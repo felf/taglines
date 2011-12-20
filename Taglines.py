@@ -185,19 +185,20 @@ if args.show_authors:
 #}}}
 
 
-currentAuthor=None
-currentTags=[]
+class CShellmode: #{{{
+    """ Shellmode class
 
-def shellmode():
-    global db
-    """The interactive part of the program
-    
     It provides a hierarchy of menus which are used to inspect
     and modify the content of the database."""
 
-    def author_menu():
+    def __init__(self):
+	self.currentAuthor=None
+	self.currentTags=[]
+	self.db = get_database_from_file(args.file)
+	self.c = self.db.cursor()
+
+    def authorMenu(self): #{{{
         """The menu with which to alter author information."""
-        global currentAuthor
         i="h"
         while True:
             print
@@ -209,9 +210,9 @@ def shellmode():
 
             if i=="l":
                 print "\nALL AUTHORS (sorted by name):"
-                c.execute( "SELECT id, name, born, died FROM authors ORDER BY name" )
+                self.c.execute( "SELECT id, name, born, died FROM authors ORDER BY name" )
                 for row in c:
-                    out="{0:>4}{1}: {2}".format(row[0], '*' if currentAuthor==row[0] else ' ', row[1].encode("utf-8"))
+                    out="{0:>4}{1}: {2}".format(row[0], '*' if self.currentAuthor==row[0] else ' ', row[1].encode("utf-8"))
                     if row[2] is not None or row[3] is not None:
                         out+=" ("+str(row[2])+"-"+str(row[3])+")"
                     print out
@@ -228,10 +229,10 @@ def shellmode():
                     except ValueError:
                         died=None
                     try:
-                        c.execute( "INSERT INTO authors (name, born, died) VALUES (?,?,?)", (
+                        self.c.execute( "INSERT INTO authors (name, born, died) VALUES (?,?,?)", (
                             unicode(name, "utf-8"), born, died) )
                         db.commit()
-                        print "Author added, new ID is {0}".format(c.lastrowid)
+                        print "Author added, new ID is {0}".format(self.c.lastrowid)
                     except sqlite3.Error, e:
                         print "An sqlite3 error occurred:", e.args[0]
                     except:
@@ -242,7 +243,7 @@ def shellmode():
                 if id!="":
                     try:
                         id=int(id)
-                        c.execute( 'DELETE FROM authors WHERE id=?', (id,) )
+                        self.c.execute( 'DELETE FROM authors WHERE id=?', (id,) )
                         db.commit()
                         print "Author deleted."
                     except ValueError:
@@ -253,23 +254,22 @@ def shellmode():
                 id=raw_input("\nID of new current author (empty to abort, 'u' to unset): ")
                 if id!="":
                     if id=="u":
-                        currentAuthor=None
+                        self.currentAuthor=None
                     else:
                         try:
-                            c.execute("SELECT id FROM authors WHERE id=?", (id,))
-                            if c.fetchone() is None:
+                            self.c.execute("SELECT id FROM authors WHERE id=?", (id,))
+                            if self.c.fetchone() is None:
                                 print "Error: no valid ID."
                             else:
-                                currentAuthor=int(id)
+                                self.currentAuthor=int(id)
                         except ValueError:
                             print "Error: no integer ID."
             elif i=="q":
                 return
-            else: i="h"
+            else: i="h" #}}}
 
-    def tag_menu():
+    def tagMenu(self): #{{{
         """The menu with which to alter tag information."""
-        global currentTags
         i="h"
         while True:
             print
@@ -289,18 +289,18 @@ def shellmode():
 
             if i=="l":
                 print "\nALL TAGS (sorted by text):"
-                c.execute( "SELECT id, text FROM tags ORDER BY text" )
-                for row in c:
-                    out="{0:>4}{1}: {2}".format(row[0], '*' if row[0] in currentTags else ' ', row[1])
+                self.c.execute( "SELECT id, text FROM tags ORDER BY text" )
+                for row in self.c:
+                    out="{0:>4}{1}: {2}".format(row[0], '*' if row[0] in self.currentTags else ' ', row[1])
                     print out
             elif i=="a":
                 text=raw_input("\nText (empty to abort): ")
                 # TODO: validate input
                 if text!="":
                     try:
-                        c.execute( "INSERT INTO tags (text) VALUES (?)", (text,) )
+                        self.c.execute( "INSERT INTO tags (text) VALUES (?)", (text,) )
                         db.commit()
-                        print "Tag added, new ID is {0}".format(c.lastrowid)
+                        print "Tag added, new ID is {0}".format(self.c.lastrowid)
                     except sqlite3.Error, e:
                         print "An sqlite3 error occurred:", e.args[0]
                     except:
@@ -311,7 +311,7 @@ def shellmode():
                 if id!="":
                     try:
                         id=int(id)
-                        c.execute( "DELETE FROM tags WHERE id=?", (id,) )
+                        self.c.execute( "DELETE FROM tags WHERE id=?", (id,) )
                         db.commit()
                         print "Tag deleted."
                     except ValueError:
@@ -330,25 +330,24 @@ def shellmode():
 			except ValueError:
 			    print "Error: no integer ID."
 		if type(id) is int:
-		    c.execute( "SELECT id FROM tags WHERE id=?", (id,) )
-		    if c.fetchone()==None:
+		    self.c.execute( "SELECT id FROM tags WHERE id=?", (id,) )
+		    if self.c.fetchone()==None:
 			print "Error: no valid ID."
 		    else:
-			if id in currentTags:
-			    i=currentTags.index(id)
-			    currentTags=currentTags[0:i]+currentTags[i+1:]
+			if id in self.currentTags:
+			    i=self.currentTags.index(id)
+			    self.currentTags=self.currentTags[0:i]+self.currentTags[i+1:]
 			    print "Tag disabled."
 			else:
-			    currentTags.append(id)
+			    self.currentTags.append(id)
 			    print "Tag enabled."
 
             elif i=="q":
                 return
-            else: i="h"
+            else: i="h" #}}}
 
-    def taglines_menu():
+    def taglinesMenu(self): #{{{
         """The menu with which to alter the actual taglines."""
-        global currentAuthor, currentTags
         i="h"
         while True:
             print
@@ -362,14 +361,14 @@ def shellmode():
                 print
                 q="SELECT t.id, a.name, source, remark, date FROM taglines t LEFT JOIN authors a ON t.author=a.id ORDER BY t.id"
                 if i=="l":
-                    c.execute("SELECT COUNT(id) FROM taglines")
-                    r=c.fetchone()
+                    self.c.execute("SELECT COUNT(id) FROM taglines")
+                    r=self.c.fetchone()
                     q+=" LIMIT {0},5".format(max(0,r[0]-5))
                     print "ALL ",
                 print "TAGLINES"
-                sub=db.cursor()
-                c.execute( q )
-                for r in c:
+                sub=self.db.cursor()
+                self.c.execute( q )
+                for r in self.c:
                     output=[]
                     if r[1] is not None: output.append("by "+r[1])
                     if r[4] is not None: output.append("from "+r[4].isoformat())
@@ -392,16 +391,16 @@ def shellmode():
             elif i=="a":
                 print "\nADD NEW TAGLINE"
                 print "Current author:",
-                if currentAuthor is None: print "None"
+                if self.currentAuthor is None: print "None"
                 else:
-                    c.execute( "SELECT name FROM authors WHERE id=?", (currentAuthor,) )
-                    print c.fetchone()[0].encode("utf-8")
+                    self.c.execute( "SELECT name FROM authors WHERE id=?", (self.currentAuthor,) )
+                    print self.c.fetchone()[0].encode("utf-8")
                 print "Current Tags:  ",
-                if len(currentTags)==0: print "None"
+                if len(self.currentTags)==0: print "None"
                 else:
-                    tags=string.join([str(t) for t in currentTags],',')
-                    c.execute( "SELECT text FROM tags WHERE id IN ("+tags+") ORDER BY text" )
-                    tags=c.fetchall()
+                    tags=string.join([str(t) for t in self.currentTags],',')
+                    self.c.execute( "SELECT text FROM tags WHERE id IN ("+tags+") ORDER BY text" )
+                    tags=self.c.fetchall()
                     tags=[t[0] for t in tags]
                     print string.join(tags, ', ')
                 print "Optional information:"
@@ -410,7 +409,7 @@ def shellmode():
                 when=raw_input("  Date (yyyy-mm-dd): ")
                 # TODO: validate date
                 texts=[]
-                
+
                 while True:
                     print "\n  ADD ITEMS TO TAGLINE"
                     print "  a - add an item       w - done, save lines to database"
@@ -443,25 +442,24 @@ def shellmode():
                     elif i=="d":
                         print "TODO"
                     if i=="w":
-                        c.execute("INSERT INTO taglines (author,source,remark,date) values (?,?,?,?)", (
-                            currentAuthor if currentAuthor else None,
+                        self.c.execute("INSERT INTO taglines (author,source,remark,date) values (?,?,?,?)", (
+                            self.currentAuthor if self.currentAuthor else None,
                             unicode(source,"utf-8") if source!="" else None,
                             unicode(remark,"utf-8") if remark!="" else None,
                             when if when!="" else None))
-                        id=c.lastrowid
+                        id=self.c.lastrowid
                         for line in texts:
-                            c.execute("INSERT INTO lines (tagline, date, language, text) values (?,?,?,?)", (
+                            self.c.execute("INSERT INTO lines (tagline, date, language, text) values (?,?,?,?)", (
                                 id,
                                 date.today().isoformat(),
                                 unicode(line[0],"utf-8") if line[0]!='' else None,
                                 unicode(line[1],"utf-8") if line[0]!='' else None))
-                        for t in currentTags:
-                            c.execute("INSERT INTO tag (tag, tagline) values (?,?)", (
+                        for t in self.currentTags:
+                            self.c.execute("INSERT INTO tag (tag, tagline) values (?,?)", (
                                 t, id))
-                        db.commit()
+                        self.db.commit()
                     if i=="w"or i=="q": break
-                    
-                        
+
             elif i=="e":
                 print "TODO"
             elif i=="d":
@@ -469,12 +467,12 @@ def shellmode():
                 if id!="":
                     try:
                         id=int(id)
-                        c.execute("SELECT id FROM taglines WHERE id=?", (id,) )
-                        if c.fetchone():
-                            c.execute( 'DELETE FROM taglines WHERE id=?', (id,) )
-                            c.execute( "DELETE FROM tag WHERE tagline=?", (id,) )
-                            c.execute( "DELETE FROM lines WHERE tagline=?", (id,) )
-                            db.commit()
+                        self.c.execute("SELECT id FROM taglines WHERE id=?", (id,) )
+                        if self.c.fetchone():
+                            self.c.execute( 'DELETE FROM taglines WHERE id=?', (id,) )
+                            self.c.execute( "DELETE FROM tag WHERE tagline=?", (id,) )
+                            self.c.execute( "DELETE FROM lines WHERE tagline=?", (id,) )
+                            self.db.commit()
                         print "Tagline and all assiciated entires deleted."
                     except ValueError:
                         print "Error: no integer ID."
@@ -482,36 +480,38 @@ def shellmode():
                         print "Error while deleting tagline."
 
             elif i=="A":
-                author_menu()
+                self.authorMenu()
             elif i=="T":
-                tag_menu()
+                self.tagMenu()
             elif i=="q":
                 break
-            else: i="h"
+            else: i="h" #}}}
 
-    print "\nBy your command..."
-    while True:
-        print "a - Author menu"
-        print "t - Tag menu"
-        print "l - taglines menu"
-        print "h - show key help (available in every menu)"
-        print "q - quit"
-        i=raw_input("MAIN menu selection: ")
-        if i=="a":
-            author_menu()
-        elif i=="t":
-            tag_menu()
-        elif i=="l":
-            taglines_menu()
-        elif i=="q":
-            ok=raw_input("\nAre you sure? [y/N] ")
-            if ok in ('y', 'ye', 'yes'):
-                print "bye"
-                break
-
-
+    def mainMenu(self): #{{{
+	print "\nBy your command..."
+	while True:
+	    print "a - Author menu"
+	    print "t - Tag menu"
+	    print "l - taglines menu"
+	    print "h - show key help (available in every menu)"
+	    print "q - quit"
+	    i=raw_input("MAIN menu selection: ")
+	    if i=="a":
+		self.authorMenu()
+	    elif i=="t":
+		self.tagMenu()
+	    elif i=="l":
+		self.taglinesMenu()
+	    elif i=="q":
+		ok=raw_input("\nAre you sure? [y/N] ")
+		if ok in ('y', 'ye', 'yes'):
+		    print "bye"
+		    break
+	#}}}
+    #}}}
 
 
 if args.interactive:
-    shellmode()
+    shellmode = CShellmode()
+    shellmode.mainMenu()
     exit(0)
