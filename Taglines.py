@@ -1,8 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# digest options
-# --------------------------------------------
+# digest options {{{
+# ----------------------------------------------------------------
 import argparse
 parser = argparse.ArgumentParser(
         description='An sqlite3 based taglines generator and manager.',
@@ -11,11 +11,11 @@ parser = argparse.ArgumentParser(
 group=parser.add_mutually_exclusive_group()
 group.add_argument('-L', '--list', action='store_true', help='List all found items')
 group.add_argument('-r', '--random', action='store_true', help='From the found items, show one at random (default)')
-group.add_argument('--show-tags', action='store_true', help='List all available tags in the database and exit');
-group.add_argument('--show-authors', action='store_true', help='List all available authors in the database and exit');
-group.add_argument('--stats', action='store_true', help='Show some statistics about the database');
-group.add_argument('--init', action='store_true', help='Initialise a new database file');
-group.add_argument('-i', '--interactive', action='store_true', help='Go into interactive mode to enter new items');
+group.add_argument('--show-tags', action='store_true', help='List all available tags in the database and exit')
+group.add_argument('--show-authors', action='store_true', help='List all available authors in the database and exit')
+group.add_argument('--stats', action='store_true', help='Show some statistics about the database')
+group.add_argument('--init', action='store_true', help='Initialise a new database file')
+group.add_argument('-i', '--interactive', action='store_true', help='Go into interactive mode (simple shell)')
 parser.add_argument('-o', '--ortag', action='store_true', help='Combine several tags with OR instead of AND')
 parser.add_argument('-t', '--tag', action='append', help='Only show items with the given tag')
 parser.add_argument('-a', '--author', help='Only show items by the given author')
@@ -28,6 +28,7 @@ parser.add_argument('file', default='~/.taglines.sqlite', help='An sqlite3 datab
 #group=parser.add_mutually_exclusive_group()
 
 args=parser.parse_args()
+#}}}
 
 
 import os
@@ -38,7 +39,8 @@ import sys
 import string
 
 
-# --------------------------------------------
+# create a new sqlite database file {{{
+# ----------------------------------------------------------------
 def db_initialise_file():
     """Initialises a new, empty database"""
     try:
@@ -47,7 +49,7 @@ def db_initialise_file():
         print "Creating new database file...",
         db=sqlite3.connect( args.file )
         #db.text_factory=str
-        c=db.cursor()
+        c = db.cursor()
         c.execute('CREATE TABLE authors (id INTEGER PRIMARY KEY, name TEXT, born INT DEFAULT NULL, died INT DEFAULT NULL);')
         c.execute('CREATE TABLE lines (id INTEGER PRIMARY KEY, tagline INT, date DATE, language VARCHAR(5), text TEXT);')
         c.execute('CREATE TABLE tag (id INTEGER PRIMARY KEY, tag INT, tagline INT);')
@@ -66,8 +68,8 @@ def db_initialise_file():
         exit(1)
 
 
-# determine database file
-# --------------------------------------------
+# get database handle from file {{{
+# ----------------------------------------------------------------
 args.file=os.path.abspath( args.file )
 fileexists=os.path.exists( args.file )
 validfile=os.path.isfile( args.file ) if fileexists else True
@@ -89,6 +91,7 @@ except:
 
 c=db.cursor()
 
+# retrieve one random tagline, then exit {{{
 if args.random or args.list:
     query="SELECT text FROM lines l, taglines tl"
     qargs=[]
@@ -136,8 +139,11 @@ if args.random or args.list:
 	    print "%"
 	print r[0].encode("utf-8")
     exit(0)
+    #}}}
 
 
+# stand-alone DB functions {{{
+# ----------------------------------------------------------------
 if args.init:
     if fileexists:
         ok = raw_input("Warning: "+args.file+" already exists. Overwrite? [y/N] ")
@@ -152,6 +158,7 @@ if args.init:
             exit(1)
     db_initialise_file()
     exit(0)
+#}}}
 
 
 currentAuthor=None
