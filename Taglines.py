@@ -67,32 +67,51 @@ def db_initialise_file():
         print >> sys.stderr, "\nError while initialising the database file: "+strerror+". Exiting."
         exit(1)
 
+if args.init:
+    if fileexists:
+        ok = raw_input("Warning: "+args.file+" already exists. Overwrite? [y/N] ")
+        if ok in ('y', 'ye', 'yes'):
+            try:
+                os.remove( args.file )
+            except:
+                print >> sys.stderr, "Error: could not delete old file. Exiting."
+                exit(1)
+        else:
+            print "good bye"
+            exit(1)
+    db_initialise_file()
+    exit(0) #}}}
+
 
 # get database handle from file {{{
 # ----------------------------------------------------------------
-args.file=os.path.abspath( args.file )
-fileexists=os.path.exists( args.file )
-validfile=os.path.isfile( args.file ) if fileexists else True
+def get_database_from_file(path):
+    args.file=os.path.abspath( path )
+    fileexists=os.path.exists( path )
+    validfile=os.path.isfile( path ) if fileexists else True
 
-if not validfile:
-    print >> sys.stderr, "Error: the given path is not a valid file. Exiting."
-    exit(1)
+    if not validfile:
+	print >> sys.stderr, "Error: the given path is not a valid file. Exiting."
+	exit(1)
 
-if not fileexists and not args.init:
-    print >> sys.stderr, "Error: the given file does not exist. Exiting."
-    exit(1)
+    if not fileexists and not args.init:
+	print >> sys.stderr, "Error: the given file does not exist. Exiting."
+	exit(1)
 
 
-try:
-    db=sqlite3.connect(args.file, detect_types=True)
-except:
-    print >> sys.stderr, "Error: could not open database file. Exiting."
-    exit(1)
+    try:
+	db=sqlite3.connect(path, detect_types=True)
+	return db
+    except:
+	print >> sys.stderr, "Error: could not open database file. Exiting."
+	exit(1)
+	#}}}
 
-c=db.cursor()
 
 # retrieve one random tagline, then exit {{{
 if args.random or args.list:
+    db = get_database_from_file(args.file);
+    c = db.cursor()
     query="SELECT text FROM lines l, taglines tl"
     qargs=[]
 
@@ -144,19 +163,24 @@ if args.random or args.list:
 
 # stand-alone DB functions {{{
 # ----------------------------------------------------------------
-if args.init:
-    if fileexists:
-        ok = raw_input("Warning: "+args.file+" already exists. Overwrite? [y/N] ")
-        if ok in ('y', 'ye', 'yes'):
-            try:
-                os.remove( args.file )
-            except:
-                print >> sys.stderr, "Error: could not delete old file. Exiting."
-                exit(1)
-        else:
-            print "good bye"
-            exit(1)
-    db_initialise_file()
+if args.show_tags:
+    db = get_database_from_file(args.file);
+    c=db.cursor()
+    c.execute( "SELECT text FROM tags ORDER BY text" )
+    for row in c:
+        print row[0]
+    exit(0)
+
+
+if args.show_authors:
+    db = get_database_from_file(args.file);
+    c=db.cursor()
+    c.execute( "SELECT name, born, died FROM authors ORDER BY name" )
+    for row in c:
+        out=row[0]
+        if row[1] is not None or row[2] is not None:
+            out+=" ("+str(row[1])+"-"+str(row[2])+")"
+        print out
     exit(0)
 #}}}
 
@@ -486,23 +510,6 @@ def shellmode():
                 break
 
 
-if args.show_tags:
-    c=db.cursor()
-    c.execute( "SELECT text FROM tags ORDER BY text" )
-    for row in c:
-        print row[0]
-    exit(0)
-
-
-if args.show_authors:
-    c=db.cursor()
-    c.execute( "SELECT name, born, died FROM authors ORDER BY name" )
-    for row in c:
-        out=row[0]
-        if row[1] is not None or row[2] is not None:
-            out+=" ("+str(row[1])+"-"+str(row[2])+")"
-        print out
-    exit(0)
 
 
 if args.interactive:
