@@ -182,6 +182,49 @@ if args.show_authors:
             out+=" ("+str(row[1])+"-"+str(row[2])+")"
         print out
     exit(0)
+
+if args.stats:
+    db = get_database_from_file(args.file);
+    c=db.cursor()
+    c.execute( "SELECT count(*) FROM tag" )
+    r=c.fetchone()
+    tagnumber=r[0];
+
+    c.execute( "SELECT count(*) FROM tags" )
+    r=c.fetchone()
+    tagsnumber=r[0];
+
+    c.execute( "SELECT count(*) FROM taglines" )
+    r=c.fetchone()
+    taglinesnumber=r[0];
+
+    c.execute( "SELECT count(*) FROM lines" )
+    r=c.fetchone()
+    linesnumber=r[0];
+
+    c.execute( "SELECT count(*) FROM authors" )
+    r=c.fetchone()
+    authorsnumber=r[0];
+
+    c.execute( "SELECT COUNT(*) FROM (SELECT DISTINCT language FROM lines)" )
+    r=c.fetchone()
+    languages=r[0]
+
+    c.execute( "SELECT text FROM lines" )
+    length=0
+    for r in c:
+	length+=len(r[0])
+
+    print "Number of taglines:        %6d" % taglinesnumber
+    print "Number of texts:           %6d   (ø %5.2f per tagline)" % (
+	linesnumber, float(linesnumber)/taglinesnumber)
+    print "Average text length:       %8.1f" % (float(length)/linesnumber)
+    print "Number of tags:            %6d" % tagsnumber
+    print "Number of tag assignments: %6d   (ø %5.2f per tagline)" % (
+	tagnumber, float(tagnumber)/taglinesnumber)
+    print "Number of authors:         %6d" % authorsnumber
+    print "Used languages:            %6d" % languages
+    exit(0)
 #}}}
 
 
