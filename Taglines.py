@@ -254,7 +254,7 @@ class CShellmode: #{{{
             if i=="l":
                 print "\nALL AUTHORS (sorted by name):"
                 self.c.execute( "SELECT id, name, born, died FROM authors ORDER BY name" )
-                for row in c:
+                for row in self.c:
                     out="{0:>4}{1}: {2}".format(row[0], '*' if self.currentAuthor==row[0] else ' ', row[1].encode("utf-8"))
                     if row[2] is not None or row[3] is not None:
                         out+=" ("+str(row[2])+"-"+str(row[3])+")"
