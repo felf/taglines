@@ -91,21 +91,21 @@ def get_database_from_file(path):
     validfile=os.path.isfile( path ) if fileexists else True
 
     if not validfile:
-	print >> sys.stderr, "Error: the given path is not a valid file. Exiting."
-	exit(1)
+        print >> sys.stderr, "Error: the given path is not a valid file. Exiting."
+        exit(1)
 
     if not fileexists and not args.init:
-	print >> sys.stderr, "Error: the given file does not exist. Exiting."
-	exit(1)
+        print >> sys.stderr, "Error: the given file does not exist. Exiting."
+        exit(1)
 
 
     try:
-	db=sqlite3.connect(path, detect_types=True)
-	return db
+        db=sqlite3.connect(path, detect_types=True)
+        return db
     except:
-	print >> sys.stderr, "Error: could not open database file. Exiting."
-	exit(1)
-	#}}}
+        print >> sys.stderr, "Error: could not open database file. Exiting."
+        exit(1)
+        #}}}
 
 
 # retrieve one random tagline, then exit {{{
@@ -117,46 +117,46 @@ if args.random or args.list:
 
     if args.author:
         # TODO: LIKE und c.execute mit ? unter einen Hut bringen
-	if args.exactauthor:
-	    query+=" JOIN authors a ON a.name=? AND tl.author=a.id"
-	    qargs.append(args.author)
-	else:
-	    query+=" JOIN authors a ON a.name LIKE '%{0}%' AND tl.author=a.id".format(args.author)
-	    #qargs.append(args.author)
+        if args.exactauthor:
+            query+=" JOIN authors a ON a.name=? AND tl.author=a.id"
+            qargs.append(args.author)
+        else:
+            query+=" JOIN authors a ON a.name LIKE '%{0}%' AND tl.author=a.id".format(args.author)
+            #qargs.append(args.author)
 
     if args.tag:
         qtags=["tag t{0}".format(x) for x in range(len(args.tag))]
-	if args.ortag:
-	    tagquery="SELECT t1.tagline FROM tag t1 JOIN tags s1 ON t1.tag=s1.id WHERE ("+string.join(
-		["s1.text=?"]*len(args.tag)," OR ")+")"
-	else:
+        if args.ortag:
+            tagquery="SELECT t1.tagline FROM tag t1 JOIN tags s1 ON t1.tag=s1.id WHERE ("+string.join(
+                ["s1.text=?"]*len(args.tag)," OR ")+")"
+        else:
             qwhere=["t{0}='{1}'".format(x,args.tag[x]) for x in range(len(args.tag))]
-	    tagquery="SELECT t1.tagline FROM "+string.join(
-		["tag t{0}, tags s{0} on s{0}.id=t{0}.tag AND s{0}.text=? AND t1.tagline=t{0}.tagline".format(x+1,args.tag[x]) for x in range(len(args.tag))], ' JOIN ')
-	qargs+=args.tag
+            tagquery="SELECT t1.tagline FROM "+string.join(
+                ["tag t{0}, tags s{0} on s{0}.id=t{0}.tag AND s{0}.text=? AND t1.tagline=t{0}.tagline".format(x+1,args.tag[x]) for x in range(len(args.tag))], ' JOIN ')
+        qargs+=args.tag
     else: tagquery=None
 
 #    query="SELECT text FROM lines l, taglines tl"
 
     query+=" WHERE tl.id=l.tagline"
     if tagquery:
-	query+=" AND tl.id IN ("+tagquery+")"
+        query+=" AND tl.id IN ("+tagquery+")"
 
     if args.lang:
-	query+=" AND l.language=?"
-	qargs.append(args.lang)
+        query+=" AND l.language=?"
+        qargs.append(args.lang)
 
     if args.random:
-	query+=" ORDER BY RANDOM() LIMIT 1"
+        query+=" ORDER BY RANDOM() LIMIT 1"
 
     c.execute(query, (qargs))
     first=True
     for r in c:
-	if first:
-	    first=False
-	else:
-	    print "%"
-	print r[0].encode("utf-8")
+        if first:
+            first=False
+        else:
+            print "%"
+        print r[0].encode("utf-8")
     exit(0)
     #}}}
 
@@ -213,15 +213,15 @@ if args.stats:
     c.execute( "SELECT text FROM lines" )
     length=0
     for r in c:
-	length+=len(r[0])
+        length+=len(r[0])
 
     print "Number of taglines:        %6d" % taglinesnumber
     print "Number of texts:           %6d   (ø %5.2f per tagline)" % (
-	linesnumber, float(linesnumber)/taglinesnumber)
+        linesnumber, float(linesnumber)/taglinesnumber)
     print "Average text length:       %8.1f" % (float(length)/linesnumber)
     print "Number of tags:            %6d" % tagsnumber
     print "Number of tag assignments: %6d   (ø %5.2f per tagline)" % (
-	tagnumber, float(tagnumber)/taglinesnumber)
+        tagnumber, float(tagnumber)/taglinesnumber)
     print "Number of authors:         %6d" % authorsnumber
     print "Used languages:            %6d" % languages
     exit(0)
@@ -235,10 +235,10 @@ class CShellmode: #{{{
     and modify the content of the database."""
 
     def __init__(self):
-	self.currentAuthor=None
-	self.currentTags=[]
-	self.db = get_database_from_file(args.file)
-	self.c = self.db.cursor()
+        self.currentAuthor=None
+        self.currentTags=[]
+        self.db = get_database_from_file(args.file)
+        self.c = self.db.cursor()
 
     def authorMenu(self): #{{{
         """The menu with which to alter author information."""
@@ -322,13 +322,13 @@ class CShellmode: #{{{
                 print "h - help            q - quit to previous menu"
             i=raw_input("TAGS menu selection: ")
 
-	    # Abkürzung: statt "t" und dann ID eingeben einfach nur die ID
-	    try:
-		id=int(i)
-	    except ValueError:
-		id=None
-	    if type(id) is int:
-		i="t"
+            # Abkürzung: statt "t" und dann ID eingeben einfach nur die ID
+            try:
+                id=int(i)
+            except ValueError:
+                id=None
+            if type(id) is int:
+                i="t"
 
             if i=="l":
                 print "\nALL TAGS (sorted by text):"
@@ -365,25 +365,25 @@ class CShellmode: #{{{
                         print "Error while deleting tag."
 
             elif i=="t":
-		if type(id) is not int:
-		    id=raw_input("\nID to toggle (empty to abort): ")
-		    if id!="":
-			try:
-			    id=int(id)
-			except ValueError:
-			    print "Error: no integer ID."
-		if type(id) is int:
-		    self.c.execute( "SELECT id FROM tags WHERE id=?", (id,) )
-		    if self.c.fetchone()==None:
-			print "Error: no valid ID."
-		    else:
-			if id in self.currentTags:
-			    i=self.currentTags.index(id)
-			    self.currentTags=self.currentTags[0:i]+self.currentTags[i+1:]
-			    print "Tag disabled."
-			else:
-			    self.currentTags.append(id)
-			    print "Tag enabled."
+                if type(id) is not int:
+                    id=raw_input("\nID to toggle (empty to abort): ")
+                    if id!="":
+                        try:
+                            id=int(id)
+                        except ValueError:
+                            print "Error: no integer ID."
+                if type(id) is int:
+                    self.c.execute( "SELECT id FROM tags WHERE id=?", (id,) )
+                    if self.c.fetchone()==None:
+                        print "Error: no valid ID."
+                    else:
+                        if id in self.currentTags:
+                            i=self.currentTags.index(id)
+                            self.currentTags=self.currentTags[0:i]+self.currentTags[i+1:]
+                            print "Tag disabled."
+                        else:
+                            self.currentTags.append(id)
+                            print "Tag enabled."
 
             elif i=="q":
                 return
@@ -531,26 +531,26 @@ class CShellmode: #{{{
             else: i="h" #}}}
 
     def mainMenu(self): #{{{
-	print "\nBy your command..."
-	while True:
-	    print "a - Author menu"
-	    print "t - Tag menu"
-	    print "l - taglines menu"
-	    print "h - show key help (available in every menu)"
-	    print "q - quit"
-	    i=raw_input("MAIN menu selection: ")
-	    if i=="a":
-		self.authorMenu()
-	    elif i=="t":
-		self.tagMenu()
-	    elif i=="l":
-		self.taglinesMenu()
-	    elif i=="q":
-		ok=raw_input("\nAre you sure? [y/N] ")
-		if ok in ('y', 'ye', 'yes'):
-		    print "bye"
-		    break
-	#}}}
+        print "\nBy your command..."
+        while True:
+            print "a - Author menu"
+            print "t - Tag menu"
+            print "l - taglines menu"
+            print "h - show key help (available in every menu)"
+            print "q - quit"
+            i=raw_input("MAIN menu selection: ")
+            if i=="a":
+                self.authorMenu()
+            elif i=="t":
+                self.tagMenu()
+            elif i=="l":
+                self.taglinesMenu()
+            elif i=="q":
+                ok=raw_input("\nAre you sure? [y/N] ")
+                if ok in ('y', 'ye', 'yes'):
+                    print "bye"
+                    break
+        #}}}
     #}}}
 
 
