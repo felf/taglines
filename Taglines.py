@@ -22,7 +22,7 @@ parser.add_argument('-a', '--author', help='Only show items by the given author'
 parser.add_argument('-e', '--exactauthor', action='store_true', help='Look for exact author match')
 parser.add_argument('-l', '--lang',  help='Only show items with the given language')
 parser.add_argument('-s', '--sort', choices=['a', 'l', 't'], help='Sort output by author, language or text')
-parser.add_argument('file', default='~/.taglines.sqlite', help='An sqlite3 database file, default is ~/.taglines.sqlite')
+parser.add_argument('file', help='An sqlite3 database file')
 
 #group=parser.add_argument_group('Actions')
 #group=parser.add_mutually_exclusive_group()
@@ -86,6 +86,10 @@ if args.init:
 # get database handle from file {{{1
 # ----------------------------------------------------------------
 def get_database_from_file(path):
+    if path is None:
+        print >> sys.stderr, "Error: no path to database given. Exiting."
+        exit(1)
+
     args.file=os.path.abspath( path )
     fileexists=os.path.exists( path )
     validfile=os.path.isfile( path ) if fileexists else True
