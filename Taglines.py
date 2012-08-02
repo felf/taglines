@@ -274,12 +274,12 @@ class CShellmode: #{{{1
                     try:
                         self.c.execute( "INSERT INTO authors (name, born, died) VALUES (?,?,?)", (
                             unicode(name, "utf-8"), born, died) )
-                        db.commit()
+                        self.db.commit()
                         print "Author added, new ID is {0}".format(self.c.lastrowid)
                     except sqlite3.Error, e:
                         print "An sqlite3 error occurred:", e.args[0]
-                    except:
-                        print "Error while adding author."
+                    except Exception, e:
+                        print "Error while adding author:", e.args[0]
 
             elif i=="d":
                 id=raw_input("\nID to delete (empty to abort): ")
