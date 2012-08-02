@@ -1,7 +1,7 @@
 #!/usr/bin/python2
 # -*- coding: utf-8 -*-
 
-# digest options {{{
+# digest options {{{1
 # ----------------------------------------------------------------
 import argparse
 parser = argparse.ArgumentParser(
@@ -28,18 +28,18 @@ parser.add_argument('file', default='~/.taglines.sqlite', help='An sqlite3 datab
 #group=parser.add_mutually_exclusive_group()
 
 args=parser.parse_args()
-#}}}
+#}}}1
 
-
+# imports {{{1
 import os
 #import datetime
 from datetime import date
 import sqlite3
 import sys
 import string
+#}}}1
 
-
-# create a new sqlite database file {{{
+# create a new sqlite database file {{{1
 # ----------------------------------------------------------------
 def db_initialise_file():
     """Initialises a new, empty database"""
@@ -80,10 +80,10 @@ if args.init:
             print "good bye"
             exit(1)
     db_initialise_file()
-    exit(0) #}}}
+    exit(0)
 
 
-# get database handle from file {{{
+# get database handle from file {{{1
 # ----------------------------------------------------------------
 def get_database_from_file(path):
     args.file=os.path.abspath( path )
@@ -98,17 +98,15 @@ def get_database_from_file(path):
         print >> sys.stderr, "Error: the given file does not exist. Exiting."
         exit(1)
 
-
     try:
         db=sqlite3.connect(path, detect_types=True)
         return db
     except:
         print >> sys.stderr, "Error: could not open database file. Exiting."
         exit(1)
-        #}}}
 
 
-# retrieve one random tagline, then exit {{{
+# retrieve one random tagline, then exit {{{1
 if args.random or args.list:
     db = get_database_from_file(args.file);
     c = db.cursor()
@@ -158,10 +156,9 @@ if args.random or args.list:
             print "%"
         print r[0].encode("utf-8")
     exit(0)
-    #}}}
 
 
-# stand-alone DB functions {{{
+# stand-alone DB functions {{{1
 # ----------------------------------------------------------------
 if args.show_tags:
     db = get_database_from_file(args.file);
@@ -225,10 +222,9 @@ if args.stats:
     print "Number of authors:         %6d" % authorsnumber
     print "Used languages:            %6d" % languages
     exit(0)
-#}}}
 
 
-class CShellmode: #{{{
+class CShellmode: #{{{1
     """ Shellmode class
 
     It provides a hierarchy of menus which are used to inspect
@@ -240,7 +236,7 @@ class CShellmode: #{{{
         self.db = get_database_from_file(args.file)
         self.c = self.db.cursor()
 
-    def authorMenu(self): #{{{
+    def authorMenu(self): #{{{2
         """The menu with which to alter author information."""
         i="h"
         while True:
@@ -309,9 +305,9 @@ class CShellmode: #{{{
                             print "Error: no integer ID."
             elif i=="q":
                 return
-            else: i="h" #}}}
+            else: i="h"
 
-    def tagMenu(self): #{{{
+    def tagMenu(self): #{{{2
         """The menu with which to alter tag information."""
         i="h"
         while True:
@@ -387,9 +383,9 @@ class CShellmode: #{{{
 
             elif i=="q":
                 return
-            else: i="h" #}}}
+            else: i="h"
 
-    def taglinesMenu(self): #{{{
+    def taglinesMenu(self): #{{{2
         """The menu with which to alter the actual taglines."""
         i="h"
         while True:
@@ -528,9 +524,9 @@ class CShellmode: #{{{
                 self.tagMenu()
             elif i=="q":
                 break
-            else: i="h" #}}}
+            else: i="h"
 
-    def mainMenu(self): #{{{
+    def mainMenu(self): #{{{2
         print "\nBy your command..."
         while True:
             print "a - Author menu"
@@ -550,8 +546,8 @@ class CShellmode: #{{{
                 if ok in ('y', 'ye', 'yes'):
                     print "bye"
                     break
-        #}}}
-    #}}}
+        #}}}2
+    #}}}1
 
 
 if args.interactive:
