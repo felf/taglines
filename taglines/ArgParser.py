@@ -31,6 +31,9 @@ class ArgParser:
         group.add_argument(
             '-i', '--interactive', action='store_true',
             help='Go into interactive mode (simple shell)')
+        group.add_argument(
+            '-g', '--graphical', action='store_true',
+            help='Open graphical version of the program (Qt4)')
         parser.add_argument(
             '-o', '--ortag', action='store_true',
             help='Combine several tags with OR instead of AND')
