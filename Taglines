@@ -420,7 +420,7 @@ if __name__ == "__main__":  # {{{1
                     if not self.closeFile():
                         return False
                     try:
-                        self.db = get_database_from_file(url)
+                        self.db = get_database_from_file(str(url))
                         self.TaglinesWidget.clear()
                         self.LinesWidget.clear()
 
