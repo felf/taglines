@@ -414,7 +414,7 @@ if __name__ == "__main__":  # {{{1
                 if args.file: self.loadFile(args.file)
 
             def closeFile(self):
-                if self.db: self.db.disconnect()
+                if self.db: self.db.close()
                 return True
             def loadFile(self, url):
                     if not self.closeFile():
