@@ -164,16 +164,14 @@ if __name__ == "__main__":  # {{{1
                 self.setHeaderData(1, Qt.Horizontal, QtCore.QVariant("Born"), Qt.DisplayRole)
                 self.setHeaderData(2, Qt.Horizontal, QtCore.QVariant("Died"), Qt.DisplayRole)
                 self.authors=[
-                    (-2, u'(Don\'t filter)', None, None),
-                    (-1, u'(None)', None, None)]
+                    (-3, u'(Don\'t filter)', None, None),
+                    (-2, u'(None)', None, None)]
             def setDB(self, db):
                 self.db = db
                 self.authors=[
-                    (-2, u'(Don\'t filter)', None, None),
-                    (-1, u'(None)', None, None)]
-                c = self.db.cursor()
-                c.execute("SELECT * FROM authors ORDER BY name")
-                for r in c:
+                    (-3, u'(Don\'t filter)', None, None),
+                    (-2, u'(None)', None, None)]
+                for r in self.db.execute("SELECT * FROM authors ORDER BY name"):
                     self.authors.append(r)
                 self.emit(SIGNAL("dataChanged()"))
             def data(self, index, role=Qt.DisplayRole):
@@ -195,19 +193,18 @@ if __name__ == "__main__":  # {{{1
                 return len(self.authors)
             def setData(self, index, value, role=Qt.EditRole):
                 if not index.isValid(): return False
-                if role!=Qt.CheckEditRole: return False
-                author=self.authors[index.row()]
-                c = self.db.cursor()
+                if role!=Qt.EditRole: return False
                 if index.column()==0:
-                    self.authors[index.row()][0]=value;
-                    c.execute("UPDATE authors SET name = '" + value +
-                        "' WHERE id = '" + index.row() + "'")
+                    return False
+                elif index.column()==1:
+                    value = unicode(value.toString()).strip()
                 else:
-                    i="" if value=="" else int(value)
-                    self.authors[index.row()][index.column()]=i;
-                    c.execute("UPDATE authors SET " +
-                        ("born" if index.column()==1 else "died") +
-                        " = '" + value + "' WHERE id = '" + index.row() + "'")
+                    value = value.toInt()
+                author=self.authors[index.row()]
+                author[index.column()] = value;
+                self.db.execute("UPDATE authors SET " +
+                    ["name", "born", "died"][author[0]] +
+                    " = ? WHERE id = ?", (value, author[0]))
                 self.parent.changed = True
                 self.emit(SIGNAL("dataChanged()"))
                 return True
@@ -224,9 +221,7 @@ if __name__ == "__main__":  # {{{1
             def setDB(self, db):
                 self.db = db
                 self.languages=[]
-                c = self.db.cursor()
-                c.execute("SELECT DISTINCT language FROM lines")
-                for r in c:
+                for r in self.db.execute("SELECT DISTINCT language FROM lines"):
                     self.languages.append(list(r)+[False])
                 self.emit(SIGNAL("dataChanged()"))
             def data(self, index, role=Qt.DisplayRole):
@@ -272,9 +267,7 @@ if __name__ == "__main__":  # {{{1
             def setDB(self, db):
                 self.db = db
                 self.tags=[]
-                c = self.db.cursor()
-                c.execute("SELECT * FROM tags ORDER BY text")
-                for r in c:
+                for r in self.db.execute("SELECT * FROM tags ORDER BY text"):
                     self.tags.append(list(r)+[False])
                 self.emit(SIGNAL("dataChanged()"))
             def data(self, index, role=Qt.DisplayRole):
@@ -286,7 +279,7 @@ if __name__ == "__main__":  # {{{1
                 return tag[index.column()]
             def flags(self, index):
                 if not index.isValid(): return Qt.NoItemFlags
-                f = Qt.ItemIsEnabled | Qt.ItemIsSelectable
+                f = Qt.ItemIsEnabled | Qt.ItemIsSelectable | Qt.ItemIsEditable
                 if index.column()==1: f |= Qt.ItemIsUserCheckable
                 return f
             def hasChildren(self, index):
@@ -307,11 +300,12 @@ if __name__ == "__main__":  # {{{1
                 if role==Qt.CheckStateRole:
                     tag[2] = value
                     return True
-                if index.column()==1:
-                    self.tags[index.row()][1]=value
-                    c = self.db.cursor()
-                    c.execute("UPDATE tags SET text = '" + value +
-                        "' WHERE id = '" + index.row() + "'")
+                if index.column()==1 and role==Qt.EditRole:
+                    text = unicode(value.toString()).strip()
+                    if tag[1]==text: return True
+                    tag[1] = text
+                    self.db.execute("UPDATE tags SET text = ? WHERE id = ?",
+                        (tag[1], tag[0]))
                 self.parent.changed = True
                 self.emit(SIGNAL("dataChanged()"))
                 return True
