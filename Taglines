@@ -157,8 +157,9 @@ if __name__ == "__main__":  # {{{1
 
             It allows to select one and only one author for a tagline.
             """
-            def __init__(self, parent=None):
+            def __init__(self, parent):
                 QAbstractItemModel.__init__(self, parent)
+                self.parent = parent
                 self.setHeaderData(0, Qt.Horizontal, QtCore.QVariant("Name"), Qt.DisplayRole)
                 self.setHeaderData(1, Qt.Horizontal, QtCore.QVariant("Born"), Qt.DisplayRole)
                 self.setHeaderData(2, Qt.Horizontal, QtCore.QVariant("Died"), Qt.DisplayRole)
@@ -207,6 +208,7 @@ if __name__ == "__main__":  # {{{1
                     c.execute("UPDATE authors SET " +
                         ("born" if index.column()==1 else "died") +
                         " = '" + value + "' WHERE id = '" + index.row() + "'")
+                self.parent.changed = True
                 self.emit(SIGNAL("dataChanged()"))
                 return True
 
@@ -216,10 +218,9 @@ if __name__ == "__main__":  # {{{1
 
             It allows to select a number of languages for a tagline.
             """
-            def __init__(self, parent=None):
+            def __init__(self, parent):
                 QAbstractItemModel.__init__(self, parent)
                 self.setHeaderData(0, Qt.Horizontal, QtCore.QVariant("Name"), Qt.DisplayRole)
-
             def setDB(self, db):
                 self.db = db
                 self.languages=[]
@@ -264,10 +265,10 @@ if __name__ == "__main__":  # {{{1
 
             It allows to select a number of tags for a tagline.
             """
-            def __init__(self, parent=None):
+            def __init__(self, parent):
                 QAbstractItemModel.__init__(self, parent)
+                self.parent = parent
                 self.setHeaderData(0, Qt.Horizontal, QtCore.QVariant("Name"), Qt.DisplayRole)
-
             def setDB(self, db):
                 self.db = db
                 self.tags=[]
@@ -311,6 +312,8 @@ if __name__ == "__main__":  # {{{1
                     c = self.db.cursor()
                     c.execute("UPDATE tags SET text = '" + value +
                         "' WHERE id = '" + index.row() + "'")
+                self.parent.changed = True
+                self.emit(SIGNAL("dataChanged()"))
                 return True
 
         class TaglinesWindow(QMainWindow): #{{{3
@@ -411,10 +414,18 @@ if __name__ == "__main__":  # {{{1
                 self.setCentralWidget(mainSplitter)
 
                 self.db = None
+                self.changed = False
                 if args.file: self.loadFile(args.file)
 
+            def closeEvent(self, event):
+                event.accept() if self.closeFile() else event.ignore()
             def closeFile(self):
-                if self.db: self.db.close()
+                if self.db:
+                    # TODO: ask to save
+                    if self.changed:
+                        self.db.commit()
+                        self.changed = False
+                    self.db.close()
                 return True
             def loadFile(self, url):
                     if not self.closeFile():
@@ -435,6 +446,7 @@ if __name__ == "__main__":  # {{{1
                         QMessageBox.critical(self, "Error", "An error occured while reading the file.")
                         return False
             def openFile(self):
+                # TODO: if self.changed: ask to save
                 if kde:
                     url = QFileDialog.getOpenFileName(
                         self, 'Open a taglines database', '',
