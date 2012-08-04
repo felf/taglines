@@ -49,12 +49,11 @@ def db_initialise_file():
         print "Creating new database file...",
         db=sqlite3.connect( args.file )
         #db.text_factory=str
-        c = db.cursor()
-        c.execute('CREATE TABLE authors (id INTEGER PRIMARY KEY, name TEXT, born INT DEFAULT NULL, died INT DEFAULT NULL);')
-        c.execute('CREATE TABLE lines (id INTEGER PRIMARY KEY, tagline INT, date DATE, language VARCHAR(5), text TEXT);')
-        c.execute('CREATE TABLE tag (id INTEGER PRIMARY KEY, tag INT, tagline INT);')
-        c.execute('CREATE TABLE taglines (id INTEGER PRIMARY KEY, author INT, source TEXT DEFAULT NULL, remark TEXT DEFAULT NULL, date DATE DEFAULT NULL);')
-        c.execute('CREATE TABLE tags (id INTEGER PRIMARY KEY, text TEXT UNIQUE);')
+        db.execute('CREATE TABLE authors (id INTEGER PRIMARY KEY, name TEXT, born INT DEFAULT NULL, died INT DEFAULT NULL);')
+        db.execute('CREATE TABLE lines (id INTEGER PRIMARY KEY, tagline INT, date DATE, language VARCHAR(5), text TEXT);')
+        db.execute('CREATE TABLE tag (id INTEGER PRIMARY KEY, tag INT, tagline INT);')
+        db.execute('CREATE TABLE taglines (id INTEGER PRIMARY KEY, author INT, source TEXT DEFAULT NULL, remark TEXT DEFAULT NULL, date DATE DEFAULT NULL);')
+        db.execute('CREATE TABLE tags (id INTEGER PRIMARY KEY, text TEXT UNIQUE);')
         db.commit()
         c.close()
         print "done."
@@ -113,7 +112,6 @@ def get_database_from_file(path):
 # retrieve one random tagline, then exit {{{1
 if args.random or args.list:
     db = get_database_from_file(args.file);
-    c = db.cursor()
     query="SELECT text FROM lines l, taglines tl"
     qargs=[]
 
@@ -151,9 +149,8 @@ if args.random or args.list:
     if args.random:
         query+=" ORDER BY RANDOM() LIMIT 1"
 
-    c.execute(query, (qargs))
     first=True
-    for r in c:
+    for r in db.execute(query, (qargs)):
         if first:
             first=False
         else:
@@ -166,18 +163,14 @@ if args.random or args.list:
 # ----------------------------------------------------------------
 if args.show_tags:
     db = get_database_from_file(args.file);
-    c=db.cursor()
-    c.execute( "SELECT text FROM tags ORDER BY text" )
-    for row in c:
+    for row in db.execute( "SELECT text FROM tags ORDER BY text" ):
         print row[0]
     exit(0)
 
 
 if args.show_authors:
     db = get_database_from_file(args.file);
-    c=db.cursor()
-    c.execute( "SELECT name, born, died FROM authors ORDER BY name" )
-    for row in c:
+    for row in db.execute( "SELECT name, born, died FROM authors ORDER BY name" ):
         out=row[0]
         if row[1] is not None or row[2] is not None:
             out+=" ("+str(row[1])+"-"+str(row[2])+")"
