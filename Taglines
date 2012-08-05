@@ -178,6 +178,12 @@ if __name__ == "__main__":  # {{{1
                 self.authors.append(author)
                 self.endInsertRows()
                 return True
+            def set(self, author):
+                self.db.execute(
+                    "UPDATE authors SET name=?, born=?, died=? WHERE id=?",
+                    tuple(author[1:]+author[0:1]))
+                self.emit(SIGNAL("dataChanged()"))
+                return True
             def setDB(self, db):
                 self.db = db
                 self.authors=[
@@ -186,6 +192,9 @@ if __name__ == "__main__":  # {{{1
                 for r in self.db.execute("SELECT * FROM authors ORDER BY name"):
                     self.authors.append(list(r))
                 self.emit(SIGNAL("dataChanged()"))
+            def author(self, index):
+                if not index.isValid(): return False
+                return self.authors[index.row()]
             def data(self, index, role=Qt.DisplayRole):
                 if not index.isValid(): return QVariant()
                 if role==Qt.TextAlignmentRole:
@@ -260,8 +269,15 @@ if __name__ == "__main__":  # {{{1
                 return self.languages
             def tagsModel(self):
                 return self.tags
+            def author(self, index):
+                return self.authors.author(index)
             def addAuthor(self, author):
                 if self.authors.add(author):
+                    self.changed = True
+                    return True
+                return False
+            def setAuthor(self, author):
+                if self.authors.set(author):
                     self.changed = True
                     return True
                 return False
@@ -380,17 +396,21 @@ if __name__ == "__main__":  # {{{1
                 self.nameEdit = QLineEdit(parent)
                 self.nameEdit.setMaxLength(255)
                 self.nameEdit.setMinimumWidth(300)
+                self.nameEdit.setText(author[1])
+                self.nameEdit.selectAll()
                 mainLayout.addWidget(self.nameEdit, 0, 1)
 
                 layout = QHBoxLayout()
                 mainLayout.addWidget(QLabel("Born:"), 1, 0, Qt.AlignRight)
                 self.bornDial = QSpinBox(self)
                 self.bornDial.setRange(-4000, 4000)
+                if not author[2] is None: self.bornDial.setValue(author[2])
                 layout.addWidget(self.bornDial)
                 layout.addStretch(1)
                 layout.addWidget(QLabel("Died:"))
                 self.diedDial = QSpinBox(self)
                 self.diedDial.setRange(-4000, 4000)
+                if not author[3] is None: self.diedDial.setValue(author[3])
                 layout.addWidget(self.diedDial)
                 layout.addStretch(1)
                 mainLayout.addLayout(layout, 1, 1)
@@ -436,11 +456,11 @@ if __name__ == "__main__":  # {{{1
                 self.setWindowTitle("Manage Tagline Authors")
 
                 mainLayout = QHBoxLayout()
-                authors = QTreeView(self)
-                authors.setModel(database.authorsModel())
-                authors.setRootIsDecorated(False)
-                authors.hideColumn(0)
-                header = authors.header()
+                self.authors = QTreeView(self)
+                self.authors.setModel(database.authorsModel())
+                self.authors.setRootIsDecorated(False)
+                self.authors.hideColumn(0)
+                header = self.authors.header()
                 header.setResizeMode(1, QHeaderView.Stretch)
                 header.setResizeMode(2, QHeaderView.ResizeToContents)
                 header.setResizeMode(3, QHeaderView.ResizeToContents)
@@ -454,7 +474,6 @@ if __name__ == "__main__":  # {{{1
                 editButton.setIcon(QIcon.fromTheme("document-edit"))
                 delButton.setIcon(QIcon.fromTheme("edit-delete"))
                 closeButton.setIcon(QIcon.fromTheme("dialog-ok"))
-                self.connect(closeButton, SIGNAL('clicked()'), self.close)
 
                 buttonLayout = QVBoxLayout()
                 buttonLayout.addWidget(addButton)
@@ -463,16 +482,24 @@ if __name__ == "__main__":  # {{{1
                 buttonLayout.addStretch(1)
                 buttonLayout.addWidget(closeButton)
 
-                mainLayout.addWidget(authors)
+                mainLayout.addWidget(self.authors)
                 mainLayout.addLayout(buttonLayout)
                 self.setLayout(mainLayout)
                 self.resize(QSize(480,480))
                 self.connect(addButton, SIGNAL('clicked()'), self.addAuthor)
+                self.connect(editButton, SIGNAL('clicked()'), self.editAuthor)
+                self.connect(closeButton, SIGNAL('clicked()'), self.close)
             def addAuthor(self):
                 author = [-1, "", None, None]
                 dlg = EditAuthorDialog(self, author)
                 if dlg.exec_():
                     self.database.addAuthor(author)
+            def editAuthor(self):
+                selection = self.authors.selectionModel().selectedRows(1)
+                author = self.database.author(selection[0])
+                dlg = EditAuthorDialog(self, author)
+                if dlg.exec_():
+                    self.database.setAuthor(author)
 
         class TaglinesWindow(QMainWindow): #{{{3
             def __init__(self): #{{{4
