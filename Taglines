@@ -315,6 +315,63 @@ if __name__ == "__main__":  # {{{1
                 self.emit(SIGNAL("dataChanged()"))
                 return True
 
+        class EditAuthorDialog(QDialog): #{{{3
+            """
+            This dialogue edits the data of one author
+            """
+            def __init__(self, parent, author):
+                QDialog.__init__(self, parent, Qt.Dialog)
+                self.author = author
+
+                mainLayout = QGridLayout(self)
+                mainLayout.addWidget(QLabel("Name:"), 0, 0, Qt.AlignRight)
+                self.nameEdit = QLineEdit(parent)
+                self.nameEdit.setMaxLength(255)
+                self.nameEdit.setMinimumWidth(300)
+                mainLayout.addWidget(self.nameEdit, 0, 1)
+
+                layout = QHBoxLayout()
+                mainLayout.addWidget(QLabel("Born:"), 1, 0, Qt.AlignRight)
+                self.bornDial = QSpinBox(self)
+                self.bornDial.setRange(-4000, 4000)
+                layout.addWidget(self.bornDial)
+                layout.addStretch(1)
+                layout.addWidget(QLabel("Died:"))
+                self.diedDial = QSpinBox(self)
+                self.diedDial.setRange(-4000, 4000)
+                layout.addWidget(self.diedDial)
+                layout.addStretch(1)
+                mainLayout.addLayout(layout, 1, 1)
+
+                layout = QHBoxLayout()
+                layout.addStretch(1)
+                okButton = QPushButton("&OK", self)
+                okButton.setDefault(True)
+                okButton.setIcon(QIcon.fromTheme("dialog-ok"))
+                layout.addWidget(okButton)
+                cancelButton = QPushButton("&Cancel", self)
+                cancelButton.setIcon(QIcon.fromTheme("dialog-cancel"))
+                layout.addWidget(cancelButton)
+                mainLayout.addLayout(layout, 2, 1, Qt.AlignRight | Qt.AlignBottom)
+
+                self.connect(okButton, SIGNAL('clicked()'), self.ok)
+                self.connect(cancelButton, SIGNAL('clicked()'), self.reject)
+                self.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
+            def ok(self):
+                error = ""
+                name = unicode(self.nameEdit.text())
+                if name == "":
+                    error = "Please enter a name."
+                born = self.bornDial.value()
+                died = self.diedDial.value()
+                if born>died and born!=0 and died!=0:
+                    error = "The year of birth must be lower than the year of death.\nEnter 0 to ignore a date."
+                if error!="":
+                    QMessageBox.critical(self, "Data invalid", error)
+                else:
+                    self.author[1:]=[name, born, died]
+                    self.accept()
+
         class EditAuthorsDialog(QDialog): #{{{2
             """
             This dialogue manages the list of authors
