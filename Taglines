@@ -167,6 +167,17 @@ if __name__ == "__main__":  # {{{1
                 self.setHeaderData(1, Qt.Horizontal, QtCore.QVariant("Name"), Qt.DisplayRole)
                 self.setHeaderData(2, Qt.Horizontal, QtCore.QVariant("Born"), Qt.DisplayRole)
                 self.setHeaderData(3, Qt.Horizontal, QtCore.QVariant("Died"), Qt.DisplayRole)
+            def add(self, author):
+                if author[0]!=-1 or not self.db: return False
+                count = self.rowCount()
+                self.beginInsertRows(QModelIndex(), count, count)
+                c = self.db.cursor()
+                c.execute("INSERT INTO authors (name, born, died) values (?,?,?)",
+                    tuple(author[1:4]))
+                author[0] = c.lastrowid
+                self.authors.append(author)
+                self.endInsertRows()
+                return True
             def setDB(self, db):
                 self.db = db
                 self.authors=[
@@ -249,6 +260,11 @@ if __name__ == "__main__":  # {{{1
                 return self.languages
             def tagsModel(self):
                 return self.tags
+            def addAuthor(self, author):
+                if self.authors.add(author):
+                    self.changed = True
+                    return True
+                return False
 
         class LanguagesModel(QAbstractItemModel): #{{{3
             """
@@ -451,6 +467,12 @@ if __name__ == "__main__":  # {{{1
                 mainLayout.addLayout(buttonLayout)
                 self.setLayout(mainLayout)
                 self.resize(QSize(480,480))
+                self.connect(addButton, SIGNAL('clicked()'), self.addAuthor)
+            def addAuthor(self):
+                author = [-1, "", None, None]
+                dlg = EditAuthorDialog(self, author)
+                if dlg.exec_():
+                    self.database.addAuthor(author)
 
         class TaglinesWindow(QMainWindow): #{{{3
             def __init__(self): #{{{4
