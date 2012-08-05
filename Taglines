@@ -214,6 +214,42 @@ if __name__ == "__main__":  # {{{1
                 self.emit(SIGNAL("dataChanged()"))
                 return True
 
+        class TagDatabase: #{{{3
+            """
+            encapsulates access to the models and state information
+            """
+            def __init__(self):
+                self.authors = AuthorModel(None)
+                self.languages = LanguagesModel(None)
+                self.tags = TagsModel(None)
+                self.db = None
+                self.changed = False
+            def active(self):
+                return not self.db is None
+            def changed(self):
+                return changed
+            def close(self):
+                if self.active():
+                    if self.changed:
+                    # TODO: ask whether to save
+                        self.db.commit()
+                    self.db.close()
+                    db = None
+                return True
+            def loadFromFile(self, url):
+                if not self.close(): return False
+                self.db = get_database_from_file(url)
+                self.authors.setDB(self.db)
+                self.languages.setDB(self.db)
+                self.tags.setDB(self.db)
+                return True
+            def authorsModel(self):
+                return self.authors
+            def languagesModel(self):
+                return self.languages
+            def tagsModel(self):
+                return self.tags
+
         class LanguagesModel(QAbstractItemModel): #{{{3
             """
             This class is the interface to the languages in the database
@@ -376,15 +412,14 @@ if __name__ == "__main__":  # {{{1
             """
             This dialogue manages the list of authors
             """
-            def __init__(self, parent, db, model):
+            def __init__(self, parent, database):
                 QDialog.__init__(self, parent)
-                self.db = db
-                self.authors = model
+                self.database = database
                 self.setWindowTitle("Manage Tagline Authors")
 
                 mainLayout = QHBoxLayout()
                 authors = QTreeView(self)
-                authors.setModel(model)
+                authors.setModel(database.authorsModel())
                 authors.setRootIsDecorated(False)
                 authors.hideColumn(0)
                 header = authors.header()
@@ -420,10 +455,7 @@ if __name__ == "__main__":  # {{{1
                 QMainWindow.__init__(self)
                 self.resize(800,600)
                 self.setWindowTitle('Taglines database')
-
-                self.authors = AuthorModel(self)
-                self.languages = LanguagesModel(self)
-                self.tags = TagsModel(self)
+                self.database = TagDatabase()
 
                 # Create actions
                 newAction = QAction('New database', self)
@@ -477,13 +509,13 @@ if __name__ == "__main__":  # {{{1
                 sidebar.setLayout(sidebarLayout)
                 sidebarLayout.addWidget(QLabel('Author:'))
                 self.AuthorList = QComboBox()
-                self.AuthorList.setModel(self.authors)
+                self.AuthorList.setModel(self.database.authorsModel())
                 self.AuthorList.setModelColumn(1)
                 sidebarLayout.addWidget(self.AuthorList)
 
                 sidebarLayout.addWidget(QLabel('Languages:'))
                 self.LangList = QListView()
-                self.LangList.setModel(self.languages)
+                self.LangList.setModel(self.database.languagesModel())
                 self.LangList.setModelColumn(1)
                 sidebarLayout.addWidget(self.LangList)
 
@@ -495,7 +527,7 @@ if __name__ == "__main__":  # {{{1
 
                 sidebarLayout.addWidget(QLabel('Tags:'))
                 self.TagList = QListView()
-                self.TagList.setModel(self.tags)
+                self.TagList.setModel(self.database.tagsModel())
                 self.TagList.setModelColumn(1)
                 sidebarLayout.addWidget(self.TagList)
 
@@ -517,42 +549,26 @@ if __name__ == "__main__":  # {{{1
                 mainSplitter.setStretchFactor(1, 1)
                 self.setCentralWidget(mainSplitter)
 
-                self.db = None
-                self.changed = False
                 if args.file: self.loadFile(args.file)
                 #}}}4
 
             def closeEvent(self, event):
-                event.accept() if self.closeFile() else event.ignore()
-            def closeFile(self):
-                if self.db:
-                    # TODO: ask to save
-                    if self.changed:
-                        self.db.commit()
-                        self.changed = False
-                    self.db.close()
-                return True
+                event.accept() if self.database.close() else event.ignore()
             def editAuthors(self):
-                dialog = EditAuthorsDialog(self, self.db, self.authors)
+                dialog = EditAuthorsDialog(self, self.database)
                 dialog.exec_()
             def loadFile(self, url):
-                    if not self.closeFile():
+                    if not self.database.close():
                         return False
                     try:
-                        self.db = get_database_from_file(str(url))
-                        self.TaglinesWidget.clear()
-                        self.LinesWidget.clear()
-
-                        self.authors.setDB(self.db)
-                        self.languages.setDB(self.db)
-                        self.tags.setDB(self.db)
-
+                        self.database.loadFromFile(str(url))
                     #except InvalidFileError:
                     #    QMessageBox.warning(None, "Error", "This file is not a taglines database.")
                     #    return False
                     except IOError:
                         QMessageBox.critical(self, "Error", "An error occured while reading the file.")
                         return False
+                    return True
             def openFile(self):
                 # TODO: if self.changed: ask to save
                 if kde:
