@@ -405,7 +405,9 @@ if __name__ == "__main__":  # {{{1
                 if error!="":
                     QMessageBox.critical(self, "Data invalid", error)
                 else:
-                    self.author[1:]=[name, born, died]
+                    self.author[1:]=[name,
+                        born if born!=0 else None,
+                        died if died!=0 else None]
                     self.accept()
 
         class EditAuthorsDialog(QDialog): #{{{2
