@@ -489,7 +489,7 @@ if __name__ == "__main__":  # {{{1
                 self.database = database
                 self.setWindowTitle("Manage Tagline Authors")
 
-                mainLayout = QHBoxLayout()
+                mainLayout = QHBoxLayout(self)
                 self.authors = QTreeView(self)
                 self.authors.setModel(database.authorsModel())
                 self.authors.setRootIsDecorated(False)
@@ -518,7 +518,6 @@ if __name__ == "__main__":  # {{{1
 
                 mainLayout.addWidget(self.authors)
                 mainLayout.addLayout(buttonLayout)
-                self.setLayout(mainLayout)
                 self.resize(QSize(480,480))
                 self.connect(addButton, SIGNAL('clicked()'), self.addAuthor)
                 self.connect(editButton, SIGNAL('clicked()'), self.editAuthor)
@@ -550,6 +549,41 @@ if __name__ == "__main__":  # {{{1
                 return True
 
 
+        class EditTagsDialog(QDialog): #{{{3
+            """
+            This dialogue manages the list of tags
+            """
+            def __init__(self, parent, database):
+                QDialog.__init__(self, parent)
+                self.database = database
+                self.setWindowTitle("Managa Tagline Tags")
+
+                mainLayout = QHBoxLayout(self)
+                self.tags = QListView(self)
+                self.tags.setModel(database.tagsModel())
+                self.tags.setModelColumn(1)
+                mainLayout.addWidget(self.tags)
+
+                addButton = QPushButton("&Add", self)
+                editButton = QPushButton("&Edit", self)
+                delButton = QPushButton("&Delete", self)
+                closeButton = QPushButton("&Close", self)
+                addButton.setIcon(QIcon.fromTheme("list-add"))
+                editButton.setIcon(QIcon.fromTheme("document-edit"))
+                delButton.setIcon(QIcon.fromTheme("edit-delete"))
+                closeButton.setIcon(QIcon.fromTheme("dialog-ok"))
+
+                buttonLayout = QVBoxLayout()
+                buttonLayout.addWidget(addButton)
+                buttonLayout.addWidget(editButton)
+                buttonLayout.addWidget(delButton)
+                buttonLayout.addStretch(1)
+                buttonLayout.addWidget(closeButton)
+                mainLayout.addLayout(buttonLayout)
+
+                self.resize(QSize(320,480))
+                self.connect(closeButton, SIGNAL('clicked()'), self.close)
+
         class TaglinesWindow(QMainWindow): #{{{3
             def __init__(self): #{{{4
                 QMainWindow.__init__(self)
@@ -564,6 +598,7 @@ if __name__ == "__main__":  # {{{1
                 saveAsAction = QAction('Save database as', self)
                 exitAction = QAction('Exit', self)
                 editAuthorsAction = QAction('Edit Authors...', self)
+                editTagsAction = QAction('Edit Tag...', self)
                 editAction = QAction('Edit Phrase Pairs', self)
 
                 newAction.setShortcut('Ctrl+N')
@@ -571,6 +606,7 @@ if __name__ == "__main__":  # {{{1
                 saveAction.setShortcut('Ctrl+S')
                 saveAsAction.setShortcut('Ctrl+Shift+S')
                 editAuthorsAction.setShortcut('Ctrl+U')
+                editTagsAction.setShortcut('Ctrl+T')
                 exitAction.setShortcut('Ctrl+Q')
 
                 newAction.setIcon(QIcon.fromTheme("document-new"))
@@ -586,6 +622,7 @@ if __name__ == "__main__":  # {{{1
                 #self.connect(saveAsAction, SIGNAL('triggered()'), self.saveFileAs)
                 self.connect(exitAction, SIGNAL('triggered()'), SLOT('close()'))
                 self.connect(editAuthorsAction, SIGNAL('triggered()'), self.editAuthors)
+                self.connect(editTagsAction, SIGNAL('triggered()'), self.editTags)
 
                 # Create menubar with actions
                 menubar = self.menuBar()
@@ -599,6 +636,7 @@ if __name__ == "__main__":  # {{{1
                 filemenu.addAction(exitAction)
                 editmenu = menubar.addMenu('&Edit')
                 editmenu.addAction(editAuthorsAction)
+                editmenu.addAction(editTagsAction)
 
                 mainSplitter = QSplitter(Qt.Horizontal, self)
                 rightSplitter = QSplitter(Qt.Vertical, self)
@@ -656,6 +694,9 @@ if __name__ == "__main__":  # {{{1
                 event.accept() if self.database.close() else event.ignore()
             def editAuthors(self):
                 dialog = EditAuthorsDialog(self, self.database)
+                dialog.exec_()
+            def editTags(self):
+                dialog = EditTagsDialog(self, self.database)
                 dialog.exec_()
             def loadFile(self, url):
                     if not self.database.close():
