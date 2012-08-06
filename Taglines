@@ -207,9 +207,7 @@ if __name__ == "__main__":  # {{{1
                     # remove author references from taglines
                     self.db.execute(
                         "UPDATE taglines SET author=NULL WHERE author=?", (author,))
-                self.db.execute(
-                    "DELETE FROM authors WHERE id=?",
-                    (self.authors[index.row()][0],))
+                self.db.execute("DELETE FROM authors WHERE id=?", (author,))
                 self.authors[index.row():index.row()+1]=[]
                 self.endRemoveRows()
                 return True
@@ -262,59 +260,6 @@ if __name__ == "__main__":  # {{{1
                 self.parent.changed = True
                 self.emit(SIGNAL("dataChanged()"))
                 return True
-
-        class TagDatabase: #{{{3
-            """
-            encapsulates access to the models and state information
-            """
-            def __init__(self):
-                self.authors = AuthorModel(None)
-                self.languages = LanguagesModel(None)
-                self.tags = TagsModel(None)
-                self.db = None
-                self.changed = False
-            def active(self):
-                return not self.db is None
-            def changed(self):
-                return changed
-            def close(self):
-                if self.active():
-                    if self.changed:
-                    # TODO: ask whether to save
-                        self.db.commit()
-                    self.db.close()
-                    db = None
-                return True
-            def loadFromFile(self, url):
-                if not self.close(): return False
-                self.db = get_database_from_file(url)
-                self.authors.setDB(self.db)
-                self.languages.setDB(self.db)
-                self.tags.setDB(self.db)
-                return True
-            def authorsModel(self):
-                return self.authors
-            def languagesModel(self):
-                return self.languages
-            def tagsModel(self):
-                return self.tags
-            def author(self, index):
-                return self.authors.author(index)
-            def addAuthor(self, author):
-                if self.authors.add(author):
-                    self.changed = True
-                    return True
-                return False
-            def setAuthor(self, author):
-                if self.authors.set(author):
-                    self.changed = True
-                    return True
-                return False
-            def deleteAuthor(self, index, taglines):
-                if self.authors.delete(index, taglines):
-                    self.changed = True
-                    return True
-                return False
 
         class LanguagesModel(QAbstractItemModel): #{{{3
             """
@@ -416,6 +361,59 @@ if __name__ == "__main__":  # {{{1
                 self.parent.changed = True
                 self.emit(SIGNAL("dataChanged()"))
                 return True
+
+        class TagDatabase: #{{{3
+            """
+            encapsulates access to the models and state information
+            """
+            def __init__(self):
+                self.authors = AuthorModel(None)
+                self.languages = LanguagesModel(None)
+                self.tags = TagsModel(None)
+                self.db = None
+                self.changed = False
+            def active(self):
+                return not self.db is None
+            def changed(self):
+                return changed
+            def close(self):
+                if self.active():
+                    if self.changed:
+                    # TODO: ask whether to save
+                        self.db.commit()
+                    self.db.close()
+                    db = None
+                return True
+            def loadFromFile(self, url):
+                if not self.close(): return False
+                self.db = get_database_from_file(url)
+                self.authors.setDB(self.db)
+                self.languages.setDB(self.db)
+                self.tags.setDB(self.db)
+                return True
+            def authorsModel(self):
+                return self.authors
+            def languagesModel(self):
+                return self.languages
+            def tagsModel(self):
+                return self.tags
+            def author(self, index):
+                return self.authors.author(index)
+            def addAuthor(self, author):
+                if self.authors.add(author):
+                    self.changed = True
+                    return True
+                return False
+            def setAuthor(self, author):
+                if self.authors.set(author):
+                    self.changed = True
+                    return True
+                return False
+            def deleteAuthor(self, index, taglines):
+                if self.authors.delete(index, taglines):
+                    self.changed = True
+                    return True
+                return False
 
         class EditAuthorDialog(QDialog): #{{{3
             """
