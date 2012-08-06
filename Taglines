@@ -184,6 +184,35 @@ if __name__ == "__main__":  # {{{1
                     tuple(author[1:]+author[0:1]))
                 self.emit(SIGNAL("dataChanged()"))
                 return True
+            def delete(self, index, taglines):
+                if not index.isValid(): return False
+                author = self.authors[index.row()][0]
+                self.beginRemoveRows(QModelIndex(), index.row(), index.row())
+                if taglines:
+                    # delete all tags assigned to the author's taglines
+                    self.db.execute("""DELETE FROM tag WHERE id IN (
+                        SELECT t.id FROM TAG t
+                            JOIN taglines tl ON t.tagline=tl.id
+                            JOIN authors a ON tl.author=a.id
+                            WHERE a.id=?)""", (author,))
+                    # delete all lines associated with the author's taglines
+                    self.db.execute("""DELETE FROM lines WHERE id IN (
+                        SELECT l.id FROM lines l
+                            JOIN taglines tl ON l.tagline=tl.id
+                            JOIN authors a ON tl.author=a.id
+                            WHERE a.id=?)""", (author,))
+                    # delete author's taglines
+                    self.db.execute("DELETE FROM taglines WHERE author=?", (author,))
+                else:
+                    # remove author references from taglines
+                    self.db.execute(
+                        "UPDATE taglines SET author=NULL WHERE author=?", (author,))
+                self.db.execute(
+                    "DELETE FROM authors WHERE id=?",
+                    (self.authors[index.row()][0],))
+                self.authors[index.row():index.row()+1]=[]
+                self.endRemoveRows()
+                return True
             def setDB(self, db):
                 self.db = db
                 self.authors=[
@@ -278,6 +307,11 @@ if __name__ == "__main__":  # {{{1
                 return False
             def setAuthor(self, author):
                 if self.authors.set(author):
+                    self.changed = True
+                    return True
+                return False
+            def deleteAuthor(self, index, taglines):
+                if self.authors.delete(index, taglines):
                     self.changed = True
                     return True
                 return False
@@ -488,6 +522,7 @@ if __name__ == "__main__":  # {{{1
                 self.resize(QSize(480,480))
                 self.connect(addButton, SIGNAL('clicked()'), self.addAuthor)
                 self.connect(editButton, SIGNAL('clicked()'), self.editAuthor)
+                self.connect(delButton, SIGNAL('clicked()'), self.deleteAuthor)
                 self.connect(closeButton, SIGNAL('clicked()'), self.close)
             def addAuthor(self):
                 author = [-1, "", None, None]
@@ -500,6 +535,20 @@ if __name__ == "__main__":  # {{{1
                 dlg = EditAuthorDialog(self, author)
                 if dlg.exec_():
                     self.database.setAuthor(author)
+            def deleteAuthor(self):
+                selection = self.authors.selectionModel().selectedRows(1)
+                if len(selection)==0: return False
+                button = QMessageBox.question(self,
+                    "Delete Author",
+                    "Do you also want to delete all taglines by that author?",
+                    QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel,
+                    QMessageBox.Cancel
+                )
+                if button==QMessageBox.Cancel:
+                    return False
+                self.database.deleteAuthor(selection[0], button==QMessageBox.Yes)
+                return True
+
 
         class TaglinesWindow(QMainWindow): #{{{3
             def __init__(self): #{{{4
