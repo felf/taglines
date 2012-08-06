@@ -177,6 +177,7 @@ if __name__ == "__main__":  # {{{1
                 author[0] = c.lastrowid
                 self.authors.append(author)
                 self.endInsertRows()
+                self.emit(SIGNAL("rowsInserted()"))
                 return True
             def set(self, author):
                 self.db.execute(
@@ -210,7 +211,11 @@ if __name__ == "__main__":  # {{{1
                 self.db.execute("DELETE FROM authors WHERE id=?", (author,))
                 self.authors[index.row():index.row()+1]=[]
                 self.endRemoveRows()
+                self.emit(SIGNAL("rowsDeleted()"))
                 return True
+            def get(self, index):
+                if not index.isValid(): return False
+                return self.authors[index.row()]
             def setDB(self, db):
                 self.db = db
                 self.authors=[
@@ -219,9 +224,6 @@ if __name__ == "__main__":  # {{{1
                 for r in self.db.execute("SELECT * FROM authors ORDER BY name"):
                     self.authors.append(list(r))
                 self.emit(SIGNAL("dataChanged()"))
-            def author(self, index):
-                if not index.isValid(): return False
-                return self.authors[index.row()]
             def data(self, index, role=Qt.DisplayRole):
                 if not index.isValid(): return QVariant()
                 if role==Qt.TextAlignmentRole:
@@ -358,18 +360,22 @@ if __name__ == "__main__":  # {{{1
                     tag[1] = text
                     self.db.execute("UPDATE tags SET text = ? WHERE id = ?",
                         (tag[1], tag[0]))
-                self.parent.changed = True
                 self.emit(SIGNAL("dataChanged()"))
                 return True
 
-        class TagDatabase: #{{{3
+        class TagDatabase(QObject): #{{{3
             """
             encapsulates access to the models and state information
             """
             def __init__(self):
+                QObject.__init__(self, None)
                 self.authors = AuthorModel(None)
                 self.languages = LanguagesModel(None)
                 self.tags = TagsModel(None)
+                for model in (self.authors, self.tags):
+                    self.connect(model, SIGNAL("dataChanged()"), self.dataChanged)
+                    self.connect(model, SIGNAL("rowsInserted()"), self.dataChanged)
+                    self.connect(model, SIGNAL("rowsDeleted()"), self.dataChanged)
                 self.db = None
                 self.changed = False
             def active(self):
@@ -384,12 +390,15 @@ if __name__ == "__main__":  # {{{1
                     self.db.close()
                     db = None
                 return True
+            def dataChanged(self):
+                self.changed = True
             def loadFromFile(self, url):
                 if not self.close(): return False
                 self.db = get_database_from_file(url)
                 self.authors.setDB(self.db)
                 self.languages.setDB(self.db)
                 self.tags.setDB(self.db)
+                self.changed = False
                 return True
             def authorsModel(self):
                 return self.authors
@@ -397,23 +406,6 @@ if __name__ == "__main__":  # {{{1
                 return self.languages
             def tagsModel(self):
                 return self.tags
-            def author(self, index):
-                return self.authors.author(index)
-            def addAuthor(self, author):
-                if self.authors.add(author):
-                    self.changed = True
-                    return True
-                return False
-            def setAuthor(self, author):
-                if self.authors.set(author):
-                    self.changed = True
-                    return True
-                return False
-            def deleteAuthor(self, index, taglines):
-                if self.authors.delete(index, taglines):
-                    self.changed = True
-                    return True
-                return False
 
         class EditAuthorDialog(QDialog): #{{{3
             """
@@ -484,12 +476,12 @@ if __name__ == "__main__":  # {{{1
             """
             def __init__(self, parent, database):
                 QDialog.__init__(self, parent)
-                self.database = database
+                self.model = database.authorsModel()
                 self.setWindowTitle("Manage Tagline Authors")
 
                 mainLayout = QHBoxLayout(self)
                 self.authors = QTreeView(self)
-                self.authors.setModel(database.authorsModel())
+                self.authors.setModel(self.model)
                 self.authors.setRootIsDecorated(False)
                 self.authors.hideColumn(0)
                 header = self.authors.header()
@@ -525,13 +517,13 @@ if __name__ == "__main__":  # {{{1
                 author = [-1, "", None, None]
                 dlg = EditAuthorDialog(self, author)
                 if dlg.exec_():
-                    self.database.addAuthor(author)
+                    self.model.add(author)
             def editAuthor(self):
                 selection = self.authors.selectionModel().selectedRows(1)
-                author = self.database.author(selection[0])
+                author = self.model.get(selection[0])
                 dlg = EditAuthorDialog(self, author)
                 if dlg.exec_():
-                    self.database.setAuthor(author)
+                    self.model.set(author)
             def deleteAuthor(self):
                 selection = self.authors.selectionModel().selectedRows(1)
                 if len(selection)==0: return False
@@ -543,7 +535,7 @@ if __name__ == "__main__":  # {{{1
                 )
                 if button==QMessageBox.Cancel:
                     return False
-                self.database.deleteAuthor(selection[0], button==QMessageBox.Yes)
+                self.model.delete(selection[0], button==QMessageBox.Yes)
                 return True
 
 
