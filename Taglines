@@ -501,18 +501,18 @@ if __name__ == "__main__":  # {{{1
                 header.setStretchLastSection(False)
 
                 addButton = QPushButton("&Add", self)
-                editButton = QPushButton("&Edit", self)
-                delButton = QPushButton("&Delete", self)
+                self.editButton = QPushButton("&Edit", self)
+                self.delButton = QPushButton("&Delete", self)
                 closeButton = QPushButton("&Close", self)
                 addButton.setIcon(QIcon.fromTheme("list-add"))
-                editButton.setIcon(QIcon.fromTheme("document-edit"))
-                delButton.setIcon(QIcon.fromTheme("edit-delete"))
+                self.editButton.setIcon(QIcon.fromTheme("document-edit"))
+                self.delButton.setIcon(QIcon.fromTheme("edit-delete"))
                 closeButton.setIcon(QIcon.fromTheme("dialog-ok"))
 
                 buttonLayout = QVBoxLayout()
                 buttonLayout.addWidget(addButton)
-                buttonLayout.addWidget(editButton)
-                buttonLayout.addWidget(delButton)
+                buttonLayout.addWidget(self.editButton)
+                buttonLayout.addWidget(self.delButton)
                 buttonLayout.addStretch(1)
                 buttonLayout.addWidget(closeButton)
 
@@ -520,9 +520,20 @@ if __name__ == "__main__":  # {{{1
                 mainLayout.addLayout(buttonLayout)
                 self.resize(QSize(480,480))
                 self.connect(addButton, SIGNAL('clicked()'), self.addAuthor)
-                self.connect(editButton, SIGNAL('clicked()'), self.editAuthor)
-                self.connect(delButton, SIGNAL('clicked()'), self.deleteAuthor)
+                self.connect(self.editButton, SIGNAL('clicked()'), self.editAuthor)
+                self.connect(self.delButton, SIGNAL('clicked()'), self.deleteAuthor)
                 self.connect(closeButton, SIGNAL('clicked()'), self.close)
+                self.editButton.setEnabled(False)
+                self.delButton.setEnabled(False)
+
+                selectionModel = self.authors.selectionModel()
+                self.connect(selectionModel,
+                    SIGNAL('selectionChanged(QItemSelection, QItemSelection)'),
+                    self.selectionChanged)
+            def selectionChanged(self, selected, deselected):
+                enabled = len(selected.indexes())!=0
+                self.editButton.setEnabled(enabled)
+                self.delButton.setEnabled(enabled)
             def addAuthor(self):
                 author = [-1, "", None, None]
                 dlg = EditAuthorDialog(self, author)
@@ -530,6 +541,7 @@ if __name__ == "__main__":  # {{{1
                     self.model.add(author)
             def editAuthor(self):
                 selection = self.authors.selectionModel().selectedRows(1)
+                if len(selection)==0: return False
                 author = self.model.get(selection[0])
                 dlg = EditAuthorDialog(self, author)
                 if dlg.exec_():
@@ -596,8 +608,19 @@ if __name__ == "__main__":  # {{{1
                 self.delButton.setEnabled(False)
                 self.connect(self.addButton, SIGNAL('clicked()'), self.addTag)
                 self.connect(closeButton, SIGNAL('clicked()'), self.close)
+
+                selectionModel = self.tags.selectionModel()
+                self.connect(selectionModel,
+                    SIGNAL('selectionChanged(QItemSelection, QItemSelection)'),
+                    self.selectionChanged)
             def newNameChanged(self, text):
+                selection = self.tags.selectionModel().currentIndex()
                 self.addButton.setEnabled(text!="")
+                self.editButton.setEnabled(text!="" and selection.isValid())
+            def selectionChanged(self, selected, deselected):
+                enabled = len(selected.indexes())!=0
+                self.editButton.setEnabled(enabled and self.newName.text()!="")
+                self.delButton.setEnabled(enabled)
             def addTag(self):
                 tag = unicode(self.newName.text())
                 if self.model.match(
