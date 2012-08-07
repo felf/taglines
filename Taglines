@@ -324,6 +324,16 @@ if __name__ == "__main__":  # {{{1
                 for r in self.db.execute("SELECT * FROM tags ORDER BY text"):
                     self.tags.append(list(r)+[False])
                 self.emit(SIGNAL("dataChanged()"))
+            def add(self, tag):
+                if tag=="" or not self.db: return False
+                count = self.rowCount()
+                self.beginInsertRows(QModelIndex(), count, count)
+                c = self.db.cursor()
+                c.execute("INSERT INTO tags (text) values (?)", (tag,))
+                self.tags.append([c.lastrowid, tag, False])
+                self.endInsertRows()
+                self.emit(SIGNAL('rowsInserted()'))
+                return True
             def data(self, index, role=Qt.DisplayRole):
                 if not index.isValid(): return QVariant()
                 tag = self.tags[index.row()]
@@ -545,34 +555,61 @@ if __name__ == "__main__":  # {{{1
             """
             def __init__(self, parent, database):
                 QDialog.__init__(self, parent)
-                self.database = database
+                self.model = database.tagsModel()
                 self.setWindowTitle("Managa Tagline Tags")
 
                 mainLayout = QHBoxLayout(self)
-                self.tags = QListView(self)
-                self.tags.setModel(database.tagsModel())
-                self.tags.setModelColumn(1)
-                mainLayout.addWidget(self.tags)
+                layout = QVBoxLayout()
 
-                addButton = QPushButton("&Add", self)
-                editButton = QPushButton("&Edit", self)
-                delButton = QPushButton("&Delete", self)
+                self.newName = QLineEdit(self)
+                self.newName.setMaxLength(50)
+                self.connect(self.newName, SIGNAL('textChanged(QString)'), self.newNameChanged)
+                #self.connect(self.newName, SIGNAL('returnPressed()'), self.addTag)
+                layout.addWidget(self.newName)
+
+                self.tags = QListView(self)
+                self.tags.setModel(self.model)
+                self.tags.setModelColumn(1)
+                layout.addWidget(self.tags)
+                mainLayout.addLayout(layout)
+
+                self.addButton = QPushButton("&Add", self)
+                self.editButton = QPushButton("&Edit", self)
+                self.delButton = QPushButton("&Delete", self)
                 closeButton = QPushButton("&Close", self)
-                addButton.setIcon(QIcon.fromTheme("list-add"))
-                editButton.setIcon(QIcon.fromTheme("document-edit"))
-                delButton.setIcon(QIcon.fromTheme("edit-delete"))
+                self.addButton.setIcon(QIcon.fromTheme("list-add"))
+                self.editButton.setIcon(QIcon.fromTheme("document-edit"))
+                self.delButton.setIcon(QIcon.fromTheme("edit-delete"))
                 closeButton.setIcon(QIcon.fromTheme("dialog-ok"))
 
                 buttonLayout = QVBoxLayout()
-                buttonLayout.addWidget(addButton)
-                buttonLayout.addWidget(editButton)
-                buttonLayout.addWidget(delButton)
+                buttonLayout.addWidget(self.addButton)
+                buttonLayout.addWidget(self.editButton)
+                buttonLayout.addWidget(self.delButton)
                 buttonLayout.addStretch(1)
                 buttonLayout.addWidget(closeButton)
                 mainLayout.addLayout(buttonLayout)
 
                 self.resize(QSize(320,480))
+                self.addButton.setEnabled(False)
+                self.editButton.setEnabled(False)
+                self.delButton.setEnabled(False)
+                self.connect(self.addButton, SIGNAL('clicked()'), self.addTag)
                 self.connect(closeButton, SIGNAL('clicked()'), self.close)
+            def newNameChanged(self, text):
+                self.addButton.setEnabled(text!="")
+            def addTag(self):
+                tag = unicode(self.newName.text())
+                if self.model.match(
+                        self.model.index(0,1), Qt.DisplayRole,
+                        QtCore.QVariant(tag), 1, Qt.MatchExactly):
+                    QMessageBox.critical(self, "Could not add tag",
+                        "A tag of this name already exists.")
+                    return False
+                else:
+                    self.model.add(tag)
+                    self.newName.setText("")
+                    return True
 
         class TaglinesWindow(QMainWindow): #{{{3
             def __init__(self): #{{{4
