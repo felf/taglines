@@ -363,7 +363,7 @@ if __name__ == "__main__":  # {{{1
                 return tag[index.column()]
             def flags(self, index):
                 if not index.isValid(): return Qt.NoItemFlags
-                f = Qt.ItemIsEnabled | Qt.ItemIsSelectable | Qt.ItemIsEditable
+                f = Qt.ItemIsEnabled | Qt.ItemIsSelectable
                 if index.column()==1: f |= Qt.ItemIsUserCheckable
                 return f
             def hasChildren(self, index):
