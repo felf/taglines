@@ -334,6 +334,26 @@ if __name__ == "__main__":  # {{{1
                 self.endInsertRows()
                 self.emit(SIGNAL('rowsInserted()'))
                 return True
+            def set(self, index, newName):
+                print "Renaming to %s" % newName
+                tag = self.tags[index.row()]
+                tag[1] = newName
+                print "Tag is", tag
+                self.db.execute("UPDATE tags SET text=? WHERE id=?", (tag[1], tag[0]))
+                self.emit(SIGNAL('dataChanged()'))
+                return True
+            def delete(self, index):
+                if not index.isValid(): return False
+                tag = self.tags[index.row()][0]
+                self.beginRemoveRows(QModelIndex(), index.row(), index.row())
+                # delete all assignments to this tag
+                self.db.execute("DELETE FROM tag WHERE tag=?", (tag,))
+                # delete tag itself
+                self.db.execute("DELETE FROM tags WHERE id=?", (tag,))
+                self.tags[index.row():index.row()+1]=[]
+                self.endRemoveRows()
+                self.emit(SIGNAL("rowsDeleted()"))
+                return True
             def data(self, index, role=Qt.DisplayRole):
                 if not index.isValid(): return QVariant()
                 tag = self.tags[index.row()]
@@ -586,7 +606,7 @@ if __name__ == "__main__":  # {{{1
                 mainLayout.addLayout(layout)
 
                 self.addButton = QPushButton("&Add", self)
-                self.editButton = QPushButton("&Edit", self)
+                self.editButton = QPushButton("&Rename", self)
                 self.delButton = QPushButton("&Delete", self)
                 closeButton = QPushButton("&Close", self)
                 self.addButton.setIcon(QIcon.fromTheme("list-add"))
@@ -607,6 +627,7 @@ if __name__ == "__main__":  # {{{1
                 self.editButton.setEnabled(False)
                 self.delButton.setEnabled(False)
                 self.connect(self.addButton, SIGNAL('clicked()'), self.addTag)
+                self.connect(self.editButton, SIGNAL('clicked()'), self.editTag)
                 self.connect(closeButton, SIGNAL('clicked()'), self.close)
 
                 selectionModel = self.tags.selectionModel()
@@ -619,7 +640,12 @@ if __name__ == "__main__":  # {{{1
                 self.editButton.setEnabled(text!="" and selection.isValid())
             def selectionChanged(self, selected, deselected):
                 enabled = len(selected.indexes())!=0
-                self.editButton.setEnabled(enabled and self.newName.text()!="")
+                if enabled:
+                    self.newName.setText(self.model.data(
+                        self.model.index(selected.indexes()[0].row(),1)))
+                    self.newName.selectAll()
+                self.addButton.setEnabled(False)
+                self.editButton.setEnabled(False)
                 self.delButton.setEnabled(enabled)
             def addTag(self):
                 tag = unicode(self.newName.text())
@@ -633,6 +659,22 @@ if __name__ == "__main__":  # {{{1
                     self.model.add(tag)
                     self.newName.setText("")
                     return True
+        def editTag(self):
+            selection = self.tags.selectionModel().currentIndex()
+            if not selection.isValid(): return False
+            tag = self.model.data(self.model.index(selection.row(),1), Qt.DisplayRole)
+            newName = self.newName.text()
+            if tag==newName:
+                QMessageBox.critical(self, "Could not rename tag",
+                    "Old and new name are the same.")
+                return False
+            if self.model.match(
+                    self.model.index(0,1), Qt.DisplayRole,
+                    QtCore.QVariant(newName), 1, Qt.MatchExactly):
+                QMessageBox.critical(self, "Could not rename tag",
+                    "A tag of this name already exists.")
+                return False
+            self.model.set(selection, unicode(newName))
 
         class TaglinesWindow(QMainWindow): #{{{3
             def __init__(self): #{{{4
