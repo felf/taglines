@@ -628,6 +628,7 @@ if __name__ == "__main__":  # {{{1
                 self.delButton.setEnabled(False)
                 self.connect(self.addButton, SIGNAL('clicked()'), self.addTag)
                 self.connect(self.editButton, SIGNAL('clicked()'), self.editTag)
+                self.connect(self.delButton, SIGNAL('clicked()'), self.deleteTag)
                 self.connect(closeButton, SIGNAL('clicked()'), self.close)
 
                 selectionModel = self.tags.selectionModel()
@@ -675,6 +676,17 @@ if __name__ == "__main__":  # {{{1
                     "A tag of this name already exists.")
                 return False
             self.model.set(selection, unicode(newName))
+        def deleteTag(self):
+            selection = self.tags.selectionModel().currentIndex()
+            if not selection.isValid(): return False
+            button = QMessageBox.question(self,
+                "Delete Tag",
+                "Do you really want to delete the tag and all assignments to it?",
+                QMessageBox.Yes | QMessageBox.Cancel, QMessageBox.Cancel)
+            if button==QMessageBox.Cancel:
+                return False
+            self.model.delete(selection)
+            return True
 
         class TaglinesWindow(QMainWindow): #{{{3
             def __init__(self): #{{{4
