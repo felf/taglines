@@ -221,7 +221,7 @@ if __name__ == "__main__":  # {{{1
                 self.authors=[
                     (-1, u'(Don\'t filter)', None, None),
                     (-1, u'(None)', None, None)]
-                for r in self.db.execute("SELECT * FROM authors ORDER BY name"):
+                for r in self.db.execute("SELECT * FROM authors"):
                     self.authors.append(list(r))
                 self.emit(SIGNAL("dataChanged()"))
             def data(self, index, role=Qt.DisplayRole):
@@ -262,6 +262,18 @@ if __name__ == "__main__":  # {{{1
                 self.parent.changed = True
                 self.emit(SIGNAL("dataChanged()"))
                 return True
+
+        class AuthorProxyModel(QSortFilterProxyModel): #{{{3
+            """
+            This proxy sorts the author data and filters out the virtual entries
+            which cannot be edited.
+            """
+            def __init__(self, parent):
+                QSortFilterProxyModel.__init__(self, parent)
+                self.setDynamicSortFilter(True)
+            def filterAcceptsRow(self, row, parent):
+                return int(self.sourceModel().data(
+                    self.sourceModel().index(row, 0, parent)))>=0
 
         class LanguagesModel(QAbstractItemModel): #{{{3
             """
@@ -451,7 +463,6 @@ if __name__ == "__main__":  # {{{1
                 self.nameEdit.setMaxLength(255)
                 self.nameEdit.setMinimumWidth(300)
                 self.nameEdit.setText(author[1])
-                self.nameEdit.selectAll()
                 mainLayout.addWidget(self.nameEdit, 0, 1)
 
                 layout = QHBoxLayout()
@@ -507,11 +518,14 @@ if __name__ == "__main__":  # {{{1
             def __init__(self, parent, database):
                 QDialog.__init__(self, parent)
                 self.model = database.authorsModel()
+                self.proxyModel = AuthorProxyModel(self)
+                self.proxyModel.setSourceModel(self.model)
+                self.proxyModel.sort(1, Qt.AscendingOrder)
                 self.setWindowTitle("Manage Tagline Authors")
 
                 mainLayout = QHBoxLayout(self)
                 self.authors = QTreeView(self)
-                self.authors.setModel(self.model)
+                self.authors.setModel(self.proxyModel)
                 self.authors.setRootIsDecorated(False)
                 self.authors.hideColumn(0)
                 header = self.authors.header()
@@ -562,10 +576,11 @@ if __name__ == "__main__":  # {{{1
             def editAuthor(self):
                 selection = self.authors.selectionModel().selectedRows(1)
                 if len(selection)==0: return False
-                author = self.model.get(selection[0])
+                author = self.model.get(self.proxyModel.mapToSource(selection[0]))
                 dlg = EditAuthorDialog(self, author)
                 if dlg.exec_():
                     self.model.set(author)
+                    self.proxyModel.sort(1, Qt.AscendingOrder)
             def deleteAuthor(self):
                 selection = self.authors.selectionModel().selectedRows(1)
                 if len(selection)==0: return False
@@ -577,7 +592,9 @@ if __name__ == "__main__":  # {{{1
                 )
                 if button==QMessageBox.Cancel:
                     return False
-                self.model.delete(selection[0], button==QMessageBox.Yes)
+                self.model.delete(
+                    self.proxyModel.mapToSource(selection[0]),
+                    button==QMessageBox.Yes)
                 return True
 
 
@@ -588,7 +605,10 @@ if __name__ == "__main__":  # {{{1
             def __init__(self, parent, database):
                 QDialog.__init__(self, parent)
                 self.model = database.tagsModel()
-                self.setWindowTitle("Managa Tagline Tags")
+                self.proxyModel = QSortFilterProxyModel(self)
+                self.proxyModel.setSourceModel(self.model)
+                self.proxyModel.sort(1, Qt.AscendingOrder)
+                self.setWindowTitle("Manage Tagline Tags")
 
                 mainLayout = QHBoxLayout(self)
                 layout = QVBoxLayout()
@@ -600,7 +620,7 @@ if __name__ == "__main__":  # {{{1
                 layout.addWidget(self.newName)
 
                 self.tags = QListView(self)
-                self.tags.setModel(self.model)
+                self.tags.setModel(self.proxyModel)
                 self.tags.setModelColumn(1)
                 layout.addWidget(self.tags)
                 mainLayout.addLayout(layout)
