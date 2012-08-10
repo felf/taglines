@@ -218,18 +218,20 @@ if __name__ == "__main__":  # {{{1
                 return self.authors[index.row()]
             def setDB(self, db):
                 self.db = db
-                self.authors=[
+                authors=[
                     (-1, u'(Don\'t filter)', None, None),
                     (-1, u'(None)', None, None)]
                 for r in self.db.execute("SELECT * FROM authors"):
-                    self.authors.append(list(r))
-                self.emit(SIGNAL("dataChanged()"))
+                    authors.append(list(r))
+                self.beginResetModel()
+                self.authors = authors
+                self.endResetModel()
             def data(self, index, role=Qt.DisplayRole):
                 if not index.isValid(): return QVariant()
                 if role==Qt.TextAlignmentRole:
                     return Qt.AlignLeft if index.column()==1 else Qt.AlignRight
-                elif role==Qt.DisplayRole:
-                    return self.authors[index.row()][index.column()]
+                elif role!=Qt.DisplayRole: return QVariant()
+                return self.authors[index.row()][index.column()]
             def hasChildren(self, index):
                 return not index.isValid();
             def headerData(self, section, orientation, role=Qt.DisplayRole):
@@ -268,11 +270,13 @@ if __name__ == "__main__":  # {{{1
             This proxy sorts the author data and filters out the virtual entries
             which cannot be edited.
             """
-            def __init__(self, parent):
+            def __init__(self, parent, showVirtual = False):
                 QSortFilterProxyModel.__init__(self, parent)
                 self.setDynamicSortFilter(True)
+                self.showVirtual = showVirtual
+                self.sort(1, Qt.AscendingOrder)
             def filterAcceptsRow(self, row, parent):
-                return int(self.sourceModel().data(
+                return self.showVirtual or int(self.sourceModel().data(
                     self.sourceModel().index(row, 0, parent)))>=0
 
         class LanguagesModel(QAbstractItemModel): #{{{3
@@ -520,7 +524,6 @@ if __name__ == "__main__":  # {{{1
                 self.model = database.authorsModel()
                 self.proxyModel = AuthorProxyModel(self)
                 self.proxyModel.setSourceModel(self.model)
-                self.proxyModel.sort(1, Qt.AscendingOrder)
                 self.setWindowTitle("Manage Tagline Authors")
 
                 mainLayout = QHBoxLayout(self)
@@ -771,7 +774,9 @@ if __name__ == "__main__":  # {{{1
                 sidebar.setLayout(sidebarLayout)
                 sidebarLayout.addWidget(QLabel('Author:'))
                 self.AuthorList = QComboBox()
-                self.AuthorList.setModel(self.database.authorsModel())
+                proxy = AuthorProxyModel(self, True)
+                proxy.setSourceModel(self.database.authorsModel())
+                self.AuthorList.setModel(proxy)
                 self.AuthorList.setModelColumn(1)
                 sidebarLayout.addWidget(self.AuthorList)
 
