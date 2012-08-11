@@ -856,6 +856,7 @@ if __name__ == "__main__":  # {{{1
                         return False
                     try:
                         self.database.loadFromFile(str(url))
+                        self.AuthorList.setCurrentIndex(0)
                     #except InvalidFileError:
                     #    QMessageBox.warning(None, "Error", "This file is not a taglines database.")
                     #    return False
