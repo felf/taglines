@@ -8,8 +8,12 @@ import taglines
 from taglines.ArgParser import ArgParser
 from taglines.ShellUI import ShellUI
 
-import os
-from datetime import date
+try:
+    import os
+    from datetime import date
+except ImportError as err:
+    print >> sys.stderr, "Could not start: "+str(err)+". Exiting."
+    exit(1)
 
 def init_database(filepath):  # {{{1
     """ create a new sqlite database file """

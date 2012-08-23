@@ -68,7 +68,8 @@ class Database:
                   format(e.args[0]), file=sys.stderr)
             exit(1)
         except sqlite3.Error as e:
-            print("An sqlite3 error occurred:", e.args[0])
+            print("An sqlite3 error occurred: {0}. Exiting.", e.args[0], file=sys.stderr)
+            exit(1)
         except Exception as e:
             print("\nError while initialising the database file: {}. Exiting.".
                   format(e.args[0]), file=sys.stderr)
