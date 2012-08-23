@@ -578,8 +578,8 @@ if __name__ == "__main__":  # {{{1
                 mainLayout.addLayout(buttonLayout)
                 self.resize(QSize(480,480))
                 self.connect(addButton, SIGNAL('clicked()'), self.addAuthor)
-                self.connect(self.editButton, SIGNAL('clicked()'), self.editAuthor)
-                self.connect(self.delButton, SIGNAL('clicked()'), self.deleteAuthor)
+                self.connect(self.editButton, SIGNAL('clicked()'), self.editSelectedAuthor)
+                self.connect(self.delButton, SIGNAL('clicked()'), self.deleteSelectedAuthor)
                 self.connect(closeButton, SIGNAL('clicked()'), self.close)
                 self.editButton.setEnabled(False)
                 self.delButton.setEnabled(False)
@@ -588,6 +588,9 @@ if __name__ == "__main__":  # {{{1
                 self.connect(selectionModel,
                     SIGNAL('selectionChanged(QItemSelection, QItemSelection)'),
                     self.selectionChanged)
+                self.connect(self.authors,
+                        SIGNAL('doubleClicked(QModelIndex)'),
+                        self.authorDoubleClicked)
             def selectionChanged(self, selected, deselected):
                 enabled = len(selected.indexes())!=0
                 self.editButton.setEnabled(enabled)
@@ -597,15 +600,11 @@ if __name__ == "__main__":  # {{{1
                 dlg = EditAuthorDialog(self, author)
                 if dlg.exec_():
                     self.model.add(author)
-            def editAuthor(self):
+            def editSelectedAuthor(self):
                 selection = self.authors.selectionModel().selectedRows(1)
                 if len(selection)==0: return False
-                author = self.model.get(self.proxyModel.mapToSource(selection[0]))
-                dlg = EditAuthorDialog(self, author)
-                if dlg.exec_():
-                    self.model.set(author)
-                    self.proxyModel.sort(1, Qt.AscendingOrder)
-            def deleteAuthor(self):
+                self.editAuthorByIndex(self.proxyModel.mapToSource(selection[0]))
+            def deleteSelectedAuthor(self):
                 selection = self.authors.selectionModel().selectedRows(1)
                 if len(selection)==0: return False
                 button = QMessageBox.question(self,
@@ -620,6 +619,15 @@ if __name__ == "__main__":  # {{{1
                     self.proxyModel.mapToSource(selection[0]),
                     button==QMessageBox.Yes)
                 return True
+            def authorDoubleClicked(self, index):
+                if index.isValid():
+                    self.editAuthorByIndex(self.proxyModel.mapToSource(index))
+            def editAuthorByIndex(self, index):
+                author = self.model.get(index)
+                dlg = EditAuthorDialog(self, author)
+                if dlg.exec_():
+                    self.model.set(author)
+                    self.proxyModel.sort(1, Qt.AscendingOrder)
 
 
         class EditTagsDialog(QDialog): #{{{3
