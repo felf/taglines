@@ -272,7 +272,7 @@ if __name__ == "__main__":  # {{{1
         class AuthorProxyModel(QSortFilterProxyModel): #{{{3
             """
             This proxy sorts the author data and filters out the virtual entries
-            which cannot be edited.
+            which cannot be edited, depending on setting.
             """
             def __init__(self, parent, showVirtual = False):
                 QSortFilterProxyModel.__init__(self, parent)
@@ -324,7 +324,7 @@ if __name__ == "__main__":  # {{{1
                 if not index.isValid(): return False
                 lang=self.languages[index.row()]
                 if role==Qt.CheckStateRole:
-                    lang[1] = value
+                    lang[1] = value.toInt()[0]
                     return True
                 return False
 
@@ -398,8 +398,9 @@ if __name__ == "__main__":  # {{{1
                 if not index.isValid(): return False
                 tag=self.tags[index.row()]
                 if role==Qt.CheckStateRole:
-                    tag[2] = value
+                    tag[2] = value.toInt()[0]
                     return True
+                return False
                 if index.column()==1 and role==Qt.EditRole:
                     text = unicode(value.toString()).strip()
                     if tag[1]==text: return True
