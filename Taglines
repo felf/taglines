@@ -11,8 +11,8 @@ from taglines.ShellUI import ShellUI
 try:
     import os
     from datetime import date
-except ImportError as err:
-    print >> sys.stderr, "Could not start: "+str(err)+". Exiting."
+except ImportError as e:
+    print >> sys.stderr, "Could not start: "+e.message+". Exiting."
     exit(1)
 
 def init_database(filepath):  # {{{1
@@ -28,7 +28,7 @@ def init_database(filepath):  # {{{1
                      e.args[1]))
         else:
             print("good bye")
-            exit(1)
+            exit(0)
     db = taglines.Database()
     db.initialiseFile(filepath)
 
@@ -165,7 +165,7 @@ if __name__ == "__main__":  # {{{1
                 QAbstractItemModel.__init__(self, parent)
                 self.parent = parent
                 self.authors=[
-                    (-1, u'(Don\'t filter)', None, None),
+                    (-2, u'(Don\'t filter)', None, None),
                     (-1, u'(None)', None, None)]
                 self.setHeaderData(0, Qt.Horizontal, QtCore.QVariant("ID"),   Qt.DisplayRole)
                 self.setHeaderData(1, Qt.Horizontal, QtCore.QVariant("Name"), Qt.DisplayRole)
@@ -223,7 +223,7 @@ if __name__ == "__main__":  # {{{1
             def setDB(self, db):
                 self.db = db
                 authors=[
-                    (-1, u'(Don\'t filter)', None, None),
+                    (-2, u'(Don\'t filter)', None, None),
                     (-1, u'(None)', None, None)]
                 for r in self.db.execute("SELECT * FROM authors"):
                     authors.append(list(r))
