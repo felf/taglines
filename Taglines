@@ -879,7 +879,7 @@ if __name__ == "__main__":  # {{{1
                 saveAsAction = QAction('Save database as', self)
                 exitAction = QAction('Exit', self)
                 editAuthorsAction = QAction('Edit Authors...', self)
-                editTagsAction = QAction('Edit Tag...', self)
+                editTagsAction = QAction('Edit Tags...', self)
                 editAction = QAction('Edit Phrase Pairs', self)
 
                 newAction.setShortcut('Ctrl+N')
