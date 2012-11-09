@@ -266,7 +266,7 @@ if __name__ == "__main__":  # {{{1
                     ["name", "born", "died"][author[0]] +
                     " = ? WHERE id = ?", (value, author[0]))
                 self.parent.changed = True
-                self.emit(SIGNAL("dataChanged()"))
+                self.emit(SIGNAL("dataChanged(QModelIndex)"), index)
                 return True
 
         class AuthorProxyModel(QSortFilterProxyModel): #{{{3
@@ -463,7 +463,7 @@ if __name__ == "__main__":  # {{{1
                 tag = self.tags[index.row()]
                 tag[1] = newName
                 self.db.execute("UPDATE tags SET text=? WHERE id=?", (tag[1], tag[0]))
-                self.emit(SIGNAL('dataChanged()'))
+                self.emit(SIGNAL("dataChanged(QModelIndex"), index)
                 return True
             def delete(self, index):
                 if not index.isValid(): return False
@@ -521,7 +521,7 @@ if __name__ == "__main__":  # {{{1
                     tag[1] = text
                     self.db.execute("UPDATE tags SET text = ? WHERE id = ?",
                         (tag[1], tag[0]))
-                self.emit(SIGNAL("dataChanged()"))
+                self.emit(SIGNAL("dataChanged(QModelIndex"), index)
                 return True
 
         class TagProxyModel(QSortFilterProxyModel): #{{{3
