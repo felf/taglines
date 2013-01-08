@@ -233,6 +233,12 @@ class CShellmode: #{{{1
         self.db = get_database_from_file(args.file)
         self.c = self.db.cursor()
 
+    def exitTaglines(self):
+        ok=raw_input("\nReally quit Taglines?  [y/N] ")
+        if ok!='' and 'yes'.startswith(ok.lower()):
+            print "bye"
+            sys.exit();
+
     def authorMenu(self): #{{{2
         """The menu with which to alter author information."""
         i="h"
@@ -241,7 +247,8 @@ class CShellmode: #{{{1
             if i=="h":
                 print "a - add author       l - list all authors"
                 print "d - delete author    c - set current author for new taglines"
-                print "h - help             q - quit to previous menu"
+                print "h - help"
+                print "q - quit menu        Q - quit Taglines"
             i=raw_input("AUTHOR menu selection: ")
 
             if i=="l":
@@ -302,6 +309,8 @@ class CShellmode: #{{{1
                             print "Error: no integer ID."
             elif i=="q":
                 return
+            elif i=="Q":
+                self.exitTaglines()
             else: i="h"
 
     def tagMenu(self): #{{{2
@@ -310,9 +319,10 @@ class CShellmode: #{{{1
         while True:
             print
             if i=="h":
-                print "a - add tag         l - list all tags"
-                print "d - delete tag      t - toggle tag"
-                print "h - help            q - quit to previous menu"
+                print "a - add tag       l - list all tags"
+                print "d - delete tag    t - toggle tag (or simply enter the ID)"
+                print "h - help"
+                print "q - quit menu     Q - quit Taglines"
             i=raw_input("TAGS menu selection: ")
 
             # Abkürzung: statt "t" und dann ID eingeben einfach nur die ID
@@ -380,6 +390,8 @@ class CShellmode: #{{{1
 
             elif i=="q":
                 return
+            elif i=="Q":
+                self.exitTaglines()
             else: i="h"
 
     def taglinesMenu(self): #{{{2
@@ -391,7 +403,8 @@ class CShellmode: #{{{1
                 print "l - list last 5 taglines    L - list all taglines"
                 print "a - add new tagline         A - go to author menu"
                 print "e - edit tagline            T - go to tag menu"
-                print "d - delete tagline          q - quit to main menu"
+                print "d - delete tagline"
+                print "q - quit menu               Q - quit Taglines"
             i=raw_input("TAGLINES menu selection: ")
             if i=="l" or i=="L":
                 print
@@ -521,6 +534,8 @@ class CShellmode: #{{{1
                 self.tagMenu()
             elif i=="q":
                 break
+            elif i=="Q":
+                self.exitTaglines()
             else: i="h"
 
     def mainMenu(self): #{{{2
@@ -530,7 +545,7 @@ class CShellmode: #{{{1
             print "t - Tag menu"
             print "l - taglines menu"
             print "h - show key help (available in every menu)"
-            print "q - quit"
+            print "q - quit         Q - quit Taglines (in all submenus)"
             i=raw_input("MAIN menu selection: ")
             if i=="a":
                 self.authorMenu()
@@ -539,10 +554,9 @@ class CShellmode: #{{{1
             elif i=="l":
                 self.taglinesMenu()
             elif i=="q":
-                ok=raw_input("\nAre you sure? [y/N] ")
-                if ok in ('y', 'ye', 'yes'):
-                    print "bye"
-                    break
+                self.exitTaglines()
+            elif i=="Q":
+                self.exitTaglines()
         #}}}2
     #}}}1
 
