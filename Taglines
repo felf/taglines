@@ -357,7 +357,9 @@ if __name__ == "__main__":  # {{{1
                 self.endResetModel()
             def data(self, index, role=Qt.DisplayRole):
                 if not index.isValid(): return QVariant()
-                if role!=Qt.DisplayRole: return QVariant()
+                if role==Qt.TextAlignmentRole:
+                    return Qt.AlignRight if index.column()==0 else Qt.AlignLeft
+                elif role!=Qt.DisplayRole: return QVariant()
                 return self.taglines[index.row()][0][index.column()]
             def hasChildren(self, index):
                 return not index.isValid();
@@ -599,6 +601,12 @@ if __name__ == "__main__":  # {{{1
                 return self.tags
             def taglinesModel(self):
                 return self.taglines
+            def getLines(self, tagline):
+                query = "SELECT id, language, text FROM lines WHERE tagline = ?"
+                lines = []
+                for r in self.db.execute(query, (tagline,)):
+                    lines.append(r)
+                return lines
 
         class EditAuthorDialog(QDialog): #{{{3
             """
@@ -973,7 +981,7 @@ if __name__ == "__main__":  # {{{1
                 header.setResizeMode(3, QHeaderView.Interactive)
                 header.setResizeMode(4, QHeaderView.ResizeToContents)
                 header.setStretchLastSection(False)
-                self.LinesWidget = QListWidget(self)
+                self.LinesWidget = QTreeWidget(self)
                 rightSplitter.addWidget(self.TaglinesWidget)
                 rightSplitter.addWidget(self.LinesWidget)
                 rightSplitter.setStretchFactor(0, 1)
@@ -985,6 +993,7 @@ if __name__ == "__main__":  # {{{1
                 self.setCentralWidget(mainSplitter)
 
                 # Connect everything
+                # actions
                 #self.connect(newAction, SIGNAL('triggered()'), self.newFile)
                 self.connect(openAction, SIGNAL('triggered()'), self.openFile)
                 #self.connect(saveAction, SIGNAL('triggered()'), self.saveFile)
@@ -994,11 +1003,20 @@ if __name__ == "__main__":  # {{{1
                 self.connect(editTagsAction, SIGNAL('triggered()'), self.editTags)
                 self.connect(refreshAction, SIGNAL('triggered()'), self.database.taglinesModel().refresh)
 
+                # widgets
                 # send changed author selection to taglines view
                 self.connect(
                     # TODO: activated richtig?
                     self.AuthorList, SIGNAL('activated(int)'),
                     self.authorSelectionChanged)
+                # change of selection in main view
+                selectionModel = self.TaglinesWidget.selectionModel()
+                self.connect(selectionModel,
+                    SIGNAL('selectionChanged(QItemSelection, QItemSelection)'),
+                    self.taglineSelectionChanged)
+                self.connect(self.TaglinesWidget,
+                        SIGNAL('doubleClicked(QModelIndex)'),
+                        self.taglineDoubleClicked)
 
                 if args.file: self.loadFile(args.file)
                 #}}}4
@@ -1043,6 +1061,20 @@ if __name__ == "__main__":  # {{{1
                 model = self.AuthorList.model()
                 data = model.data(model.index(index, 0))
                 self.database.taglinesModel().setAuthor(data.toString())
+            def taglineSelectionChanged(self, selected, deselected):
+                enabled = len(selected.indexes())!=0
+                if enabled:
+                    # selected row, column 0
+                    index = selected.indexes()[0]
+                    id = self.database.taglinesModel().data(index)
+                    lines = self.database.getLines(id)
+                    print lines
+                    self.LinesWidget.clear()
+    #                self.model.data(
+    #                    self.proxy.mapToSource(selected.indexes()[0])
+    #                ))
+            def taglineDoubleClicked(self, index):
+                pass
         #}}}2
 
         app = QApplication(sys.argv)
