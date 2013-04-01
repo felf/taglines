@@ -356,10 +356,33 @@ class CShellmode: #{{{1
                 id=input("\nID to delete (empty to abort): ")
                 if id!="":
                     try:
+                        while True:
+                            dellines = input("Also delete all taglines associated with that tag? [y/n] ")
+                            if dellines != "":
+                                if "yes".startswith(dellines.lower()): dellines = "y"
+                                elif "no".startswith(dellines.lower()): dellines = "n"
+                                else: dellines = ""
+                            if dellines == "":
+                                print("Please answer yes or no.")
+                            else: break
+
                         id=int(id)
+                        if dellines == "y":
+                            # delete lines of associated taglines
+                            self.db.execute("""DELETE FROM lines WHERE id IN (SELECT
+                                l.id FROM lines l JOIN tag t ON t.tagline=l.tagline WHERE t.tag=?)""", (id,))
+                            # delete associated taglines
+                            self.c.execute( """DELETE FROM taglines WHERE id IN (SELECT
+                                tl.id FROM taglines tl JOIN tag t ON t.tagline=tl.id WHERE t.tag=?)""", (id,) )
+                            deleted = self.c.rowcount
+                            if deleted==1: output = " and one tagline"
+                            else: output = " and {0} taglines".format(deleted)
+                        else:
+                            output = ""
+                        self.c.execute( "DELETE FROM tag WHERE tag=?", (id,) )
                         self.c.execute( "DELETE FROM tags WHERE id=?", (id,) )
                         self.db.commit()
-                        print("Tag deleted.")
+                        print("Tag{0} deleted.".format(output))
                     except ValueError:
                         print("Error: no integer ID.")
                     except sqlite3.Error as e:
