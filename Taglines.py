@@ -502,7 +502,7 @@ class CShellmode: #{{{1
                                 id,
                                 date.today().isoformat(),
                                 unicode(line[0],"utf-8") if line[0]!='' else None,
-                                unicode(line[1],"utf-8") if line[0]!='' else None))
+                                unicode(line[1],"utf-8") if line[1]!='' else None))
                         for t in self.currentTags:
                             self.c.execute("INSERT INTO tag (tag, tagline) values (?,?)", (
                                 t, id))
