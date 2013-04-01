@@ -287,7 +287,7 @@ class CShellmode: #{{{1
                     try:
                         id=int(id)
                         self.c.execute( 'DELETE FROM authors WHERE id=?', (id,) )
-                        db.commit()
+                        self.db.commit()
                         print("Author deleted.")
                     except ValueError:
                         print("Error: no integer ID.")
@@ -349,8 +349,8 @@ class CShellmode: #{{{1
                         print("Tag added, new ID is", self.c.lastrowid)
                     except sqlite3.Error as e:
                         print("An sqlite3 error occurred:", e.args[0])
-                    except:
-                        print("Error while adding tag.")
+                    except Exception as e:
+                        print("Error while adding tag: {0}.".format(e.args[0]))
 
             elif i=="d":
                 id=input("\nID to delete (empty to abort): ")
@@ -358,14 +358,14 @@ class CShellmode: #{{{1
                     try:
                         id=int(id)
                         self.c.execute( "DELETE FROM tags WHERE id=?", (id,) )
-                        db.commit()
+                        self.db.commit()
                         print("Tag deleted.")
                     except ValueError:
                         print("Error: no integer ID.")
                     except sqlite3.Error as e:
                         print("An sqlite3 error occurred:", e.args[0])
-                    except:
-                        print("Error while deleting tag.")
+                    except Exception as e:
+                        print("Error while deleting tag: {0}.".format(e.args[0]))
 
             elif i=="t":
                 if type(id) is not int:
