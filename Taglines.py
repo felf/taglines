@@ -424,23 +424,31 @@ class CShellmode: #{{{1
             print()
             if i=="h":
                 print("l - list last 5 taglines    L - list all taglines")
-                print("a - add new tagline         A - go to author menu")
-                print("e - edit tagline            T - go to tag menu")
-                print("d - delete tagline")
+                print("a - add new tagline         any number - show tagline of that ID")
+                print("e - edit tagline            A - go to author menu")
+                print("d - delete tagline          T - go to tag menu")
                 print("q - quit menu               Q - quit Taglines")
             i=input("TAGLINES menu selection: ")
-            if i=="l" or i=="L":
+            if i in ("l", "L") or i.isdecimal():
                 print()
-                q="SELECT t.id, a.name, source, remark, date FROM taglines t LEFT JOIN authors a ON t.author=a.id ORDER BY t.id"
+                q="SELECT t.id, a.name, source, remark, date FROM taglines t LEFT JOIN authors a ON t.author=a.id"
                 if i=="l":
                     self.c.execute("SELECT COUNT(id) FROM taglines")
                     r=self.c.fetchone()
-                    q+=" LIMIT {0},5".format(max(0,r[0]-5))
-                    print("ALL", end=' ')
-                print("TAGLINES")
+                    q+=" ORDER BY t.id LIMIT {0},5".format(max(0,r[0]-5))
+                    print("LAST 5 TAGLINES")
+                elif i=="L":
+                    q+=" ORDER BY t.id"
+                    print("ALL TAGLINES")
+                elif i.isdecimal():
+                    id=int(i)
+                    q+=" WHERE t.id='{0}'".format(id)
+                else: continue
                 sub=self.db.cursor()
                 self.c.execute( q )
-                for r in self.c:
+                anzahl = -1
+                for index, r in enumerate(self.c):
+                    anzahl = index
                     output=[]
                     if r[1] is not None: output.append("by "+r[1])
                     if r[4] is not None: output.append("from "+r[4].isoformat())
@@ -460,6 +468,8 @@ class CShellmode: #{{{1
                             " ("+t[1].isoformat()+")" if t[1] is not None else "",
                             " lang="+t[2] if t[2] is not None else "",
                             t[3] if t[3] else ""))
+                if (anzahl==-1):
+                    print("No match found.")
             elif i=="a":
                 print("\nADD NEW TAGLINE")
                 print("Current author:", end=' ')
