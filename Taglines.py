@@ -67,7 +67,7 @@ def db_initialise_file():
         exit(1)
 
 if args.init:
-    if fileexists:
+    if os.path.exists(args.file):
         ok = raw_input("Warning: "+args.file+" already exists. Overwrite? [y/N] ")
         if ok in ('y', 'ye', 'yes'):
             try:
