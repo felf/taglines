@@ -428,17 +428,18 @@ class CShellmode: #{{{1 interactive mode
                         except ValueError:
                             print("Error: no integer ID.")
                 if type(id) is int:
-                    self.c.execute( "SELECT id FROM tags WHERE id=?", (id,) )
-                    if self.c.fetchone()==None:
+                    self.c.execute( "SELECT id, text FROM tags WHERE id=?", (id,) )
+                    row = self.c.fetchone()
+                    if not row:
                         print("Error: no valid ID.")
                     else:
                         if id in self.currentTags:
                             i=self.currentTags.index(id)
                             self.currentTags=self.currentTags[0:i]+self.currentTags[i+1:]
-                            print("Tag disabled.")
+                            print("Tag '{0}' disabled.".format(row[1]))
                         else:
                             self.currentTags.append(id)
-                            print("Tag enabled.")
+                            print("Tag '{0}' enabled.".format(row[1]))
 
             elif i=="q":
                 return
