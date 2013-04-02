@@ -221,7 +221,7 @@ if args.stats:
     exit(0)
 
 
-class CShellmode: #{{{1
+class CShellmode: #{{{1 interactive mode
     """ Shellmode class
 
     It provides a hierarchy of menus which are used to inspect
@@ -503,6 +503,8 @@ class CShellmode: #{{{1
                         print("    ENTER A NEW ITEM")
                         language=input("    Language (ISO code): ")
                         print("    Text (f=finish, r=restart, c=correct last line, a=abort):")
+                        print("".join(["         {0}".format(x) for x in range(1,9)]))
+                        print("1234567890"*8)
                         lines=[]
                         while True:
                             line=input()
