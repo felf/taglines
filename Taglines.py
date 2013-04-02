@@ -245,9 +245,29 @@ class CShellmode: #{{{1 interactive mode
             except EOFError:
                 return False
 
+    def askYesNo(self, text, default = "n"):
+        """ Ask a yes/no question, digest the answer and return the answer.
+
+        default should be either "y" or "n" to set the relevant answer. """
+
+        while True:
+            suffix = "  [{0}/{1}] ".format(
+                    "Y" if default=="y" else "y",
+                    "N" if default=="n" else "n")
+            i = self.getInput(text + suffix)
+            if not i:
+                i = default
+            if i:
+                if "yes".startswith(i.lower()): i = "y"
+                elif "no".startswith(i.lower()): i = "n"
+                else: i = ""
+            if i == "":
+                print("Please answer yes or no.")
+            else: return i
+
     def exitTaglines(self):
         try:
-            # not using getInput b/c of own handling of Ctrl+C/D
+            # not using askYesNo b/c of own handling of Ctrl+C/D
             ok=input("\nReally quit Taglines?  [y/N] ")
         except (EOFError, KeyboardInterrupt):
             print()
@@ -373,15 +393,7 @@ class CShellmode: #{{{1 interactive mode
                 id=self.getInput("\nID to delete (empty to abort): ")
                 if id:
                     try:
-                        while True:
-                            dellines = input("Also delete all taglines associated with that tag? [y/n] ")
-                            if dellines != "":
-                                if "yes".startswith(dellines.lower()): dellines = "y"
-                                elif "no".startswith(dellines.lower()): dellines = "n"
-                                else: dellines = ""
-                            if dellines == "":
-                                print("Please answer yes or no.")
-                            else: break
+                        dellines = self.askYesNo("Also delete all taglines associated with that tag?")
 
                         id=int(id)
                         if dellines == "y":
