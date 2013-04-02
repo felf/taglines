@@ -233,8 +233,25 @@ class CShellmode: #{{{1 interactive mode
         self.db = get_database_from_file(args.file)
         self.c = self.db.cursor()
 
+    def getInput(self, text):
+        """ This is a common function to get input and catch Ctrl+C/D. """
+        while True:
+            try:
+                return input(text)
+            # Ctrl+C
+            except KeyboardInterrupt:
+                self.exitTaglines()
+            # Ctrl+D
+            except EOFError:
+                return False
+
     def exitTaglines(self):
-        ok=input("\nReally quit Taglines?  [y/N] ")
+        try:
+            # not using getInput b/c of own handling of Ctrl+C/D
+            ok=input("\nReally quit Taglines?  [y/N] ")
+        except (EOFError, KeyboardInterrupt):
+            print()
+            return
         if ok and "yes".startswith(ok.lower()):
             print("bye")
             sys.exit();
@@ -249,7 +266,8 @@ class CShellmode: #{{{1 interactive mode
                 print("d - delete author    c - set current author for new taglines")
                 print("h - help")
                 print("q - quit menu        Q - quit Taglines")
-            i=input("AUTHOR menu selection: ")
+            i=self.getInput("AUTHOR menu selection: ")
+            if not i: continue
 
             if i=="l":
                 print("\nALL AUTHORS (sorted by name):")
@@ -260,15 +278,15 @@ class CShellmode: #{{{1 interactive mode
                         out+=" ("+str(row[2])+"-"+str(row[3])+")"
                     print(out)
             elif i=="a":
-                name=input("\nName (empty to abort): ")
+                name=self.getInput("\nName (empty to abort): ")
                 # TODO: validate input
                 if name!="":
                     try:
-                        born=int(input("Year of birth: "))
+                        born=int(self.getInput("Year of birth: "))
                     except ValueError:
                         born=None
                     try:
-                        died=int(input("Year of death: "))
+                        died=int(self.getInput("Year of death: "))
                     except ValueError:
                         died=None
                     try:
@@ -282,8 +300,8 @@ class CShellmode: #{{{1 interactive mode
                         print("Error while adding author:", e.args[0])
 
             elif i=="d":
-                id=input("\nID to delete (empty to abort): ")
-                if id!="":
+                id=self.getInput("\nID to delete (empty to abort): ")
+                if id:
                     try:
                         id=int(id)
                         self.c.execute( 'DELETE FROM authors WHERE id=?', (id,) )
@@ -294,8 +312,8 @@ class CShellmode: #{{{1 interactive mode
                     except Exception as e:
                         print("Error while deleting author: {0}.".format(e.args[0],))
             elif i=="c":
-                id=input("\nID of new current author (empty to abort, 'u' to unset): ")
-                if id!="":
+                id=self.getInput("\nID of new current author (empty to abort, 'u' to unset): ")
+                if id:
                     if id=="u":
                         self.currentAuthor=None
                     else:
@@ -323,15 +341,14 @@ class CShellmode: #{{{1 interactive mode
                 print("d - delete tag    t - toggle tag (or simply enter the ID)")
                 print("h - help")
                 print("q - quit menu     Q - quit Taglines")
-            i=input("TAGS menu selection: ")
+            i=self.getInput("TAGS menu selection: ")
 
             # Abkürzung: statt "t" und dann ID eingeben einfach nur die ID
             try:
                 id=int(i)
+                i="t"
             except ValueError:
                 id=None
-            if type(id) is int:
-                i="t"
 
             if i=="l":
                 print("\nALL TAGS (sorted by text):")
@@ -340,9 +357,9 @@ class CShellmode: #{{{1 interactive mode
                     out="{0:>4}{1}: {2}".format(row[0], '*' if row[0] in self.currentTags else ' ', row[1])
                     print(out)
             elif i=="a":
-                text=input("\nText (empty to abort): ")
+                text=self.getInput("\nTag text (empty to abort): ")
                 # TODO: validate input
-                if text!="":
+                if text:
                     try:
                         self.c.execute( "INSERT INTO tags (text) VALUES (?)", (text,) )
                         db.commit()
@@ -353,8 +370,8 @@ class CShellmode: #{{{1 interactive mode
                         print("Error while adding tag: {0}.".format(e.args[0]))
 
             elif i=="d":
-                id=input("\nID to delete (empty to abort): ")
-                if id!="":
+                id=self.getInput("\nID to delete (empty to abort): ")
+                if id:
                     try:
                         while True:
                             dellines = input("Also delete all taglines associated with that tag? [y/n] ")
@@ -392,8 +409,8 @@ class CShellmode: #{{{1 interactive mode
 
             elif i=="t":
                 if type(id) is not int:
-                    id=input("\nID to toggle (empty to abort): ")
-                    if id!="":
+                    id=self.getInput("\nID to toggle (empty to abort): ")
+                    if id:
                         try:
                             id=int(id)
                         except ValueError:
@@ -428,7 +445,8 @@ class CShellmode: #{{{1 interactive mode
                 print("e - edit tagline            A - go to author menu")
                 print("d - delete tagline          T - go to tag menu")
                 print("q - quit menu               Q - quit Taglines")
-            i=input("TAGLINES menu selection: ")
+            i=self.getInput("TAGLINES menu selection: ")
+
             if i in ("l", "L") or i.isdecimal():
                 print()
                 q="SELECT t.id, a.name, source, remark, date FROM taglines t LEFT JOIN authors a ON t.author=a.id"
@@ -486,9 +504,9 @@ class CShellmode: #{{{1 interactive mode
                     tags=[t[0] for t in tags]
                     print(", ".join(tags))
                 print("Optional information:")
-                source=input("  Source: ")
-                remark=input("  Remark: ")
-                when=input("  Date (yyyy-mm-dd): ")
+                source=self.getInput("  Source: ")
+                remark=self.getInput("  Remark: ")
+                when=self.getInput("  Date (yyyy-mm-dd): ")
                 # TODO: validate date
                 texts=[]
 
@@ -496,18 +514,19 @@ class CShellmode: #{{{1 interactive mode
                     print("\n  ADD ITEMS TO TAGLINE")
                     print("  a - add an item       w - done, save lines to database")
                     print("  d - delete an item    q - quit to previous menu, discarding changes")
-                    i=input("  ")
+                    i=self.getInput("  ")
+
                     if i=="q":
                         break
                     elif i=="a":
                         print("    ENTER A NEW ITEM")
-                        language=input("    Language (ISO code): ")
+                        language=self.getInput("    Language (ISO code): ")
                         print("    Text (f=finish, r=restart, c=correct last line, a=abort):")
                         print("".join(["         {0}".format(x) for x in range(1,9)]))
                         print("1234567890"*8)
                         lines=[]
                         while True:
-                            line=input()
+                            line=self.getInput()
                             if line=="r":
                                 lines=[]
                                 print("--> Input restarted.")
@@ -547,7 +566,7 @@ class CShellmode: #{{{1 interactive mode
             elif i=="e":
                 print("TODO")
             elif i=="d":
-                id=input("\nID to delete (empty to abort): ")
+                id=self.getInput("\nID to delete (empty to abort): ")
                 if id!="":
                     try:
                         id=int(id)
@@ -574,14 +593,14 @@ class CShellmode: #{{{1 interactive mode
             else: i="h"
 
     def mainMenu(self): #{{{2
-        print("\nBy your command...")
         while True:
+            print("\nBy your command...")
             print("a - Author menu")
             print("t - Tag menu")
             print("l - taglines menu")
             print("h - show key help (available in every menu)")
             print("q - quit         Q - quit Taglines (in all submenus)")
-            i=input("MAIN menu selection: ")
+            i=self.getInput("MAIN menu selection: ")
             if i=="a":
                 self.authorMenu()
             elif i=="t":
