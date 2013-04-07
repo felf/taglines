@@ -233,7 +233,7 @@ class CShellmode: #{{{1 interactive mode
         self.db = get_database_from_file(args.file)
         self.c = self.db.cursor()
 
-    def getInput(self, text):
+    def getInput(self, text=""):
         """ This is a common function to get input and catch Ctrl+C/D. """
         while True:
             try:
