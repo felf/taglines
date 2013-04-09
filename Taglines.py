@@ -525,9 +525,8 @@ class CShellmode: #{{{1 interactive mode
 
                 while True:
                     print("\n  ADD ITEMS TO TAGLINE")
-                    print("  a - add an item         w - done, save lines to database")
-                    print("  d - delete an item      q - quit to previous menu, discarding changes")
-                    print("  s - show entered items")
+                    print("  a - add an item            w - done, save lines to database")
+                    print("  m - manage entered items   q - quit to previous menu, discarding changes")
                     i=self.getInput("  ")
 
                     if i=="q":
@@ -556,11 +555,15 @@ class CShellmode: #{{{1 interactive mode
                                 lines=[]
                             elif line=="a": break
                             else: lines.append(line)
-                    elif i=="d":
-                        print("TODO")
-                    elif i=="s":
+                    elif i=="m":
                         for lang, text in texts:
                             print("\nLanguage: {0}\n{1}".format(lang, text))
+                        lang = self.getInput("\n   Language to delete (empty to do nothing): ")
+                        for number, item in enumerate(texts):
+                            if item[0] == lang:
+                                texts.pop(number)
+                                print("Item with language '{0}' deleted.".format(item[0]))
+                                break
                     if i=="w":
                         self.c.execute("INSERT INTO taglines (author,source,remark,date) values (?,?,?,?)", (
                             self.currentAuthor if self.currentAuthor else None,
