@@ -292,9 +292,9 @@ class CShellmode: #{{{1 interactive mode
                 print("h - help")
                 print("q - quit menu        Q - quit Taglines")
             i=self.getInput("AUTHOR menu selection: ")
-            if not i: continue
 
-            if i=="l":
+            if not i or i=="q": return
+            elif i=="l":
                 print("\nALL AUTHORS (sorted by name):")
                 self.c.execute( "SELECT id, name, born, died FROM authors ORDER BY name" )
                 for row in self.c:
@@ -350,8 +350,6 @@ class CShellmode: #{{{1 interactive mode
                                 self.currentAuthor=int(id)
                         except ValueError:
                             print("Error: no integer ID.")
-            elif i=="q":
-                return
             elif i=="Q":
                 self.exitTaglines()
             else: i="h"
@@ -375,7 +373,8 @@ class CShellmode: #{{{1 interactive mode
             except ValueError:
                 id=None
 
-            if i=="l":
+            if not i or i=="q": return
+            elif i=="l":
                 print("\nALL TAGS (sorted by text):")
                 self.c.execute( "SELECT id, text FROM tags ORDER BY text" )
                 for row in self.c:
@@ -446,8 +445,6 @@ class CShellmode: #{{{1 interactive mode
                             self.currentTags.append(id)
                             print("Tag '{0}' enabled.".format(row[1]))
 
-            elif i=="q":
-                return
             elif i=="Q":
                 self.exitTaglines()
             else: i="h"
@@ -465,7 +462,8 @@ class CShellmode: #{{{1 interactive mode
                 print("q - quit menu               Q - quit Taglines")
             i=self.getInput("TAGLINES menu selection: ")
 
-            if i in ("l", "L") or i.isdecimal():
+            if not i or i=="q": return
+            elif i in ("l", "L") or i.isdecimal():
                 print()
                 q="SELECT t.id, a.name, source, remark, date FROM taglines t LEFT JOIN authors a ON t.author=a.id"
                 if i=="l":
@@ -609,8 +607,6 @@ class CShellmode: #{{{1 interactive mode
                 self.authorMenu()
             elif i=="T":
                 self.tagMenu()
-            elif i=="q":
-                break
             elif i=="Q":
                 self.exitTaglines()
             else: i="h"
@@ -624,16 +620,14 @@ class CShellmode: #{{{1 interactive mode
             print("h - show key help (available in every menu)")
             print("q - quit         Q - quit Taglines (in all submenus)")
             i=self.getInput("MAIN menu selection: ")
+            if i==False or i=="q" or i=="Q":
+                self.exitTaglines()
             if i=="a":
                 self.authorMenu()
             elif i=="t":
                 self.tagMenu()
             elif i=="l":
                 self.taglinesMenu()
-            elif i=="q":
-                self.exitTaglines()
-            elif i=="Q":
-                self.exitTaglines()
         #}}}2
     #}}}1
 
