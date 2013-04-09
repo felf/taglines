@@ -543,7 +543,7 @@ class CShellmode: #{{{1 interactive mode
                         if texts.get(language):
                             if self.askYesNo("    There is already an item with this language. Overwrite it?") == "n":
                                 continue
-                        print("    Text (f=finish, r=restart, c=correct last line, a=abort):")
+                        print("    Text ('r'=restart, 'c'=correct last line, 'a'=abort, 'f' or two empty lines=finish:")
                         print("".join(["         {0}".format(x) for x in range(1,9)]))
                         print("1234567890"*8)
                         lines=[]
@@ -555,7 +555,7 @@ class CShellmode: #{{{1 interactive mode
                             elif line=="c":
                                 lines.pop()
                                 print("--> Last line deleted.")
-                            elif line=="f":
+                            elif line=="f" or line=="" and len(lines)>0 and lines[-1]=="":
                                 texts[language] = "\n".join(lines).strip()
                                 break
                             # special case for importing from a text file via copy+paste more easily
