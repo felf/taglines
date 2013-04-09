@@ -547,10 +547,11 @@ class CShellmode: #{{{1 interactive mode
                                 lines=lines[:-1]
                                 print("--> Last line deleted.")
                             elif line=="f":
-                                texts.append((language, "\n".join(lines)))
+                                texts.append((language, "\n".join(lines).strip()))
                                 break
+                            # special case for importing from a text file via copy+paste more easily
                             elif line=="---":
-                                texts.append(("de", "\n".join(lines)))
+                                texts.append(("de", "\n".join(lines).strip()))
                                 language="en"
                                 lines=[]
                             elif line=="a": break
