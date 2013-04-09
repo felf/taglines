@@ -521,7 +521,7 @@ class CShellmode: #{{{1 interactive mode
                 remark=self.getInput("  Remark: ")
                 when=self.getInput("  Date (yyyy-mm-dd): ")
                 # TODO: validate date
-                texts=[]
+                texts={}
 
                 while True:
                     print("\n  ADD ITEMS TO TAGLINE")
@@ -534,6 +534,9 @@ class CShellmode: #{{{1 interactive mode
                     elif i=="a":
                         print("    ENTER A NEW ITEM")
                         language=self.getInput("    Language (ISO code): ")
+                        if texts.get(language):
+                            if self.askYesNo("    There is already an item with this language. Overwrite it?") == "n":
+                                continue
                         print("    Text (f=finish, r=restart, c=correct last line, a=abort):")
                         print("".join(["         {0}".format(x) for x in range(1,9)]))
                         print("1234567890"*8)
@@ -544,27 +547,24 @@ class CShellmode: #{{{1 interactive mode
                                 lines=[]
                                 print("--> Input restarted.")
                             elif line=="c":
-                                lines=lines[:-1]
+                                lines.pop()
                                 print("--> Last line deleted.")
                             elif line=="f":
-                                texts.append((language, "\n".join(lines).strip()))
+                                texts[language] = "\n".join(lines).strip()
                                 break
                             # special case for importing from a text file via copy+paste more easily
                             elif line=="---":
-                                texts.append(("de", "\n".join(lines).strip()))
+                                texts["de"] = "\n".join(lines).strip()
                                 language="en"
                                 lines=[]
                             elif line=="a": break
                             else: lines.append(line)
                     elif i=="m":
-                        for lang, text in texts:
+                        for lang, text in texts.items():
                             print("\nLanguage: {0}\n{1}".format(lang, text))
                         lang = self.getInput("\n   Language to delete (empty to do nothing): ")
-                        for number, item in enumerate(texts):
-                            if item[0] == lang:
-                                texts.pop(number)
-                                print("Item with language '{0}' deleted.".format(item[0]))
-                                break
+                        if texts.pop(lang, None):
+                            print("Item with language '{0}' deleted.".format(lang))
                     if i=="w":
                         self.c.execute("INSERT INTO taglines (author,source,remark,date) values (?,?,?,?)", (
                             self.currentAuthor if self.currentAuthor else None,
@@ -572,15 +572,11 @@ class CShellmode: #{{{1 interactive mode
                             remark if remark!="" else None,
                             when if when!="" else None))
                         id=self.c.lastrowid
-                        for line in texts:
-                            self.c.execute("INSERT INTO lines (tagline, date, language, text) values (?,?,?,?)", (
-                                id,
-                                date.today().isoformat(),
-                                line[0] if line[0]!='' else None,
-                                line[1] if line[1]!='' else None))
+                        for lang, text in texts.items():
+                            self.c.execute("INSERT INTO lines (tagline, date, language, text) values (?,?,?,?)",
+                                    (id, date.today().isoformat(), lang, text))
                         for t in self.currentTags:
-                            self.c.execute("INSERT INTO tag (tag, tagline) values (?,?)", (
-                                t, id))
+                            self.c.execute("INSERT INTO tag (tag, tagline) values (?,?)", (t, id))
                         self.db.commit()
                     if i=="w"or i=="q": break
 
