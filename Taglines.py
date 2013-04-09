@@ -227,13 +227,13 @@ class CShellmode: #{{{1 interactive mode
     It provides a hierarchy of menus which are used to inspect
     and modify the content of the database."""
 
-    def __init__(self):
+    def __init__(self): #{{{2
         self.currentAuthor=None
         self.currentTags=[]
         self.db = get_database_from_file(args.file)
         self.c = self.db.cursor()
 
-    def getInput(self, text="", nonempty=False):
+    def getInput(self, text="", nonempty=False): #{{{2
         """ This is a common function to get input and catch Ctrl+C/D. """
         while True:
             try:
@@ -250,7 +250,7 @@ class CShellmode: #{{{1 interactive mode
                 print()
                 return False
 
-    def askYesNo(self, text, default = "n"):
+    def askYesNo(self, text, default = "n"): #{{{2
         """ Ask a yes/no question, digest the answer and return the answer.
 
         default should be either "y" or "n" to set the relevant answer. """
@@ -270,7 +270,7 @@ class CShellmode: #{{{1 interactive mode
                 print("Please answer yes or no.")
             else: return i
 
-    def exitTaglines(self):
+    def exitTaglines(self): #{{{2
         try:
             # not using askYesNo b/c of own handling of Ctrl+C/D
             ok=input("\nReally quit Taglines?  [y/N] ")
