@@ -233,16 +233,21 @@ class CShellmode: #{{{1 interactive mode
         self.db = get_database_from_file(args.file)
         self.c = self.db.cursor()
 
-    def getInput(self, text=""):
+    def getInput(self, text="", nonempty=False):
         """ This is a common function to get input and catch Ctrl+C/D. """
         while True:
             try:
-                return input(text)
+                i = input(text)
+                if nonempty and not i:
+                    print("Empty string not allowed here.")
+                else:
+                    return i
             # Ctrl+C
             except KeyboardInterrupt:
                 self.exitTaglines()
             # Ctrl+D
             except EOFError:
+                print()
                 return False
 
     def askYesNo(self, text, default = "n"):
@@ -533,7 +538,8 @@ class CShellmode: #{{{1 interactive mode
                         break
                     elif i=="a":
                         print("    ENTER A NEW ITEM")
-                        language=self.getInput("    Language (ISO code): ")
+                        language = self.getInput("    Language (ISO code): ", nonempty = True)
+                        if not language: continue
                         if texts.get(language):
                             if self.askYesNo("    There is already an item with this language. Overwrite it?") == "n":
                                 continue
