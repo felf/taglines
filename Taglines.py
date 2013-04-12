@@ -532,9 +532,7 @@ class CShellmode: #{{{1 interactive mode
                     print("  m - manage entered items   q - quit to previous menu, discarding changes")
                     i=self.getInput("  ")
 
-                    if i=="q":
-                        break
-                    elif i=="a":
+                    if i=="a":
                         print("    ENTER A NEW ITEM")
                         language = self.getInput("    Language (ISO code): ", nonempty = True)
                         if not language: continue
@@ -569,7 +567,7 @@ class CShellmode: #{{{1 interactive mode
                         lang = self.getInput("\n   Language to delete (empty to do nothing): ")
                         if texts.pop(lang, None):
                             print("Item with language '{0}' deleted.".format(lang))
-                    if i=="w":
+                    elif i=="w":
                         self.c.execute("INSERT INTO taglines (author,source,remark,date) values (?,?,?,?)", (
                             self.currentAuthor if self.currentAuthor else None,
                             source if source!="" else None,
@@ -582,7 +580,11 @@ class CShellmode: #{{{1 interactive mode
                         for t in self.currentTags:
                             self.c.execute("INSERT INTO tag (tag, tagline) values (?,?)", (t, id))
                         self.db.commit()
-                    if i=="w"or i=="q": break
+                        break
+                    elif i=="q":
+                        if texts:
+                            if self.askYesNo("    This will discard your changes. Continue?", "n") == "y":
+                                break
 
             elif i=="e":
                 print("TODO")
