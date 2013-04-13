@@ -36,6 +36,9 @@ import os
 from datetime import date
 import sqlite3
 import sys
+
+import taglines
+
 #}}}1
 
 # create a new sqlite database file {{{1
@@ -80,36 +83,10 @@ if args.init:
     exit(0)
 
 
-# get database handle from file {{{1
-# ----------------------------------------------------------------
-def get_database_from_file(path):
-    if path is None:
-        print("Error: no path to database given. Exiting.", file=sys.stderr)
-        exit(1)
-
-    args.file=os.path.abspath( path )
-    fileexists=os.path.exists( path )
-    validfile=os.path.isfile( path ) if fileexists else True
-
-    if not validfile:
-        print("Error: the given path is not a valid file. Exiting.", file=sys.stderr)
-        exit(1)
-
-    if not fileexists and not args.init:
-        print("Error: the given file does not exist. Exiting.", file=sys.stderr)
-        exit(1)
-
-    try:
-        db=sqlite3.connect(path, detect_types=True)
-        return db
-    except:
-        print("Error: could not open database file. Exiting.", file=sys.stderr)
-        exit(1)
-
-
 # retrieve one random tagline, then exit {{{1
 if args.random or args.list:
-    db = get_database_from_file(args.file);
+    db = taglines.Database(args.file)
+    db.open()
     query="SELECT text FROM lines l, taglines tl"
     qargs=[]
 
@@ -162,14 +139,16 @@ if args.random or args.list:
 # stand-alone DB functions {{{1
 # ----------------------------------------------------------------
 if args.show_tags:
-    db = get_database_from_file(args.file);
+    db = taglines.Database(args.file);
+    db.open()
     for row in db.execute( "SELECT text FROM tags ORDER BY text" ):
         print(row[0])
     exit(0)
 
 
 if args.show_authors:
-    db = get_database_from_file(args.file);
+    db = taglines.Database(args.file);
+    db.open()
     for row in db.execute( "SELECT name, born, died FROM authors ORDER BY name" ):
         out=row[0]
         if row[1] is not None or row[2] is not None:
@@ -178,33 +157,33 @@ if args.show_authors:
     exit(0)
 
 if args.stats:
-    db = get_database_from_file(args.file);
-    c=db.cursor()
-    c.execute( "SELECT count(*) FROM tag" )
+    db = taglines.Database(args.file);
+    db.open()
+    c = db.execute( "SELECT count(*) FROM tag" )
     r=c.fetchone()
     tagnumber=r[0];
 
-    c.execute( "SELECT count(*) FROM tags" )
+    c = db.execute( "SELECT count(*) FROM tags" )
     r=c.fetchone()
     tagsnumber=r[0];
 
-    c.execute( "SELECT count(*) FROM taglines" )
+    c = db.execute( "SELECT count(*) FROM taglines" )
     r=c.fetchone()
     taglinesnumber=r[0];
 
-    c.execute( "SELECT count(*) FROM lines" )
+    c = db.execute( "SELECT count(*) FROM lines" )
     r=c.fetchone()
     linesnumber=r[0];
 
-    c.execute( "SELECT count(*) FROM authors" )
+    c = db.execute( "SELECT count(*) FROM authors" )
     r=c.fetchone()
     authorsnumber=r[0];
 
-    c.execute( "SELECT COUNT(*) FROM (SELECT DISTINCT language FROM lines)" )
+    c = db.execute( "SELECT COUNT(*) FROM (SELECT DISTINCT language FROM lines)" )
     r=c.fetchone()
     languages=r[0]
 
-    c.execute( "SELECT text FROM lines" )
+    c = db.execute( "SELECT text FROM lines" )
     length=0
     for r in c:
         length+=len(r[0])
@@ -230,8 +209,8 @@ class CShellmode: #{{{1 interactive mode
     def __init__(self): #{{{2
         self.currentAuthor=None
         self.currentTags=[]
-        self.db = get_database_from_file(args.file)
-        self.c = self.db.cursor()
+        self.db = taglines.Database(args.file)
+        self.db.open()
 
     def getInput(self, text="", nonempty=False): #{{{2
         """ This is a common function to get input and catch Ctrl+C/D. """
@@ -296,8 +275,8 @@ class CShellmode: #{{{1 interactive mode
             if not i or i=="q": return
             elif i=="l":
                 print("\nALL AUTHORS (sorted by name):")
-                self.c.execute( "SELECT id, name, born, died FROM authors ORDER BY name" )
-                for row in self.c:
+                c = self.db.execute( "SELECT id, name, born, died FROM authors ORDER BY name" )
+                for row in c:
                     out="{0:>4}{1}: {2}".format(row[0], '*' if self.currentAuthor==row[0] else ' ', row[1])
                     if row[2] is not None or row[3] is not None:
                         out+=" ("+str(row[2])+"-"+str(row[3])+")"
@@ -315,10 +294,9 @@ class CShellmode: #{{{1 interactive mode
                     except ValueError:
                         died=None
                     try:
-                        self.c.execute( "INSERT INTO authors (name, born, died) VALUES (?,?,?)", (
-                            name, born, died) )
-                        self.db.commit()
-                        print("Author added, new ID is {0}".format(self.c.lastrowid))
+                        c = self.db.execute( "INSERT INTO authors (name, born, died) VALUES (?,?,?)", (
+                            name, born, died), True )
+                        print("Author added, new ID is {0}".format(c.lastrowid))
                     except sqlite3.Error as e:
                         print("An sqlite3 error occurred:", e.args[0])
                     except Exception as e:
@@ -329,8 +307,7 @@ class CShellmode: #{{{1 interactive mode
                 if id:
                     try:
                         id=int(id)
-                        self.c.execute( 'DELETE FROM authors WHERE id=?', (id,) )
-                        self.db.commit()
+                        self.db.execute( 'DELETE FROM authors WHERE id=?', (id,), True )
                         print("Author deleted.")
                     except ValueError:
                         print("Error: no integer ID.")
@@ -343,8 +320,8 @@ class CShellmode: #{{{1 interactive mode
                         self.currentAuthor=None
                     else:
                         try:
-                            self.c.execute("SELECT id FROM authors WHERE id=?", (id,))
-                            if self.c.fetchone() is None:
+                            c = self.db.execute("SELECT id FROM authors WHERE id=?", (id,))
+                            if c.fetchone() is None:
                                 print("Error: no valid ID.")
                             else:
                                 self.currentAuthor=int(id)
@@ -376,8 +353,8 @@ class CShellmode: #{{{1 interactive mode
             if not i or i=="q": return
             elif i=="l":
                 print("\nALL TAGS (sorted by text):")
-                self.c.execute( "SELECT id, text FROM tags ORDER BY text" )
-                for row in self.c:
+                c = self.db.execute( "SELECT id, text FROM tags ORDER BY text" )
+                for row in c:
                     out="{0:>4}{1}: {2}".format(row[0], '*' if row[0] in self.currentTags else ' ', row[1])
                     print(out)
             elif i=="a":
@@ -385,9 +362,8 @@ class CShellmode: #{{{1 interactive mode
                 # TODO: validate input
                 if text:
                     try:
-                        self.c.execute( "INSERT INTO tags (text) VALUES (?)", (text,) )
-                        db.commit()
-                        print("Tag added, new ID is", self.c.lastrowid)
+                        c = self.db.execute( "INSERT INTO tags (text) VALUES (?)", (text,), True)
+                        print("Tag added, new ID is", c.lastrowid)
                     except sqlite3.Error as e:
                         print("An sqlite3 error occurred:", e.args[0])
                     except Exception as e:
@@ -405,16 +381,15 @@ class CShellmode: #{{{1 interactive mode
                             self.db.execute("""DELETE FROM lines WHERE id IN (SELECT
                                 l.id FROM lines l JOIN tag t ON t.tagline=l.tagline WHERE t.tag=?)""", (id,))
                             # delete associated taglines
-                            self.c.execute( """DELETE FROM taglines WHERE id IN (SELECT
+                            c = self.db.execute( """DELETE FROM taglines WHERE id IN (SELECT
                                 tl.id FROM taglines tl JOIN tag t ON t.tagline=tl.id WHERE t.tag=?)""", (id,) )
-                            deleted = self.c.rowcount
+                            deleted = c.rowcount
                             if deleted==1: output = " and one tagline"
                             else: output = " and {0} taglines".format(deleted)
                         else:
                             output = ""
-                        self.c.execute( "DELETE FROM tag WHERE tag=?", (id,) )
-                        self.c.execute( "DELETE FROM tags WHERE id=?", (id,) )
-                        self.db.commit()
+                        self.db.execute( "DELETE FROM tag WHERE tag=?", (id,) )
+                        self.db.execute( "DELETE FROM tags WHERE id=?", (id,), True)
                         print("Tag{0} deleted.".format(output))
                     except ValueError:
                         print("Error: no integer ID.")
@@ -432,8 +407,8 @@ class CShellmode: #{{{1 interactive mode
                         except ValueError:
                             print("Error: no integer ID.")
                 if type(id) is int:
-                    self.c.execute( "SELECT id, text FROM tags WHERE id=?", (id,) )
-                    row = self.c.fetchone()
+                    c = self.db.execute( "SELECT id, text FROM tags WHERE id=?", (id,) )
+                    row = c.fetchone()
                     if not row:
                         print("Error: no valid ID.")
                     else:
@@ -467,8 +442,8 @@ class CShellmode: #{{{1 interactive mode
                 print()
                 q="SELECT t.id, a.name, source, remark, date FROM taglines t LEFT JOIN authors a ON t.author=a.id"
                 if i=="l":
-                    self.c.execute("SELECT COUNT(id) FROM taglines")
-                    r=self.c.fetchone()
+                    c = self.db.execute("SELECT COUNT(id) FROM taglines")
+                    r = c.fetchone()
                     q+=" ORDER BY t.id LIMIT {0},5".format(max(0,r[0]-5))
                     print("LAST 5 TAGLINES")
                 elif i=="L":
@@ -478,24 +453,23 @@ class CShellmode: #{{{1 interactive mode
                     id=int(i)
                     q+=" WHERE t.id='{0}'".format(id)
                 else: continue
-                sub=self.db.cursor()
-                self.c.execute( q )
+                c = self.db.execute( q )
                 anzahl = -1
-                for index, r in enumerate(self.c):
+                for index, r in enumerate(c):
                     anzahl = index
                     output=[]
                     if r[1] is not None: output.append("by "+r[1])
                     if r[4] is not None: output.append("from "+r[4].isoformat())
                     if r[2] is not None: output.append("source: "+r[2])
                     if r[3] is not None: output.append("remark: "+r[3])
-                    sub.execute( "SELECT text FROM tags JOIN tag t ON t.tagline=? AND t.tag=tags.id ORDER BY text", (r[0],) )
+                    sub = self.db.execute( "SELECT text FROM tags JOIN tag t ON t.tagline=? AND t.tag=tags.id ORDER BY text", (r[0],) )
                     tags=sub.fetchall()
                     tags=[t[0] for t in tags]
                     if tags:
                         output.append(str("tags: "+",".join(tags)))
                     print("#{0:>5}{1}".format(
                         r[0], ": "+", ".join(output) if output else ""))
-                    sub.execute( "SELECT l.id, l.date, language, text FROM lines l LEFT JOIN taglines t ON l.tagline=t.id WHERE t.id=?", (r[0],) )
+                    sub = self.db.execute( "SELECT l.id, l.date, language, text FROM lines l LEFT JOIN taglines t ON l.tagline=t.id WHERE t.id=?", (r[0],) )
                     for t in sub:
                         print("     Line #{0:>5}:{1}{2}: {3}".format(
                             t[0],
@@ -509,14 +483,14 @@ class CShellmode: #{{{1 interactive mode
                 print("Current author:", end=' ')
                 if self.currentAuthor is None: print("None")
                 else:
-                    self.c.execute( "SELECT name FROM authors WHERE id=?", (self.currentAuthor,) )
-                    print(self.c.fetchone()[0])
+                    c = self.db.execute( "SELECT name FROM authors WHERE id=?", (self.currentAuthor,) )
+                    print(c.fetchone()[0])
                 print("Current Tags:  ", end=' ')
                 if len(self.currentTags)==0: print("None")
                 else:
                     tags=",".join([str(t) for t in self.currentTags])
-                    self.c.execute( "SELECT text FROM tags WHERE id IN ("+tags+") ORDER BY text" )
-                    tags=self.c.fetchall()
+                    c = self.db.execute( "SELECT text FROM tags WHERE id IN ("+tags+") ORDER BY text" )
+                    tags=c.fetchall()
                     tags=[t[0] for t in tags]
                     print(", ".join(tags))
                 print("Optional information:")
@@ -549,7 +523,8 @@ class CShellmode: #{{{1 interactive mode
                                 lines=[]
                                 print("--> Input restarted.")
                             elif line=="c":
-                                lines.pop()
+                                if lines:
+                                    lines.pop()
                                 print("--> Last line deleted.")
                             elif line=="f" or line=="" and len(lines)>0 and lines[-1]=="":
                                 texts[language] = "\n".join(lines).strip()
@@ -568,17 +543,17 @@ class CShellmode: #{{{1 interactive mode
                         if texts.pop(lang, None):
                             print("Item with language '{0}' deleted.".format(lang))
                     elif i=="w":
-                        self.c.execute("INSERT INTO taglines (author,source,remark,date) values (?,?,?,?)", (
+                        c = self.db.execute("INSERT INTO taglines (author,source,remark,date) values (?,?,?,?)", (
                             self.currentAuthor if self.currentAuthor else None,
                             source if source!="" else None,
                             remark if remark!="" else None,
-                            when if when!="" else None))
-                        id=self.c.lastrowid
+                            when if when!="" else None), commit = True)
+                        id = c.lastrowid
                         for lang, text in texts.items():
-                            self.c.execute("INSERT INTO lines (tagline, date, language, text) values (?,?,?,?)",
+                            self.db.execute("INSERT INTO lines (tagline, date, language, text) values (?,?,?,?)",
                                     (id, date.today().isoformat(), lang, text))
                         for t in self.currentTags:
-                            self.c.execute("INSERT INTO tag (tag, tagline) values (?,?)", (t, id))
+                            self.db.execute("INSERT INTO tag (tag, tagline) values (?,?)", (t, id))
                         self.db.commit()
                         break
                     elif i=="q":
@@ -593,12 +568,11 @@ class CShellmode: #{{{1 interactive mode
                 if id!="":
                     try:
                         id=int(id)
-                        self.c.execute("SELECT id FROM taglines WHERE id=?", (id,) )
-                        if self.c.fetchone():
-                            self.c.execute( 'DELETE FROM taglines WHERE id=?', (id,) )
-                            self.c.execute( "DELETE FROM tag WHERE tagline=?", (id,) )
-                            self.c.execute( "DELETE FROM lines WHERE tagline=?", (id,) )
-                            self.db.commit()
+                        c = self.db.execute("SELECT id FROM taglines WHERE id=?", (id,) )
+                        if c.fetchone():
+                            c.execute( 'DELETE FROM taglines WHERE id=?', (id,) )
+                            c.execute( "DELETE FROM tag WHERE tagline=?", (id,) )
+                            c.execute( "DELETE FROM lines WHERE tagline=?", (id,), commit = True )
                         print("Tagline and all assiciated entires deleted.")
                     except ValueError:
                         print("Error: no integer ID.")
