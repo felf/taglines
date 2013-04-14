@@ -15,29 +15,6 @@ import sys
 
 # create a new sqlite database file {{{1
 # ----------------------------------------------------------------
-def db_initialise_file():
-    """Initialises a new, empty database"""
-    try:
-        dbfile=open( args.file, 'w' )
-        dbfile.close()
-        print("Creating new database file...", end=' ')
-        db=sqlite3.connect( args.file )
-        #db.text_factory=str
-        db.execute('CREATE TABLE authors (id INTEGER PRIMARY KEY, name TEXT, born INT DEFAULT NULL, died INT DEFAULT NULL);')
-        db.execute('CREATE TABLE lines (id INTEGER PRIMARY KEY, tagline INT, date DATE, language VARCHAR(5), text TEXT);')
-        db.execute('CREATE TABLE tag (id INTEGER PRIMARY KEY, tag INT, tagline INT);')
-        db.execute('CREATE TABLE taglines (id INTEGER PRIMARY KEY, author INT, source TEXT DEFAULT NULL, remark TEXT DEFAULT NULL, date DATE DEFAULT NULL);')
-        db.execute('CREATE TABLE tags (id INTEGER PRIMARY KEY, text TEXT UNIQUE);')
-        db.commit()
-        print("done.")
-    except IOError as e:
-        print("\nError while creating the database file: {0}. Exiting.".format(e.args[0]), file=sys.stderr)
-        exit(1)
-    except sqlite3.Error as e:
-        print("An sqlite3 error occurred:", e.args[0])
-    except:
-        print("\nError while initialising the database file: {0}. Exiting.".format(e.args[0]), file=sys.stderr)
-        exit(1)
 
 if args.init:
     if os.path.exists(args.file):
@@ -51,7 +28,8 @@ if args.init:
         else:
             print("good bye")
             exit(1)
-    db_initialise_file()
+    db = taglines.Database()
+    db.initialiseFile(args.file)
     exit(0)
 
 
