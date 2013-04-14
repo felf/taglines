@@ -92,6 +92,11 @@ class Database:
             self.db.commit()
         return r
 
+    def getOne(self, query): # {{{1
+        """ Shortcut function for a simply one-line retrieve. """
+        c = self.execute(query)
+        return c.fetchone() if c else None
+
     def parseArguments(self, args): # {{{1
         self.filters = {}
         self.exactAuthorMode = args.exactauthor
@@ -162,3 +167,18 @@ class Database:
         query = "SELECT name, born, died FROM authors ORDER BY name"
         return (name+(" ({0}-{1})".format(born,died) if born or died else "")
                 for name,born,died in self.execute(query))
+
+    def stats(self): # {{{1
+        stats = {}
+        stats["tag assignments"] = int(self.getOne("SELECT count(*) FROM tag")[0])
+        stats["tag count"] = int(self.getOne("SELECT count(*) FROM tags")[0])
+        stats["tagline count"] = int(self.getOne("SELECT count(*) FROM taglines")[0])
+        stats["line count"] = int(self.getOne("SELECT count(*) FROM lines")[0])
+        stats["author count"] = int(self.getOne("SELECT count(*) FROM authors")[0])
+        stats["language count"] = int(self.getOne("SELECT COUNT(*) FROM (SELECT DISTINCT language FROM lines)")[0])
+
+        c = self.execute("SELECT text FROM lines")
+        linelengthsum = sum(len(r[0]) for r in c)
+        stats["avg tagline length"] = linelengthsum/stats["line count"]
+
+        return stats

@@ -72,46 +72,19 @@ if args.show_authors:
 
 if args.stats:
     db = taglines.Database(args.file);
-    db.open()
-    c = db.execute( "SELECT count(*) FROM tag" )
-    r=c.fetchone()
-    tagnumber=r[0];
+    if db:
+        stats = db.stats()
 
-    c = db.execute( "SELECT count(*) FROM tags" )
-    r=c.fetchone()
-    tagsnumber=r[0];
-
-    c = db.execute( "SELECT count(*) FROM taglines" )
-    r=c.fetchone()
-    taglinesnumber=r[0];
-
-    c = db.execute( "SELECT count(*) FROM lines" )
-    r=c.fetchone()
-    linesnumber=r[0];
-
-    c = db.execute( "SELECT count(*) FROM authors" )
-    r=c.fetchone()
-    authorsnumber=r[0];
-
-    c = db.execute( "SELECT COUNT(*) FROM (SELECT DISTINCT language FROM lines)" )
-    r=c.fetchone()
-    languages=r[0]
-
-    c = db.execute( "SELECT text FROM lines" )
-    length=0
-    for r in c:
-        length+=len(r[0])
-
-    print("Number of taglines:        {0:6d}".format(taglinesnumber,))
-    print("Number of texts:           {0:6d}   (ø {1:5.2f} per tagline)".format(
-        linesnumber, linesnumber/taglinesnumber))
-    print("Average text length:       {0:8.1f}".format(length/linesnumber,))
-    print("Number of tags:            {0:6d}".format(tagsnumber,))
-    print("Number of tag assignments: {0:6d}   (ø {1:5.2f} per tagline)".format(
-        tagnumber, tagnumber/taglinesnumber))
-    print("Number of authors:         {0:6d}".format(authorsnumber,))
-    print("Used languages:            {0:6d}".format(languages,))
-    exit(0)
+        print("Number of taglines:        {0:6d}".format(stats["tagline count"],))
+        print("Number of texts:           {0:6d}   (ø {1:5.2f} per tagline)".format(
+            stats["line count"], stats["line count"]/stats["tagline count"]))
+        print("Average text length:       {0:8.1f}".format(stats["avg tagline length"],))
+        print("Number of tags:            {0:6d}".format(stats["tag count"],))
+        print("Number of tag assignments: {0:6d}   (ø {1:5.2f} per tagline)".format(
+            stats["tag assignments"], stats["tag assignments"]/stats["tagline count"]))
+        print("Number of authors:         {0:6d}".format(stats["author count"],))
+        print("Used languages:            {0:6d}".format(stats["language count"],))
+        exit(0)
 
 
 class CShellmode: #{{{1 interactive mode
