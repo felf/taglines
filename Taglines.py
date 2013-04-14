@@ -59,19 +59,15 @@ if args.list:
 # ----------------------------------------------------------------
 if args.show_tags:
     db = taglines.Database(args.file);
-    for tag in db.tags( "SELECT text FROM tags ORDER BY text" ):
-        print(row[0])
+    if db:
+        for tag in db.tags(orderByName = True): print(tag)
     exit(0)
 
 
 if args.show_authors:
     db = taglines.Database(args.file);
-    db.open()
-    for row in db.execute( "SELECT name, born, died FROM authors ORDER BY name" ):
-        out=row[0]
-        if row[1] is not None or row[2] is not None:
-            out+=" ("+str(row[1])+"-"+str(row[2])+")"
-        print(out)
+    if db:
+        for author in db.authors(): print(print)
     exit(0)
 
 if args.stats:

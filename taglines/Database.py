@@ -151,3 +151,14 @@ class Database:
             query += " ORDER BY RANDOM() LIMIT 1"
 
         return self.execute(query, (qargs))
+
+    def tags(self, orderByName = True): # {{{1
+        query = "SELECT text FROM tags"
+        if orderByName:
+            query += " ORDER by text"
+        return (r[0] for r in self.execute(query))
+
+    def tags(self, orderByName = True): # {{{1
+        query = "SELECT name, born, died FROM authors ORDER BY name"
+        return (name+(" ({0}-{1})".format(born,died) if born or died else "")
+                for name,born,died in self.execute(query))
