@@ -8,6 +8,9 @@ class Database:
         self.isOpen = False
         self.db = None
         self.filename = None
+        self.filters = {}
+        self.exactAuthorMode = False
+
         if dbfilename: self.setPath(dbfilename)
 
     def __del__(self): # {{{1
@@ -37,7 +40,7 @@ class Database:
         # TODO: handle invalid DB
         return self.isOpen
 
-    def initialiseFile(self, filename):
+    def initialiseFile(self, filename): # {{{1
         """Initialises a new, empty database"""
         if self.isOpen: self.close()
 
@@ -64,9 +67,9 @@ class Database:
             print("\nError while initialising the database file: {0}. Exiting.".format(e.args[0]), file=sys.stderr)
             exit(1)
 
-        def commit(self): # {{{1
-            if self.isOpen:
-                self.db.commit()
+    def commit(self): # {{{1
+        if self.isOpen:
+            self.db.commit()
 
     def close(self): # {{{1
         """ Closes the instance's database connection. """
@@ -77,8 +80,9 @@ class Database:
             self.db = None
             self.isOpen = False
 
-    def execute(self, query, args=None, commit = False):
-        if not self.isOpen: return
+    def execute(self, query, args=None, commit = False): # {{{1
+        if not self.isOpen and not self.open():
+            return False
         c = self.db.cursor()
         if args:
             r = c.execute(query, args)
@@ -87,3 +91,63 @@ class Database:
         if commit and query.lower()[0:6] in ("insert", "update", "delete"):
             self.db.commit()
         return r
+
+    def parseArguments(self, args): # {{{1
+        self.filters = {}
+        self.exactAuthorMode = args.exactauthor
+        self.tagsOrMode = args.ortag
+        if args.author: self.filters["author"] = args.author
+        if args.tag: self.filters["tags"] = args.tag
+        if args.lang: self.filters["language"] = args.lang
+
+    def randomTagline(self): # {{{1
+        c = self.taglines(True)
+        if c:
+            return c.fetchone()[0]
+
+    def taglines(self, random = False): # {{{1
+        """ Returns taglines according to set filters. """
+
+        query="SELECT text FROM lines l, taglines tl"
+        qargs=[]
+
+        author = self.filters.get("author")
+        if author:
+            # TODO: LIKE und c.execute mit ? unter einen Hut bringen
+            if self.exactAuthorMode:
+                query += " JOIN authors a ON a.name=? AND tl.author=a.id"
+            else:
+                query += " JOIN authors a ON a.name LIKE '%{0}%' AND tl.author=a.id"
+            qargs.append(author)
+                #qargs.append(args.author)
+
+        tags = self.filters.get("tags")
+        if tags:
+            qtags=["tag t{0}".format(x) for x in range(len(tags))]
+            if self.tagsOrMode:
+                tagquery=("SELECT t1.tagline FROM tag t1 JOIN tags s1 ON t1.tag=s1.id WHERE (" +
+                        " OR ".join(["s1.text=?"]*len(tags)) + ")")
+            else:
+                qwhere=["t{0}='{1}'".format(x,tags[x]) for x in range(len(tags))]
+                tagquery=("SELECT t1.tagline FROM " +
+                    " JOIN ".join([
+                    "tag t{0}, tags s{0} on s{0}.id=t{0}.tag AND s{0}.text=? AND t1.tagline=t{0}.tagline".format(x+1,tags[x]) for x in range(len(tags))])
+                    )
+            qargs += tags
+        else: tagquery=None
+
+    #    query="SELECT text FROM lines l, taglines tl"
+
+        query += " WHERE tl.id=l.tagline"
+        if tagquery:
+            query += " AND tl.id IN ("+tagquery+")"
+
+        lang = self.filters.get("language")
+        if lang:
+            query += " AND l.language=?"
+            qargs.append(lang)
+
+        if random:
+            query += " ORDER BY RANDOM() LIMIT 1"
+
+        return self.execute(query, (qargs))

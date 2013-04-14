@@ -34,64 +34,32 @@ if args.init:
 
 
 # retrieve one random tagline, then exit {{{1
-if args.random or args.list:
+if args.random:
     db = taglines.Database(args.file)
-    db.open()
-    query="SELECT text FROM lines l, taglines tl"
-    qargs=[]
+    if db:
+        db.parseArguments(args)
+        print(db.randomTagline())
 
-    if args.author:
-        # TODO: LIKE und c.execute mit ? unter einen Hut bringen
-        if args.exactauthor:
-            query+=" JOIN authors a ON a.name=? AND tl.author=a.id"
-            qargs.append(args.author)
-        else:
-            query+=" JOIN authors a ON a.name LIKE '%{0}%' AND tl.author=a.id".format(args.author)
-            #qargs.append(args.author)
+if args.list:
+    db = taglines.Database(args.file)
+    if db:
+        db.parseArguments(args)
 
-    if args.tag:
-        qtags=["tag t{0}".format(x) for x in range(len(args.tag))]
-        if args.ortag:
-            tagquery=("SELECT t1.tagline FROM tag t1 JOIN tags s1 ON t1.tag=s1.id WHERE (" +
-                    " OR ".join(["s1.text=?"]*len(args.tag)) + ")")
-        else:
-            qwhere=["t{0}='{1}'".format(x,args.tag[x]) for x in range(len(args.tag))]
-            tagquery=("SELECT t1.tagline FROM " +
-                " JOIN ".join([
-                "tag t{0}, tags s{0} on s{0}.id=t{0}.tag AND s{0}.text=? AND t1.tagline=t{0}.tagline".format(x+1,args.tag[x]) for x in range(len(args.tag))])
-                )
-        qargs+=args.tag
-    else: tagquery=None
-
-#    query="SELECT text FROM lines l, taglines tl"
-
-    query+=" WHERE tl.id=l.tagline"
-    if tagquery:
-        query+=" AND tl.id IN ("+tagquery+")"
-
-    if args.lang:
-        query+=" AND l.language=?"
-        qargs.append(args.lang)
-
-    if args.random:
-        query+=" ORDER BY RANDOM() LIMIT 1"
-
-    first=True
-    for r in db.execute(query, (qargs)):
-        if first:
-            first=False
-        else:
-            print("%")
-        print(r[0])
-    exit(0)
+        first=True
+        for r in db.taglines():
+            if first:
+                first=False
+            else:
+                print("%")
+            print(r[0])
+        exit(0)
 
 
 # stand-alone DB functions {{{1
 # ----------------------------------------------------------------
 if args.show_tags:
     db = taglines.Database(args.file);
-    db.open()
-    for row in db.execute( "SELECT text FROM tags ORDER BY text" ):
+    for tag in db.tags( "SELECT text FROM tags ORDER BY text" ):
         print(row[0])
     exit(0)
 
