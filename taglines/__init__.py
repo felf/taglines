@@ -6,4 +6,4 @@ from . ArgParser import ArgParser
 from . Database import Database
 from . ShellUI import ShellUI
 
-__version__ = "0.9"
+__version__ = "0.9.1"
