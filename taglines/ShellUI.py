@@ -43,22 +43,24 @@ class ShellUI: #{{{1 interactive mode
                     ]) + "\033[0;0m"
             print(o, end = ending)
 
-    def menu(self, breadcrumbs, choices, prompt = ""):
-        length = 10
-        self.print([("White", " Taglines: ")], False)
-        for level, crumb in enumerate(breadcrumbs):
-            if level>0:
-                print(" > ")
-                length += 3
-            self.print([("White", crumb.upper())])
-            length += len(crumb)
-        print("-" * (length+2), end="\n\n")
+    def menu(self, breadcrumbs, choices, prompt = "", silent = False):
+        if not silent:
+            length = 10
+            self.print([("White", "\n Taglines: ")], False)
+            for level, crumb in enumerate(breadcrumbs):
+                if level>0:
+                    print(" > ", end="")
+                    length += 3
+                self.print([("White", crumb.upper())], False)
+                length += len(crumb)
+            print("\n" + "-" * (length+2), end="\n\n")
 
         keys = [False]
         for choice in choices:
             key, text = choice.split(" - ", 1)
             if key: keys.append(key.lstrip()[0])
-            self.print([("Yellow", key), " - "+text if key else text], False)
+            if not silent:
+                self.print([("Yellow", key), " - "+text if key else text], False)
 
         """ main menu """
         if len(breadcrumbs) == 1:
@@ -67,11 +69,11 @@ class ShellUI: #{{{1 interactive mode
                 key, text = choice.split(" - ")
                 self.print([("Yellow", key), " - "+text], False)
             keys.extend(["h", "q", "Q"])
-            print("\n")
+            print("")
 
         while True:
             if not prompt: prompt = breadcrumbs[-1] + " menu choice: "
-            i = self.getInput(prompt)
+            i = self.getInput("\n"+prompt)
             if i == "": continue
             if i in keys: return i
             self.print([("Red", "Invalid choice.")])
@@ -457,7 +459,7 @@ class ShellUI: #{{{1 interactive mode
         while True:
             bc = ["Main"]
             choice = self.menu(bc,
-                    ["   a - Author menu    ", "t - Tag menu    ", "l - taglines menu\n"],
+                    ["   a - Author menu    ", "t - Tag menu    ", "l - taglines menu"],
                     "By your command: ")
             if choice==False or choice=="q" or choice=="Q":
                 self.exitTaglines()
