@@ -318,13 +318,13 @@ class ShellUI: #{{{1 interactive mode
                     r = c.fetchone()
                     q+=" ORDER BY t.id LIMIT {0},5".format(max(0,r[0]-5))
                     print("LAST 5 TAGLINES")
-                elif choice=="L":
+                elif choice == "L":
                     q+=" ORDER BY t.id"
                     print("ALL TAGLINES")
-                elif choice.isdecimal():
-                    id=int(choice)
-                    q+=" WHERE t.id='{0}'".format(id)
-                else: continue
+                else:
+                    id = int(choice)
+                    q += " WHERE t.id='{0}'".format(id)
+
                 c = self.db.execute( q )
                 anzahl = -1
                 for index, r in enumerate(c):
