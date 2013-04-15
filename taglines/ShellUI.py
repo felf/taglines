@@ -68,14 +68,16 @@ class ShellUI: #{{{1 interactive mode
             for choice in ["   q / ^d - quit to parent menu   ", "Q / ^c - quit program   ", "h - show menu help"]:
                 key, text = choice.split(" - ")
                 self.print([("Yellow", key), " - "+text], False)
-            keys.extend(["h", "q", "Q"])
+            keys.extend(["h", "q"])
             print("")
 
         while True:
             if not prompt: prompt = breadcrumbs[-1] + " menu choice: "
             i = self.getInput("\n"+prompt)
             if i == "": continue
-            if i in keys: return i
+            elif i=="Q":
+                self.exitTaglines()
+            elif i in keys: return i
             self.print([("Red", "Invalid choice.")])
 
 
@@ -128,20 +130,18 @@ class ShellUI: #{{{1 interactive mode
             print("bye")
             sys.exit();
 
-    def authorMenu(self): #{{{1
+    def authorMenu(self, breadcrumbs): #{{{1
         """The menu with which to alter author information."""
-        i="h"
-        while True:
-            print()
-            if i=="h":
-                print("a - add author       l - list all authors")
-                print("d - delete author    c - set current author for new taglines")
-                print("h - help")
-                print("q - quit menu        Q - quit Taglines")
-            i=self.getInput("AUTHOR menu selection: ")
 
-            if not i or i=="q": return
-            elif i=="l":
+        choice = "h"
+        while True:
+            choice = self.menu(breadcrumbs+["Author"],
+                   ["a - add author      ", "l - list all authors\n",
+                    "d - delete author   ", "c - set current author for new taglines\n"],
+                    silent = choice != "h")
+
+            if not choice or choice=="q": return
+            elif choice=="l":
                 print("\nALL AUTHORS (sorted by name):")
                 c = self.db.execute( "SELECT id, name, born, died FROM authors ORDER BY name" )
                 for row in c:
@@ -149,7 +149,7 @@ class ShellUI: #{{{1 interactive mode
                     if row[2] is not None or row[3] is not None:
                         out+=" ("+str(row[2])+"-"+str(row[3])+")"
                     print(out)
-            elif i=="a":
+            elif choice=="a":
                 name=self.getInput("\nName (empty to abort): ")
                 # TODO: validate input
                 if name!="":
@@ -170,7 +170,7 @@ class ShellUI: #{{{1 interactive mode
                     except Exception as e:
                         print("Error while adding author:", e.args[0])
 
-            elif i=="d":
+            elif choice=="d":
                 id=self.getInput("\nID to delete (empty to abort): ")
                 if id:
                     try:
@@ -181,7 +181,7 @@ class ShellUI: #{{{1 interactive mode
                         print("Error: no integer ID.")
                     except Exception as e:
                         print("Error while deleting author: {0}.".format(e.args[0],))
-            elif i=="c":
+            elif choice=="c":
                 id=self.getInput("\nID of new current author (empty to abort, 'u' to unset): ")
                 if id:
                     if id=="u":
@@ -195,9 +195,6 @@ class ShellUI: #{{{1 interactive mode
                                 self.currentAuthor=int(id)
                         except ValueError:
                             print("Error: no integer ID.")
-            elif i=="Q":
-                self.exitTaglines()
-            else: i="h"
 
     def tagMenu(self): #{{{1
         """The menu with which to alter tag information."""
@@ -464,7 +461,7 @@ class ShellUI: #{{{1 interactive mode
             if choice==False or choice=="q" or choice=="Q":
                 self.exitTaglines()
             if choice=="a":
-                self.authorMenu()
+                self.authorMenu(bc)
             elif choice=="t":
                 self.tagMenu()
             elif choice=="l":
