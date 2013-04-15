@@ -81,7 +81,8 @@ class ShellUI: #{{{1 interactive mode
         """ This is a common function to get input and catch Ctrl+C/D. """
         while True:
             try:
-                i = input(text)
+                self.print([("green", text)], False)
+                i = input()
                 if nonempty and not i:
                     print("Empty string not allowed here.")
                 else:
