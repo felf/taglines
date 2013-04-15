@@ -43,7 +43,7 @@ class ShellUI: #{{{1 interactive mode
                     ]) + "\033[0;0m"
             print(o, end = ending)
 
-    def menu(self, breadcrumbs, choices, prompt = "", silent = False, allowInts = False):
+    def menu(self, breadcrumbs, choices, prompt = "", silent = False, allowInts = False): # {{{1
         if not silent:
             length = 10
             self.print([("White", "\n Taglines: ")], False)
@@ -65,18 +65,25 @@ class ShellUI: #{{{1 interactive mode
         """ main menu """
         if len(breadcrumbs) == 1:
             print("\nAlso available in all menus:")
-            for choice in ["   q / ^d - quit to parent menu   ", "Q / ^c - quit program   ", "h - show menu help"]:
+            for choice in ["   q/^d - quit to parent menu   ", "Q/^c - quit program   ", "h/? - show menu help"]:
                 key, text = choice.split(" - ")
                 self.print([("Yellow", key), " - "+text], False)
             print("")
 
-        keys.extend(["h", "q"])
+        keys.extend(["h", "?", "q"])
         while True:
             if not prompt: prompt = breadcrumbs[-1] + " menu choice: "
-            i = self.getInput("\n"+prompt)
-            if i == "": continue
-            elif i=="Q":
+            try:
+                i = self.getInput("\n"+prompt)
+            except KeyboardInterrupt:
+                i = "Q"
+
+            if i == False: return "q"
+            elif i == "?": return "h"
+            elif i == "Q":
                 self.exitTaglines()
+                continue
+            elif i == "": continue
             elif i in keys: return i
             elif allowInts and i.isdecimal(): return int(i)
             self.print([("Red", "Invalid choice.")])
@@ -94,6 +101,7 @@ class ShellUI: #{{{1 interactive mode
                     return i
             # Ctrl+C
             except KeyboardInterrupt:
+                print()
                 self.exitTaglines()
             # Ctrl+D
             except EOFError:
@@ -141,7 +149,7 @@ class ShellUI: #{{{1 interactive mode
                     "d - delete author   ", "c - set current author for new taglines\n"],
                     silent = choice != "h")
 
-            if not choice or choice=="q": return
+            if choice=="q": return
             elif choice=="l":
                 print("\nALL AUTHORS (sorted by name):")
                 c = self.db.execute( "SELECT id, name, born, died FROM authors ORDER BY name" )
@@ -150,6 +158,7 @@ class ShellUI: #{{{1 interactive mode
                     if row[2] is not None or row[3] is not None:
                         out+=" ("+str(row[2])+"-"+str(row[3])+")"
                     print(out)
+
             elif choice=="a":
                 name=self.getInput("\nName (empty to abort): ")
                 # TODO: validate input
@@ -182,6 +191,7 @@ class ShellUI: #{{{1 interactive mode
                         print("Error: no integer ID.")
                     except Exception as e:
                         print("Error while deleting author: {0}.".format(e.args[0],))
+
             elif choice=="c":
                 id=self.getInput("\nID of new current author (empty to abort, 'u' to unset): ")
                 if id:
@@ -214,13 +224,15 @@ class ShellUI: #{{{1 interactive mode
             else:
                 id=None
 
-            if not choice or choice=="q": return
+            if choice=="q": return
+
             elif choice=="l":
                 print("\nALL TAGS (sorted by text):")
                 c = self.db.execute( "SELECT id, text FROM tags ORDER BY text" )
                 for row in c:
                     out="{0:>4}{1}: {2}".format(row[0], '*' if row[0] in self.currentTags else ' ', row[1])
                     print(out)
+
             elif choice=="a":
                 text=self.getInput("\nTag text (empty to abort): ")
                 # TODO: validate input
@@ -296,7 +308,8 @@ class ShellUI: #{{{1 interactive mode
                     "d - delete tagline         ", "T - go to tag menu\n"],
                     silent = choice != "h", allowInts = True)
 
-            if not choice or choice=="q": return
+            if choice=="q": return
+
             elif choice in ("l", "L") or type(choice) is int:
                 print()
                 q="SELECT t.id, a.name, source, remark, date FROM taglines t LEFT JOIN authors a ON t.author=a.id"
@@ -337,6 +350,7 @@ class ShellUI: #{{{1 interactive mode
                             t[3] if t[3] else ""))
                 if (anzahl==-1):
                     print("No match found.")
+
             elif choice=="a":
                 print("\nADD NEW TAGLINE")
                 print("Current author:", end=' ')
@@ -422,7 +436,8 @@ class ShellUI: #{{{1 interactive mode
                                 break
 
             elif choice=="e":
-                print("TODO")
+                print("TODO :)")
+
             elif choice=="d":
                 id=self.getInput("\nID to delete (empty to abort): ")
                 if id!="":
@@ -441,6 +456,7 @@ class ShellUI: #{{{1 interactive mode
 
             elif choice=="A":
                 self.authorMenu()
+
             elif choice=="T":
                 self.tagMenu()
 
@@ -450,7 +466,7 @@ class ShellUI: #{{{1 interactive mode
             choice = self.menu(bc,
                     ["   a - Author menu    ", "t - Tag menu    ", "l - taglines menu"],
                     "By your command: ")
-            if choice==False or choice=="q" or choice=="Q":
+            if choice=="q":
                 self.exitTaglines()
             if choice=="a":
                 self.authorMenu(bc)
