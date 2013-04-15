@@ -1,4 +1,5 @@
 import taglines
+import sys
 
 class ShellUI: #{{{1 interactive mode
     """ Shellmode class
@@ -11,6 +12,70 @@ class ShellUI: #{{{1 interactive mode
         self.currentTags=[]
         self.db = db
         self.db.open()
+
+    def colorstring(self, color): # {{{1
+        """ Return terminal escape sequences for colourful output. """
+        _colors = {
+            'black':  '30',
+            'red':    '31',
+            'green':  '32',
+            'yellow': '33',
+            'blue':   '34',
+            'purple': '35',
+            'cyan':   '36',
+            'white':  '37'
+        }
+        return "\033[{0};{1}m".format(
+                "0" if color[0].islower() else "1",
+                _colors.get(color.lower(), "0"))
+
+    def print(self, what, newline = True): # {{{1
+        """ Print a string or a list of coloured strings. """
+        ending = "\n" if newline else ""
+        if type(what) is str:
+            print(what, end = ending)
+        else:
+            o = ""
+            for part in what:
+                o += "".join([
+                    self.colorstring(part[0]) + part[1] + "\033[0;0m"
+                        if type(part) is tuple else part
+                    ]) + "\033[0;0m"
+            print(o, end = ending)
+
+    def menu(self, breadcrumbs, choices, prompt = ""):
+        length = 10
+        self.print([("White", " Taglines: ")], False)
+        for level, crumb in enumerate(breadcrumbs):
+            if level>0:
+                print(" > ")
+                length += 3
+            self.print([("White", crumb.upper())])
+            length += len(crumb)
+        print("-" * (length+2), end="\n\n")
+
+        keys = [False]
+        for choice in choices:
+            key, text = choice.split(" - ", 1)
+            if key: keys.append(key.lstrip()[0])
+            self.print([("Yellow", key), " - "+text if key else text], False)
+
+        """ main menu """
+        if len(breadcrumbs) == 1:
+            print("\nAlso available in all menus:")
+            for choice in ["   q / ^d - quit to parent menu   ", "Q / ^c - quit program   ", "h - show menu help"]:
+                key, text = choice.split(" - ")
+                self.print([("Yellow", key), " - "+text], False)
+            keys.extend(["h", "q", "Q"])
+            print("\n")
+
+        while True:
+            if not prompt: prompt = breadcrumbs[-1] + " menu choice: "
+            i = self.getInput(prompt)
+            if i == "": continue
+            if i in keys: return i
+            self.print([("Red", "Invalid choice.")])
+
 
     def getInput(self, text="", nonempty=False): #{{{1
         """ This is a common function to get input and catch Ctrl+C/D. """
@@ -389,20 +454,17 @@ class ShellUI: #{{{1 interactive mode
 
     def mainMenu(self): #{{{1
         while True:
-            print("\nBy your command...")
-            print("a - Author menu")
-            print("t - Tag menu")
-            print("l - taglines menu")
-            print("h - show key help (available in every menu)")
-            print("q - quit         Q - quit Taglines (in all submenus)")
-            i=self.getInput("MAIN menu selection: ")
-            if i==False or i=="q" or i=="Q":
+            bc = ["Main"]
+            choice = self.menu(bc,
+                    ["   a - Author menu    ", "t - Tag menu    ", "l - taglines menu\n"],
+                    "By your command: ")
+            if choice==False or choice=="q" or choice=="Q":
                 self.exitTaglines()
-            if i=="a":
+            if choice=="a":
                 self.authorMenu()
-            elif i=="t":
+            elif choice=="t":
                 self.tagMenu()
-            elif i=="l":
+            elif choice=="l":
                 self.taglinesMenu()
         #}}}2
     #}}}1
