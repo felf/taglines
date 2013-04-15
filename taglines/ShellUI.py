@@ -43,7 +43,7 @@ class ShellUI: #{{{1 interactive mode
                     ]) + "\033[0;0m"
             print(o, end = ending)
 
-    def menu(self, breadcrumbs, choices, prompt = "", silent = False):
+    def menu(self, breadcrumbs, choices, prompt = "", silent = False, allowInts = False):
         if not silent:
             length = 10
             self.print([("White", "\n Taglines: ")], False)
@@ -78,6 +78,7 @@ class ShellUI: #{{{1 interactive mode
             elif i=="Q":
                 self.exitTaglines()
             elif i in keys: return i
+            elif allowInts and i.isdecimal(): return int(i)
             self.print([("Red", "Invalid choice.")])
 
 
