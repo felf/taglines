@@ -284,33 +284,32 @@ class ShellUI: #{{{1 interactive mode
                             self.currentTags.append(id)
                             print("Tag '{0}' enabled.".format(row[1]))
 
-    def taglinesMenu(self): #{{{1
+    def taglinesMenu(self, breadcrumbs): #{{{1
         """The menu with which to alter the actual taglines."""
-        i="h"
-        while True:
-            print()
-            if i=="h":
-                print("l - list last 5 taglines    L - list all taglines")
-                print("a - add new tagline         any number - show tagline of that ID")
-                print("e - edit tagline            A - go to author menu")
-                print("d - delete tagline          T - go to tag menu")
-                print("q - quit menu               Q - quit Taglines")
-            i=self.getInput("TAGLINES menu selection: ")
 
-            if not i or i=="q": return
-            elif i in ("l", "L") or i.isdecimal():
+        choice ="h"
+        while True:
+            choice = self.menu(breadcrumbs+["Tagline"],
+                   ["l - list last 5 taglines   ", "L - list all taglines\n",
+                    "a - add new tagline        ", "any number - show tagline of that ID\n",
+                    "e - edit tagline           ", "A - go to author menu\n",
+                    "d - delete tagline         ", "T - go to tag menu\n"],
+                    silent = choice != "h", allowInts = True)
+
+            if not choice or choice=="q": return
+            elif choice in ("l", "L") or type(choice) is int:
                 print()
                 q="SELECT t.id, a.name, source, remark, date FROM taglines t LEFT JOIN authors a ON t.author=a.id"
-                if i=="l":
+                if choice=="l":
                     c = self.db.execute("SELECT COUNT(id) FROM taglines")
                     r = c.fetchone()
                     q+=" ORDER BY t.id LIMIT {0},5".format(max(0,r[0]-5))
                     print("LAST 5 TAGLINES")
-                elif i=="L":
+                elif choice=="L":
                     q+=" ORDER BY t.id"
                     print("ALL TAGLINES")
-                elif i.isdecimal():
-                    id=int(i)
+                elif choice.isdecimal():
+                    id=int(choice)
                     q+=" WHERE t.id='{0}'".format(id)
                 else: continue
                 c = self.db.execute( q )
@@ -338,7 +337,7 @@ class ShellUI: #{{{1 interactive mode
                             t[3] if t[3] else ""))
                 if (anzahl==-1):
                     print("No match found.")
-            elif i=="a":
+            elif choice=="a":
                 print("\nADD NEW TAGLINE")
                 print("Current author:", end=' ')
                 if self.currentAuthor is None: print("None")
@@ -360,7 +359,8 @@ class ShellUI: #{{{1 interactive mode
                 # TODO: validate date
                 texts={}
 
-                while True:
+                i = "h"
+                while i != "q":
                     print("\n  ADD ITEMS TO TAGLINE")
                     print("  a - add an item            w - done, save lines to database")
                     print("  m - manage entered items   q - quit to previous menu, discarding changes")
@@ -421,9 +421,9 @@ class ShellUI: #{{{1 interactive mode
                             if self.askYesNo("    This will discard your changes. Continue?", "n") == "y":
                                 break
 
-            elif i=="e":
+            elif choice=="e":
                 print("TODO")
-            elif i=="d":
+            elif choice=="d":
                 id=self.getInput("\nID to delete (empty to abort): ")
                 if id!="":
                     try:
@@ -439,13 +439,10 @@ class ShellUI: #{{{1 interactive mode
                     except:
                         print("Error while deleting tagline.")
 
-            elif i=="A":
+            elif choice=="A":
                 self.authorMenu()
-            elif i=="T":
+            elif choice=="T":
                 self.tagMenu()
-            elif i=="Q":
-                self.exitTaglines()
-            else: i="h"
 
     def mainMenu(self): #{{{1
         while True:
@@ -460,6 +457,6 @@ class ShellUI: #{{{1 interactive mode
             elif choice=="t":
                 self.tagMenu(bc)
             elif choice=="l":
-                self.taglinesMenu()
+                self.taglinesMenu(bc)
         #}}}2
     #}}}1
