@@ -68,9 +68,9 @@ class ShellUI: #{{{1 interactive mode
             for choice in ["   q / ^d - quit to parent menu   ", "Q / ^c - quit program   ", "h - show menu help"]:
                 key, text = choice.split(" - ")
                 self.print([("Yellow", key), " - "+text], False)
-            keys.extend(["h", "q"])
             print("")
 
+        keys.extend(["h", "q"])
         while True:
             if not prompt: prompt = breadcrumbs[-1] + " menu choice: "
             i = self.getInput("\n"+prompt)
