@@ -43,8 +43,8 @@ class ShellUI: #{{{1 interactive mode
                     ]) + "\033[0;0m"
             print(o, end = ending)
 
-    def menu(self, breadcrumbs, choices, prompt = "", silent = False, allowInts = False): # {{{1
-        if not silent:
+    def menu(self, breadcrumbs, choices = None, prompt = "", silent = False, noHeader = False, allowInts = False): # {{{1
+        if not (silent or noHeader):
             length = 10
             self.print([("White", "\n Taglines: ")], False)
             for level, crumb in enumerate(breadcrumbs):
@@ -54,6 +54,8 @@ class ShellUI: #{{{1 interactive mode
                 self.print([("White", crumb.upper())], False)
                 length += len(crumb)
             print("\n" + "-" * (length+2), end="\n\n")
+        # no choices given -> just output the headline
+        if not choices: return
 
         keys = [False]
         for choice in choices:
@@ -355,88 +357,7 @@ class ShellUI: #{{{1 interactive mode
                     print("No match found.")
 
             elif choice=="a":
-                print("\nADD NEW TAGLINE")
-                print("Current author:", end=' ')
-                if self.currentAuthor is None: print("None")
-                else:
-                    c = self.db.execute( "SELECT name FROM authors WHERE id=?", (self.currentAuthor,) )
-                    print(c.fetchone()[0])
-                print("Current Tags:  ", end=' ')
-                if len(self.currentTags)==0: print("None")
-                else:
-                    tags=",".join([str(t) for t in self.currentTags])
-                    c = self.db.execute( "SELECT text FROM tags WHERE id IN ("+tags+") ORDER BY text" )
-                    tags=c.fetchall()
-                    tags=[t[0] for t in tags]
-                    print(", ".join(tags))
-                print("Optional information:")
-                source=self.getInput("  Source: ")
-                remark=self.getInput("  Remark: ")
-                when=self.getInput("  Date (yyyy-mm-dd): ")
-                # TODO: validate date
-                texts={}
-
-                tchoice = "h"
-                while tchoice != "q":
-                    tchoice = self.menu(breadcrumbs+["Edit tagline"],
-                           ["a - add an item            ", "w - save lines to database and quit menu\n",
-                            "m - manage entered items   ", "q - quit to previous menu, discarding changes\n"],
-                            silent = tchoice != "h")
-
-                    if tchoice=="a":
-                        print("    ENTER A NEW ITEM")
-                        language = self.getInput("    Language (ISO code): ", nonempty = True)
-                        if not language: continue
-                        if texts.get(language):
-                            if self.askYesNo("    There is already an item with this language. Overwrite it?") == "n":
-                                continue
-                        print("    Text ('r'=restart, 'c'=correct last line, 'a'=abort, 'f' or two empty lines=finish:")
-                        print("".join(["         {0}".format(x) for x in range(1,9)]))
-                        print("1234567890"*8)
-                        lines=[]
-                        while True:
-                            line=self.getInput()
-                            if line=="r":
-                                lines=[]
-                                print("--> Input restarted.")
-                            elif line=="c":
-                                if lines:
-                                    lines.pop()
-                                print("--> Last line deleted.")
-                            elif line=="f" or line=="" and len(lines)>0 and lines[-1]=="":
-                                texts[language] = "\n".join(lines).strip()
-                                break
-                            # special case for importing from a text file via copy+paste more easily
-                            elif line=="---":
-                                texts["de"] = "\n".join(lines).strip()
-                                language="en"
-                                lines=[]
-                            elif line=="a": break
-                            else: lines.append(line)
-                    elif tchoice=="m":
-                        for lang, text in texts.items():
-                            print("\nLanguage: {0}\n{1}".format(lang, text))
-                        lang = self.getInput("\n   Language to delete (empty to do nothing): ")
-                        if texts.pop(lang, None):
-                            print("Item with language '{0}' deleted.".format(lang))
-                    elif tchoice=="w":
-                        c = self.db.execute("INSERT INTO taglines (author,source,remark,date) values (?,?,?,?)", (
-                            self.currentAuthor if self.currentAuthor else None,
-                            source if source!="" else None,
-                            remark if remark!="" else None,
-                            when if when!="" else None), commit = True)
-                        id = c.lastrowid
-                        for lang, text in texts.items():
-                            self.db.execute("INSERT INTO lines (tagline, date, language, text) values (?,?,?,?)",
-                                    (id, date.today().isoformat(), lang, text))
-                        for t in self.currentTags:
-                            self.db.execute("INSERT INTO tag (tag, tagline) values (?,?)", (t, id))
-                        self.db.commit()
-                        break
-                    elif tchoice=="q":
-                        if texts:
-                            if self.askYesNo("    This will discard your changes. Continue?", "n") == "y":
-                                break
+                self.taglineEditMenu(breadcrumbs)
 
             elif choice=="e":
                 print("TODO :)")
@@ -462,6 +383,103 @@ class ShellUI: #{{{1 interactive mode
 
             elif choice=="T":
                 self.tagMenu(breadcrumbs)
+
+    def taglineEditMenu(self, breadcrumbs, id = None): # {{{1
+        """ Edit the content of a tagline or add a new one. """
+
+        breadcrumbs = breadcrumbs[:] + ["Edit tagline" if id else "New tagline"]
+        choice = "h"
+
+        self.menu(breadcrumbs)
+
+        if not id:
+            print("Current author:", end=' ')
+            if self.currentAuthor is None: print("None")
+            else:
+                c = self.db.execute( "SELECT name FROM authors WHERE id=?", (self.currentAuthor,) )
+                print(c.fetchone()[0])
+            print("Current Tags:  ", end=' ')
+            if len(self.currentTags)==0: print("None")
+            else:
+                tags=",".join([str(t) for t in self.currentTags])
+                c = self.db.execute( "SELECT text FROM tags WHERE id IN ("+tags+") ORDER BY text" )
+                tags=c.fetchall()
+                tags=[t[0] for t in tags]
+                print(", ".join(tags))
+            self.print([("White", "\nOptional information:")])
+            source = self.getInput("  Tagline source: ")
+            remark = self.getInput("  Tagline remark: ")
+            when   = self.getInput("  Tagline date (yyyy-mm-dd): ")
+            print()
+        else:
+            # TODO: get source, remark, when from database for given id
+            pass
+
+        noHeader = True
+        # TODO: validate date
+        texts = {}
+
+        while choice != "q":
+            choice = self.menu(breadcrumbs,
+                   ["a - add an item            ", "w - save lines to database and quit menu\n",
+                    "m - manage entered items   ", "q - quit to previous menu, discarding changes\n"],
+                    silent = choice != "h", noHeader = noHeader)
+            noHeader = False
+
+            if choice=="a":
+                print("    ENTER A NEW ITEM")
+                language = self.getInput("    Language (ISO code): ", nonempty = True)
+                if not language: continue
+                if texts.get(language):
+                    if self.askYesNo("    There is already an item with this language. Overwrite it?") == "n":
+                        continue
+                print("    Text ('r'=restart, 'c'=correct last line, 'a'=abort, 'f' or two empty lines=finish:")
+                print("".join(["         {0}".format(x) for x in range(1,9)]))
+                print("1234567890"*8)
+                lines=[]
+                while True:
+                    line=self.getInput()
+                    if line=="r":
+                        lines=[]
+                        print("--> Input restarted.")
+                    elif line=="c":
+                        if lines:
+                            lines.pop()
+                        print("--> Last line deleted.")
+                    elif line=="f" or line=="" and len(lines)>0 and lines[-1]=="":
+                        texts[language] = "\n".join(lines).strip()
+                        break
+                    # special case for importing from a text file via copy+paste more easily
+                    elif line=="---":
+                        texts["de"] = "\n".join(lines).strip()
+                        language="en"
+                        lines=[]
+                    elif line=="a": break
+                    else: lines.append(line)
+            elif choice=="m":
+                for lang, text in texts.items():
+                    print("\nLanguage: {0}\n{1}".format(lang, text))
+                lang = self.getInput("\n   Language to delete (empty to do nothing): ")
+                if texts.pop(lang, None):
+                    print("Item with language '{0}' deleted.".format(lang))
+            elif choice=="w":
+                c = self.db.execute("INSERT INTO taglines (author,source,remark,date) values (?,?,?,?)", (
+                    self.currentAuthor if self.currentAuthor else None,
+                    source if source!="" else None,
+                    remark if remark!="" else None,
+                    when if when!="" else None), commit = True)
+                id = c.lastrowid
+                for lang, text in texts.items():
+                    self.db.execute("INSERT INTO lines (tagline, date, language, text) values (?,?,?,?)",
+                            (id, date.today().isoformat(), lang, text))
+                for t in self.currentTags:
+                    self.db.execute("INSERT INTO tag (tag, tagline) values (?,?)", (t, id))
+                self.db.commit()
+                break
+            elif choice=="q":
+                if texts:
+                    if self.askYesNo("    This will discard your changes. Continue?", "n") != "y":
+                        choice = ""
 
     def mainMenu(self): #{{{1
         while True:
