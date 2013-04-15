@@ -142,9 +142,10 @@ class ShellUI: #{{{1 interactive mode
     def authorMenu(self, breadcrumbs): #{{{1
         """The menu with which to alter author information."""
 
+        breadcrumbs = breadcrumbs[:]+["Author"]
         choice = "h"
         while True:
-            choice = self.menu(breadcrumbs+["Author"],
+            choice = self.menu(breadcrumbs,
                    ["a - add author      ", "l - list all authors\n",
                     "d - delete author   ", "c - set current author for new taglines\n"],
                     silent = choice != "h")
@@ -210,9 +211,10 @@ class ShellUI: #{{{1 interactive mode
     def tagMenu(self, breadcrumbs): #{{{1
         """The menu with which to alter tag information."""
 
+        breadcrumbs = breadcrumbs[:]+["Tag"]
         choice = "h"
         while True:
-            choice = self.menu(breadcrumbs+["Tag"],
+            choice = self.menu(breadcrumbs,
                    ["a - add tag      ", "l - list all tags\n",
                     "d - delete tag   ", "t - toggle tag (or simply enter the ID)\n"],
                     silent = choice != "h", allowInts = True)
@@ -299,9 +301,10 @@ class ShellUI: #{{{1 interactive mode
     def taglinesMenu(self, breadcrumbs): #{{{1
         """The menu with which to alter the actual taglines."""
 
+        breadcrumbs = breadcrumbs[:]+["Tagline"]
         choice ="h"
         while True:
-            choice = self.menu(breadcrumbs+["Tagline"],
+            choice = self.menu(breadcrumbs,
                    ["l - list last 5 taglines   ", "L - list all taglines\n",
                     "a - add new tagline        ", "any number - show tagline of that ID\n",
                     "e - edit tagline           ", "A - go to author menu\n",
@@ -316,7 +319,7 @@ class ShellUI: #{{{1 interactive mode
                 if choice=="l":
                     c = self.db.execute("SELECT COUNT(id) FROM taglines")
                     r = c.fetchone()
-                    q+=" ORDER BY t.id LIMIT {0},5".format(max(0,r[0]-5))
+                    q += " ORDER BY t.id LIMIT {0},5".format(max(0,r[0]-5))
                     print("LAST 5 TAGLINES")
                 elif choice == "L":
                     q+=" ORDER BY t.id"
@@ -455,10 +458,10 @@ class ShellUI: #{{{1 interactive mode
                         print("Error while deleting tagline.")
 
             elif choice=="A":
-                self.authorMenu()
+                self.authorMenu(breadcrumbs)
 
             elif choice=="T":
-                self.tagMenu()
+                self.tagMenu(breadcrumbs)
 
     def mainMenu(self): #{{{1
         while True:
