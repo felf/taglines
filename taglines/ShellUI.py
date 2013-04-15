@@ -197,33 +197,31 @@ class ShellUI: #{{{1 interactive mode
                         except ValueError:
                             print("Error: no integer ID.")
 
-    def tagMenu(self): #{{{1
+    def tagMenu(self, breadcrumbs): #{{{1
         """The menu with which to alter tag information."""
-        i="h"
+
+        choice = "h"
         while True:
-            print()
-            if i=="h":
-                print("a - add tag       l - list all tags")
-                print("d - delete tag    t - toggle tag (or simply enter the ID)")
-                print("h - help")
-                print("q - quit menu     Q - quit Taglines")
-            i=self.getInput("TAGS menu selection: ")
+            choice = self.menu(breadcrumbs+["Tag"],
+                   ["a - add tag      ", "l - list all tags\n",
+                    "d - delete tag   ", "t - toggle tag (or simply enter the ID)\n"],
+                    silent = choice != "h", allowInts = True)
 
             # Abkürzung: statt "t" und dann ID eingeben einfach nur die ID
-            try:
-                id=int(i)
-                i="t"
-            except ValueError:
+            if type(choice) is int:
+                id = choice
+                choice = "t"
+            else:
                 id=None
 
-            if not i or i=="q": return
-            elif i=="l":
+            if not choice or choice=="q": return
+            elif choice=="l":
                 print("\nALL TAGS (sorted by text):")
                 c = self.db.execute( "SELECT id, text FROM tags ORDER BY text" )
                 for row in c:
                     out="{0:>4}{1}: {2}".format(row[0], '*' if row[0] in self.currentTags else ' ', row[1])
                     print(out)
-            elif i=="a":
+            elif choice=="a":
                 text=self.getInput("\nTag text (empty to abort): ")
                 # TODO: validate input
                 if text:
@@ -235,7 +233,7 @@ class ShellUI: #{{{1 interactive mode
                     except Exception as e:
                         print("Error while adding tag: {0}.".format(e.args[0]))
 
-            elif i=="d":
+            elif choice=="d":
                 id=self.getInput("\nID to delete (empty to abort): ")
                 if id:
                     try:
@@ -264,7 +262,7 @@ class ShellUI: #{{{1 interactive mode
                     except Exception as e:
                         print("Error while deleting tag: {0}.".format(e.args[0]))
 
-            elif i=="t":
+            elif choice=="t":
                 if type(id) is not int:
                     id=self.getInput("\nID to toggle (empty to abort): ")
                     if id:
@@ -285,10 +283,6 @@ class ShellUI: #{{{1 interactive mode
                         else:
                             self.currentTags.append(id)
                             print("Tag '{0}' enabled.".format(row[1]))
-
-            elif i=="Q":
-                self.exitTaglines()
-            else: i="h"
 
     def taglinesMenu(self): #{{{1
         """The menu with which to alter the actual taglines."""
@@ -464,7 +458,7 @@ class ShellUI: #{{{1 interactive mode
             if choice=="a":
                 self.authorMenu(bc)
             elif choice=="t":
-                self.tagMenu()
+                self.tagMenu(bc)
             elif choice=="l":
                 self.taglinesMenu()
         #}}}2
