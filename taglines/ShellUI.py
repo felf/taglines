@@ -376,14 +376,14 @@ class ShellUI: #{{{1 interactive mode
                 # TODO: validate date
                 texts={}
 
-                i = "h"
-                while i != "q":
-                    print("\n  ADD ITEMS TO TAGLINE")
-                    print("  a - add an item            w - done, save lines to database")
-                    print("  m - manage entered items   q - quit to previous menu, discarding changes")
-                    i=self.getInput("  ")
+                tchoice = "h"
+                while tchoice != "q":
+                    tchoice = self.menu(breadcrumbs+["Edit tagline"],
+                           ["a - add an item            ", "w - save lines to database and quit menu\n",
+                            "m - manage entered items   ", "q - quit to previous menu, discarding changes\n"],
+                            silent = tchoice != "h")
 
-                    if i=="a":
+                    if tchoice=="a":
                         print("    ENTER A NEW ITEM")
                         language = self.getInput("    Language (ISO code): ", nonempty = True)
                         if not language: continue
@@ -413,13 +413,13 @@ class ShellUI: #{{{1 interactive mode
                                 lines=[]
                             elif line=="a": break
                             else: lines.append(line)
-                    elif i=="m":
+                    elif tchoice=="m":
                         for lang, text in texts.items():
                             print("\nLanguage: {0}\n{1}".format(lang, text))
                         lang = self.getInput("\n   Language to delete (empty to do nothing): ")
                         if texts.pop(lang, None):
                             print("Item with language '{0}' deleted.".format(lang))
-                    elif i=="w":
+                    elif tchoice=="w":
                         c = self.db.execute("INSERT INTO taglines (author,source,remark,date) values (?,?,?,?)", (
                             self.currentAuthor if self.currentAuthor else None,
                             source if source!="" else None,
@@ -433,7 +433,7 @@ class ShellUI: #{{{1 interactive mode
                             self.db.execute("INSERT INTO tag (tag, tagline) values (?,?)", (t, id))
                         self.db.commit()
                         break
-                    elif i=="q":
+                    elif tchoice=="q":
                         if texts:
                             if self.askYesNo("    This will discard your changes. Continue?", "n") == "y":
                                 break
