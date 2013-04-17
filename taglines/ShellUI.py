@@ -37,6 +37,8 @@ class ShellUI: #{{{1 interactive mode
         if type(what) is str:
             print(what, end = ending)
         else:
+            if type(what) is tuple:
+                what = [what]
             o = ""
             for part in what:
                 o += "".join([
@@ -47,17 +49,17 @@ class ShellUI: #{{{1 interactive mode
 
     def printWarning(self, what): # {{{1
         """ Convenience function to print a red warning message. """
-        self.print([("Red", what)])
+        self.print(("Red", what))
 
     def menu(self, breadcrumbs, choices = None, prompt = "", silent = False, noHeader = False, allowInts = False): # {{{1
         if not (silent or noHeader):
             length = 10
-            self.print([("White", "\n Taglines: ")], False)
+            self.print(("White", "\n Taglines: "), False)
             for level, crumb in enumerate(breadcrumbs):
                 if level>0:
                     print(" > ", end="")
                     length += 3
-                self.print([("White", crumb.upper())], False)
+                self.print(("White", crumb.upper()), False)
                 length += len(crumb)
             print("\n" + "-" * (length+2), end="\n\n")
         # no choices given -> just output the headline
@@ -94,14 +96,14 @@ class ShellUI: #{{{1 interactive mode
             elif i == "": continue
             elif i in keys: return i
             elif allowInts and i.isdecimal(): return int(i)
-            self.print([("Red", "Invalid choice.")])
+            self.printWarning("Invalid choice.")
 
 
     def getInput(self, text="", nonempty=False): #{{{1
         """ This is a common function to get input and catch Ctrl+C/D. """
         while True:
             try:
-                self.print([("green", text)], False)
+                self.print(("green", text), False)
                 i = input()
                 if nonempty and not i:
                     print("Empty string not allowed here.")
@@ -412,7 +414,7 @@ class ShellUI: #{{{1 interactive mode
                 tags=c.fetchall()
                 tags=[t[0] for t in tags]
                 print(", ".join(tags))
-            self.print([("White", "\nOptional information:")])
+            self.print(("White", "\nOptional information:"))
             source = self.getInput("  Tagline source: ")
             remark = self.getInput("  Tagline remark: ")
             when   = self.getInput("  Tagline date (yyyy-mm-dd): ")
