@@ -370,14 +370,14 @@ class ShellUI: #{{{1 interactive mode
                         id=int(id)
                         c = self.db.execute("SELECT id FROM taglines WHERE id=?", (id,) )
                         if c.fetchone():
-                            c.execute( 'DELETE FROM taglines WHERE id=?', (id,) )
                             c.execute( "DELETE FROM tag WHERE tagline=?", (id,) )
                             c.execute( "DELETE FROM lines WHERE tagline=?", (id,), commit = True )
+                            c.execute( 'DELETE FROM taglines WHERE id=?', (id,) )
                         print("Tagline and all assiciated entires deleted.")
                     except ValueError:
                         print("Error: no integer ID.")
-                    except:
-                        print("Error while deleting tagline.")
+                    except sqlite3.Error as e:
+                        print("Error while deleting tagline: {0}.".format(e.args[0]))
 
             elif choice=="A":
                 self.authorMenu(breadcrumbs)
