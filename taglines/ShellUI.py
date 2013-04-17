@@ -1,5 +1,6 @@
 import taglines
 import sys
+from datetime import date
 
 class ShellUI: #{{{1 interactive mode
     """ Shellmode class
