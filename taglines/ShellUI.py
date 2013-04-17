@@ -1,4 +1,5 @@
 import taglines
+import sqlite3
 import sys
 from datetime import date
 
