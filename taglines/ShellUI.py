@@ -45,6 +45,10 @@ class ShellUI: #{{{1 interactive mode
                     ]) + "\033[0;0m"
             print(o, end = ending)
 
+    def printWarning(self, what): # {{{1
+        """ Convenience function to print a red warning message. """
+        self.print([("Red", what)])
+
     def menu(self, breadcrumbs, choices = None, prompt = "", silent = False, noHeader = False, allowInts = False): # {{{1
         if not (silent or noHeader):
             length = 10
@@ -465,6 +469,9 @@ class ShellUI: #{{{1 interactive mode
                 if texts.pop(lang, None):
                     print("Item with language '{0}' deleted.".format(lang))
             elif choice=="w":
+                if not texts:
+                    self.printWarning("No lines to save.")
+                    continue
                 c = self.db.execute("INSERT INTO taglines (author,source,remark,date) values (?,?,?,?)", (
                     self.currentAuthor if self.currentAuthor else None,
                     source if source!="" else None,
