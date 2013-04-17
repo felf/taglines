@@ -2,8 +2,10 @@
 # -*- coding: utf-8 -*-
 
 import taglines
+from taglines.ArgParser import ArgParser
+from taglines.ShellUI import ShellUI
 
-parser = taglines.ArgParser()
+parser = ArgParser()
 args = parser.args
 
 import os
@@ -89,6 +91,6 @@ if args.stats:
 if args.interactive:
     db = taglines.Database(args.file);
     if db:
-        shell = taglines.ShellUI(db)
+        shell = ShellUI(db)
     shell.mainMenu()
     exit(0)
