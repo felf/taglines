@@ -371,7 +371,9 @@ class ShellUI: #{{{1 interactive mode
                 print("TODO :)")
 
             elif choice=="d":
-                id=self.getInput("\nID to delete (empty to abort): ")
+                id = self.getInput("\nID to delete (d=last tagline in list, empty to abort): ")
+                if id == "d":
+                    id = self.db.getOne("SELECT MAX(id) FROM taglines")[0]
                 if id!="":
                     try:
                         id=int(id)
