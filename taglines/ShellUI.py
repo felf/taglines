@@ -99,13 +99,13 @@ class ShellUI: #{{{1 interactive mode
             self.printWarning("Invalid choice.")
 
 
-    def getInput(self, text="", nonempty=False): #{{{1
+    def getInput(self, text="", allowEmpty = True): #{{{1
         """ This is a common function to get input and catch Ctrl+C/D. """
         while True:
             try:
                 self.print(("green", text), False)
                 i = input()
-                if nonempty and not i:
+                if not allowEmpty and not i:
                     print("Empty string not allowed here.")
                 else:
                     return i
@@ -446,7 +446,7 @@ class ShellUI: #{{{1 interactive mode
 
             if choice=="a":
                 print("    ENTER A NEW ITEM")
-                language = self.getInput("    Language (ISO code): ", nonempty = True)
+                language = self.getInput("    Language (ISO code): ", allowEmpty = False)
                 if not language: continue
                 if texts.get(language):
                     if self.askYesNo("    There is already an item with this language. Overwrite it?") == "n":
