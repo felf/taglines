@@ -225,8 +225,9 @@ class ShellUI: #{{{1 interactive mode
         choice = "h"
         while True:
             choice = self.menu(breadcrumbs,
-                   ["a - add tag      ", "l - list all tags\n",
-                    "d - delete tag   ", "t - toggle tag (or simply enter the ID)\n"],
+                   ["a - add tag          ", "l - list all tags\n",
+                    "d - delete tag       ", "t - toggle tag (or simply enter the ID)\n",
+                    "r - reset all tags\n"],
                     silent = choice != "h", allowInts = True)
 
             # Abkürzung: statt "t" und dann ID eingeben einfach nur die ID
@@ -285,6 +286,10 @@ class ShellUI: #{{{1 interactive mode
                         print("An sqlite3 error occurred:", e.args[0])
                     except Exception as e:
                         print("Error while deleting tag: {0}.".format(e.args[0]))
+
+            elif choice=="r":
+                self.currentTags = []
+                print("All tags deselected.")
 
             elif choice=="t":
                 if type(id) is not int:
