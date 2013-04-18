@@ -92,9 +92,9 @@ class Database:
             self.db.commit()
         return r
 
-    def getOne(self, query): # {{{1
+    def getOne(self, query, args = None): # {{{1
         """ Shortcut function for a simply one-line retrieve. """
-        c = self.execute(query)
+        c = self.execute(query, args)
         return c.fetchone() if c else None
 
     def parseArguments(self, args): # {{{1
