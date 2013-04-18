@@ -416,8 +416,11 @@ class ShellUI: #{{{1 interactive mode
                 print(", ".join(tags))
             self.print(("White", "\nOptional information:"))
             source = self.getInput("  Tagline source: ")
+            if source == False: return
             remark = self.getInput("  Tagline remark: ")
+            if remark == False: return
             when   = self.getInput("  Tagline date (yyyy-mm-dd): ")
+            if when == False: return
             print()
         else:
             # TODO: get source, remark, when from database for given id
