@@ -320,7 +320,7 @@ class ShellUI: #{{{1 interactive mode
         choice ="h"
         while True:
             choice = self.menu(breadcrumbs,
-                   ["l - list last 5 taglines   ", "L - list all taglines\n",
+                   ["l - list last n taglines   ", "L - list all taglines\n",
                     "n - add new tagline        ", "any number - show tagline of that ID\n",
                     "e - edit tagline           ", "a - go to author menu\n",
                     "d - delete tagline         ", "t - go to tag menu\n"],
@@ -332,10 +332,18 @@ class ShellUI: #{{{1 interactive mode
                 print()
                 q="SELECT t.id, a.name, source, remark, date FROM taglines t LEFT JOIN authors a ON t.author=a.id"
                 if choice=="l":
+                    limit = self.getInput("  Number of taglines to list (default: 5): ")
+                    if limit == False:
+                        continue
+                    if limit.isdecimal():
+                        limit = int(limit)
+                        if limit<0: limit = 5
+                    else:
+                        limit = 5
                     c = self.db.execute("SELECT COUNT(id) FROM taglines")
                     r = c.fetchone()
-                    q += " ORDER BY t.id LIMIT {0},5".format(max(0,r[0]-5))
-                    print("LAST 5 TAGLINES")
+                    q += " ORDER BY t.id LIMIT {0},{1}".format(max(0,r[0]-limit), limit)
+                    print("LAST {0} TAGLINES".format(limit))
                 elif choice == "L":
                     q+=" ORDER BY t.id"
                     print("ALL TAGLINES")
