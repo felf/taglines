@@ -118,17 +118,21 @@ class ShellUI: #{{{1 interactive mode
                 print()
                 return False
 
-    def askYesNo(self, text, default = "n"): #{{{1
+    def askYesNo(self, text, default = "n", allowCancel = False): #{{{1
         """ Ask a yes/no question, digest the answer and return the answer.
 
         default should be either "y" or "n" to set the relevant answer. """
 
+        suffix = [ "Y" if default=="y" else "y",
+                   "N" if default=="n" else "n"]
+        if allowCancel:
+            suffix.append("^d")
+        text += "  [" + "/".join(suffix) + "] "
+
         while True:
-            suffix = "  [{0}/{1}] ".format(
-                    "Y" if default=="y" else "y",
-                    "N" if default=="n" else "n")
-            i = self.getInput(text + suffix)
+            i = self.getInput(text)
             if not i:
+                if i == False and allowCancel: return False
                 i = default
             if i:
                 if "yes".startswith(i.lower()): i = "y"
