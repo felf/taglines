@@ -266,21 +266,27 @@ class ShellUI: #{{{1 interactive mode
                 id=self.getInput("\nID to delete (empty to abort): ")
                 if id:
                     try:
-                        dellines = self.askYesNo("Also delete all taglines associated with that tag?")
-
                         id=int(id)
-                        if dellines == "y":
-                            # delete lines of associated taglines
-                            self.db.execute("""DELETE FROM lines WHERE id IN (SELECT
-                                l.id FROM lines l JOIN tag t ON t.tagline=l.tagline WHERE t.tag=?)""", (id,))
-                            # delete associated taglines
-                            c = self.db.execute( """DELETE FROM taglines WHERE id IN (SELECT
-                                tl.id FROM taglines tl JOIN tag t ON t.tagline=tl.id WHERE t.tag=?)""", (id,) )
-                            deleted = c.rowcount
-                            if deleted==1: output = " and one tagline"
-                            else: output = " and {0} taglines".format(deleted)
-                        else:
-                            output = ""
+                        output = ""
+
+                        c = self.db.getOne("SELECT COUNT(*) FROM tag WHERE tag=?", (id,))
+                        if c[0] > 0:
+                            dellines = self.askYesNo(
+                                    "Also delete the {0} taglines associated with that tag?".format(c[0],),
+                                    allowCancel = True)
+                            if dellines == False:
+                                print("Deletion aborted.")
+                                continue
+                            if dellines == "y":
+                                # delete lines of associated taglines
+                                self.db.execute("""DELETE FROM lines WHERE id IN (SELECT
+                                    l.id FROM lines l JOIN tag t ON t.tagline=l.tagline WHERE t.tag=?)""", (id,))
+                                # delete associated taglines
+                                c = self.db.execute( """DELETE FROM taglines WHERE id IN (SELECT
+                                    tl.id FROM taglines tl JOIN tag t ON t.tagline=tl.id WHERE t.tag=?)""", (id,) )
+                                deleted = c.rowcount
+                                if deleted==1: output = " and one tagline"
+                                else: output = " and {0} taglines".format(deleted)
                         self.db.execute( "DELETE FROM tag WHERE tag=?", (id,) )
                         self.db.execute( "DELETE FROM tags WHERE id=?", (id,), True)
                         print("Tag{0} deleted.".format(output))
