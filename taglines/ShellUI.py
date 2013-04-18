@@ -321,9 +321,9 @@ class ShellUI: #{{{1 interactive mode
         while True:
             choice = self.menu(breadcrumbs,
                    ["l - list last 5 taglines   ", "L - list all taglines\n",
-                    "a - add new tagline        ", "any number - show tagline of that ID\n",
-                    "e - edit tagline           ", "A - go to author menu\n",
-                    "d - delete tagline         ", "T - go to tag menu\n"],
+                    "n - add new tagline        ", "any number - show tagline of that ID\n",
+                    "e - edit tagline           ", "a - go to author menu\n",
+                    "d - delete tagline         ", "t - go to tag menu\n"],
                     silent = choice != "h", allowInts = True)
 
             if choice=="q": return
@@ -369,7 +369,7 @@ class ShellUI: #{{{1 interactive mode
                 if (anzahl==-1):
                     print("No match found.")
 
-            elif choice=="a":
+            elif choice=="n":
                 self.taglineEditMenu(breadcrumbs)
 
             elif choice=="e":
@@ -393,10 +393,10 @@ class ShellUI: #{{{1 interactive mode
                     except sqlite3.Error as e:
                         print("Error while deleting tagline: {0}.".format(e.args[0]))
 
-            elif choice=="A":
+            elif choice=="a":
                 self.authorMenu(breadcrumbs)
 
-            elif choice=="T":
+            elif choice=="t":
                 self.tagMenu(breadcrumbs)
 
     def taglineEditMenu(self, breadcrumbs, id = None): # {{{1
