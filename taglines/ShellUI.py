@@ -380,7 +380,7 @@ class ShellUI: #{{{1 interactive mode
                             self.db.execute( "DELETE FROM tag WHERE tagline=?", (id,) )
                             self.db.execute( "DELETE FROM lines WHERE tagline=?", (id,), commit = True )
                             self.db.execute( 'DELETE FROM taglines WHERE id=?', (id,) )
-                        print("Tagline and all assiciated entires deleted.")
+                        print("Tagline and all its tag assignments deleted.")
                     except ValueError:
                         print("Error: no integer ID.")
                     except sqlite3.Error as e:
