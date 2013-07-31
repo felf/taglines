@@ -214,11 +214,13 @@ class ShellUI: #{{{1 interactive mode
                         self.currentAuthor=None
                     else:
                         try:
-                            c = self.db.execute("SELECT id FROM authors WHERE id=?", (id,))
-                            if c.fetchone() is None:
+                            c = self.db.execute("SELECT id, name FROM authors WHERE id=?", (id,))
+                            row = c.fetchone()
+                            if row is None:
                                 print("Error: no valid ID.")
                             else:
                                 self.currentAuthor=int(id)
+                                print("New current author:", row[1])
                         except ValueError:
                             print("Error: no integer ID.")
 
