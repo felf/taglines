@@ -66,7 +66,7 @@ if args.show_tags:
 if args.show_authors:
     db = taglines.Database(args.file);
     if db:
-        for author in db.authors(): print(print)
+        for author in db.authors(): print(author)
     exit(0)
 
 if args.stats:
