@@ -6,7 +6,7 @@ class ArgParser:
     def __init__(self):
         parser = argparse.ArgumentParser(
                 description='An sqlite3 based taglines generator and manager.',
-                prog="Taglines.py")
+                prog="Taglines")
 
         group=parser.add_mutually_exclusive_group()
         group.add_argument('-L', '--list', action='store_true', help='List all found items')
