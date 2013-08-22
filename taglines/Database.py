@@ -118,13 +118,12 @@ class Database:
 
         author = self.filters.get("author")
         if author:
-            # TODO: LIKE und c.execute mit ? unter einen Hut bringen
             if self.exactAuthorMode:
                 query += " JOIN authors a ON a.name=? AND tl.author=a.id"
+                qargs.append(author)
             else:
-                query += " JOIN authors a ON a.name LIKE '%{0}%' AND tl.author=a.id"
-            qargs.append(author)
-                #qargs.append(args.author)
+                query += " JOIN authors a ON a.name LIKE ? AND tl.author=a.id"
+                qargs.append("%"+author+"%")
 
         tags = self.filters.get("tags")
         if tags:
