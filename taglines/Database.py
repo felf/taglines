@@ -80,11 +80,13 @@ class Database:
             self.db = None
             self.isOpen = False
 
-    def execute(self, query, args=None, commit = False): # {{{1
+    def execute(self, query, args=None, commit = False, debug = False): # {{{1
         if not self.isOpen and not self.open():
             return False
         c = self.db.cursor()
+        if debug: print(query)
         if args:
+            if debug: print(qargs)
             r = c.execute(query, args)
         else:
             r = c.execute(query)
