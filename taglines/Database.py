@@ -11,12 +11,13 @@ class Database:
         self.filters = {}
         self.exactAuthorMode = False
 
-        if dbfilename: self.setPath(dbfilename)
+        if dbfilename and not self.setPath(dbfilename):
+            raise Exception("The given filename could not be opened.")
 
     def __del__(self): # {{{1
         self.close()
         
-    def setPath(self, path):
+    def setPath(self, path): # {{{1
         """ Sets the instance's database filename.
 
         If the path is valid, it is stored and True is returned. """
