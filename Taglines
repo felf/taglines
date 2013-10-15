@@ -144,6 +144,7 @@ if __name__ == "__main__":  # {{{1
             from PyQt4 import QtGui,QtCore
             from PyQt4.QtGui import *
             from PyQt4.QtCore import *
+            import sys
         except ImportError:
             print("PyQt modules not found.  Cannot start graphical interface.")
             exit(1)
@@ -586,7 +587,7 @@ if __name__ == "__main__":  # {{{1
                 self.changed = True
             def loadFromFile(self, url):
                 if not self.close(): return False
-                self.db = get_database_from_file(url)
+                self.db = taglines.Database(url)
                 self.authors.setDB(self.db)
                 self.languages.setDB(self.db)
                 self.tags.setDB(self.db)
