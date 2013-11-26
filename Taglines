@@ -4,6 +4,7 @@
 # Preamble {{{1
 """ Entry point for the Taglines program. """
 
+import sys
 import taglines
 from taglines.ArgParser import ArgParser
 from taglines.ShellUI import ShellUI
