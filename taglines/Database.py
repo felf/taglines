@@ -167,8 +167,11 @@ class Database:
 
     def authors(self, orderByName = True): # {{{1
         query = "SELECT name, born, died FROM authors ORDER BY name"
-        return (name+(" ({0}-{1})".format(born,died) if born or died else "")
-                for name,born,died in self.execute(query))
+        return (name+(" ({0}-{1})".format(
+                    born if born else "",
+                    died if died else ""
+                ) if born or died else "")
+            for name,born,died in self.execute(query))
 
     def stats(self): # {{{1
         stats = {}
