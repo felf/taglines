@@ -236,7 +236,7 @@ class ShellUI: #{{{1 interactive mode
                     "r - reset all tags\n"],
                     silent = choice != "h", allowInts = True)
 
-            # Abkürzung: statt "t" und dann ID eingeben einfach nur die ID
+            # instead of entering "t" and then the ID, simply enter the ID
             if type(choice) is int:
                 id = choice
                 choice = "t"
@@ -332,7 +332,7 @@ class ShellUI: #{{{1 interactive mode
         choice ="h"
         while True:
             choice = self.menu(breadcrumbs,
-                   ["l - list last 5 taglines   ", "L - list all taglines\n",
+                   ["l - list last taglines     ", "L - list all taglines\n",
                     "a - add new tagline        ", "any number - show tagline of that ID\n",
                     "e - edit tagline           ", "A - go to author menu\n",
                     "d - delete tagline         ", "T - go to tag menu\n"],
