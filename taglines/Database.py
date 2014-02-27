@@ -3,8 +3,9 @@ import sqlite3
 # TODO: remove all output stuff from here
 import sys
 
+
 class Database:
-    def __init__(self, dbfilename = None): # {{{1
+    def __init__(self, dbfilename=None):  # {{{1
         self.isOpen = False
         self.db = None
         self.filename = None
@@ -14,10 +15,10 @@ class Database:
         if dbfilename and not self.setPath(dbfilename):
             raise Exception("The given filename could not be opened.")
 
-    def __del__(self): # {{{1
+    def __del__(self):  # {{{1
         self.close()
-        
-    def setPath(self, path): # {{{1
+
+    def setPath(self, path):  # {{{1
         """ Sets the instance's database filename.
 
         If the path is valid, it is stored and True is returned. """
@@ -28,22 +29,25 @@ class Database:
         if exists and isfile:
             self.filename = filename
             return True
-        else: return False
+        else:
+            return False
 
-    def open(self): # {{{1
+    def open(self):  # {{{1
         """ Opens a connection to an existing database.
-            
+
         Returns False if unsuccessful. """
 
-        if self.isOpen: return
+        if self.isOpen:
+            return
         self.db = sqlite3.connect(self.filename, detect_types=True)
         self.isOpen = type(self.db) is sqlite3.Connection
         # TODO: handle invalid DB
         return self.isOpen
 
-    def initialiseFile(self, filename): # {{{1
+    def initialiseFile(self, filename):  # {{{1
         """Initialises a new, empty database"""
-        if self.isOpen: self.close()
+        if self.isOpen:
+            self.close()
 
         try:
             dbfile = open(filename, 'w')
@@ -60,7 +64,8 @@ class Database:
             self.db.commit()
             self.isOpen = True
         except IOError as e:
-            print("\nError while creating the database file: {0}. Exiting.".format(e.args[0]), file=sys.stderr)
+            print("\nError while creating the database file: {0}. Exiting.".
+                  format(e.args[0]), file=sys.stderr)
             exit(1)
         except sqlite3.Error as e:
             print("An sqlite3 error occurred:", e.args[0])
@@ -68,11 +73,11 @@ class Database:
             print("\nError while initialising the database file: {0}. Exiting.".format(e.args[0]), file=sys.stderr)
             exit(1)
 
-    def commit(self): # {{{1
+    def commit(self):  # {{{1
         if self.isOpen:
             self.db.commit()
 
-    def close(self): # {{{1
+    def close(self):  # {{{1
         """ Closes the instance's database connection. """
 
         if self.db and self.isOpen:
@@ -81,13 +86,15 @@ class Database:
             self.db = None
             self.isOpen = False
 
-    def execute(self, query, args=None, commit = False, debug = False): # {{{1
+    def execute(self, query, args=None, commit=False, debug=False):  # {{{1
         if not self.isOpen and not self.open():
             return False
         c = self.db.cursor()
-        if debug: print(query)
+        if debug:
+            print(query)
         if args:
-            if debug: print(qargs)
+            if debug:
+                print(qargs)
             r = c.execute(query, args)
         else:
             r = c.execute(query)
@@ -95,29 +102,32 @@ class Database:
             self.db.commit()
         return r
 
-    def getOne(self, query, args = None): # {{{1
+    def getOne(self, query, args=None):  # {{{1
         """ Shortcut function for a simply one-line retrieve. """
         c = self.execute(query, args)
         return c.fetchone() if c else None
 
-    def parseArguments(self, args): # {{{1
+    def parseArguments(self, args):  # {{{1
         self.filters = {}
         self.exactAuthorMode = args.exactauthor
         self.tagsOrMode = args.ortag
-        if args.author: self.filters["author"] = args.author
-        if args.tag: self.filters["tags"] = args.tag
-        if args.lang: self.filters["language"] = args.lang
+        if args.author:
+            self.filters["author"] = args.author
+        if args.tag:
+            self.filters["tags"] = args.tag
+        if args.lang:
+            self.filters["language"] = args.lang
 
-    def randomTagline(self): # {{{1
+    def randomTagline(self):  # {{{1
         c = self.taglines(True)
         if c:
             return c.fetchone()[0]
 
-    def taglines(self, random = False): # {{{1
+    def taglines(self, random=False):  # {{{1
         """ Returns taglines according to set filters. """
 
-        query="SELECT text FROM lines l, taglines tl"
-        qargs=[]
+        query = "SELECT text FROM lines l, taglines tl"
+        qargs = []
 
         author = self.filters.get("author")
         if author:
@@ -130,18 +140,20 @@ class Database:
 
         tags = self.filters.get("tags")
         if tags:
-            qtags=["tag t{0}".format(x) for x in range(len(tags))]
+            qtags = ["tag t{0}".format(x) for x in range(len(tags))]
             if self.tagsOrMode:
-                tagquery=("SELECT t1.tagline FROM tag t1 JOIN tags s1 ON t1.tag=s1.id WHERE (" +
-                        " OR ".join(["s1.text=?"]*len(tags)) + ")")
+                tagquery = ("SELECT t1.tagline FROM tag t1 JOIN tags s1 ON t1.tag=s1.id WHERE (" +
+                            " OR ".join(["s1.text=?"]*len(tags)) + ")")
             else:
-                qwhere=["t{0}='{1}'".format(x,tags[x]) for x in range(len(tags))]
-                tagquery=("SELECT t1.tagline FROM " +
-                    " JOIN ".join([
-                    "tag t{0}, tags s{0} on s{0}.id=t{0}.tag AND s{0}.text=? AND t1.tagline=t{0}.tagline".format(x+1,tags[x]) for x in range(len(tags))])
+                qwhere = ["t{0}='{1}'".format(
+                    x, tags[x]) for x in range(len(tags))]
+                tagquery = (
+                    "SELECT t1.tagline FROM " + " JOIN ".join([
+                        "tag t{0}, tags s{0} on s{0}.id=t{0}.tag AND s{0}.text=? AND t1.tagline=t{0}.tagline".format(x+1, tags[x]) for x in range(len(tags))])
                     )
             qargs += tags
-        else: tagquery=None
+        else:
+            tagquery = None
 
     #    query="SELECT text FROM lines l, taglines tl"
 
@@ -159,21 +171,22 @@ class Database:
 
         return self.execute(query, (qargs))
 
-    def tags(self, orderByName = True): # {{{1
+    def tags(self, orderByName=True):  # {{{1
         query = "SELECT text FROM tags"
         if orderByName:
             query += " ORDER by text"
         return (r[0] for r in self.execute(query))
 
-    def authors(self, orderByName = True): # {{{1
+    def authors(self, orderByName=True):  # {{{1
         query = "SELECT name, born, died FROM authors ORDER BY name"
-        return (name+(" ({0}-{1})".format(
+        return (name+(" ({0}-{1})".
+                format(
                     born if born else "",
                     died if died else ""
                 ) if born or died else "")
-            for name,born,died in self.execute(query))
+                for name, born, died in self.execute(query))
 
-    def stats(self): # {{{1
+    def stats(self):  # {{{1
         stats = {}
         stats["tag assignments"] = int(self.getOne("SELECT count(*) FROM tag")[0])
         stats["tag count"] = int(self.getOne("SELECT count(*) FROM tags")[0])

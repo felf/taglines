@@ -21,9 +21,10 @@ if args.init:
         ok = input("Warning: "+args.file+" already exists. Overwrite? [y/N] ")
         if ok and "yes".startswith(ok.lower()):
             try:
-                os.remove( args.file )
+                os.remove(args.file)
             except OSError as e:
-                exit("Error: could not delete old file: {0}. Exiting.".format(e.args[1]))
+                exit("Error: could not delete old file: {0}. Exiting.".format(
+                     e.args[1]))
         else:
             print("good bye")
             exit(1)
@@ -38,7 +39,8 @@ if args.random:
     if db:
         db.parseArguments(args)
         tl = db.randomTagline()
-        if tl: print(tl)
+        if tl:
+            print(tl)
 
 # show list of taglines, then exit {{{1
 if args.list:
@@ -46,10 +48,10 @@ if args.list:
     if db:
         db.parseArguments(args)
 
-        first=True
+        first = True
         for r in db.taglines():
             if first:
-                first=False
+                first = False
             else:
                 print("%")
             print(r[0])
@@ -59,20 +61,22 @@ if args.list:
 # stand-alone DB functions {{{1
 # ----------------------------------------------------------------
 if args.show_tags:
-    db = taglines.Database(args.file);
+    db = taglines.Database(args.file)
     if db:
-        for tag in db.tags(orderByName = True): print(tag)
+        for tag in db.tags(orderByName=True):
+            print(tag)
     exit(0)
 
 
 if args.show_authors:
-    db = taglines.Database(args.file);
+    db = taglines.Database(args.file)
     if db:
-        for author in db.authors(): print(author)
+        for author in db.authors():
+            print(author)
     exit(0)
 
 if args.stats:
-    db = taglines.Database(args.file);
+    db = taglines.Database(args.file)
     if db:
         stats = db.stats()
 
@@ -87,12 +91,9 @@ if args.stats:
         print("Used languages:            {0:6d}".format(stats["language count"],))
         exit(0)
 
-
-
-
 if args.interactive:
     try:
-        db = taglines.Database(args.file);
+        db = taglines.Database(args.file)
         if db:
             shell = ShellUI(db)
         shell.mainMenu()
