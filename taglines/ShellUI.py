@@ -184,7 +184,7 @@ class ShellUI:  # {{{1 interactive mode
                 print("\nALL AUTHORS (sorted by name):")
                 c = self.db.execute("SELECT id, name, born, died FROM authors ORDER BY name")
                 for row in c:
-                    out = "{0:>4}{1}: {2}".format(row[0], '*' if self.currentAuthor == row[0] else ' ', row[1])
+                    out = "{0:>4}{1}: {2}".format(row[0], self.colorstring("Yellow")+"*\033[0;0m" if self.currentAuthor == row[0] else ' ', row[1])
                     if row[2] is not None or row[3] is not None:
                         out += " ("+str(row[2])+"-"+str(row[3])+")"
                     print(out)
@@ -265,7 +265,7 @@ class ShellUI:  # {{{1 interactive mode
                 print("\nALL TAGS (sorted by text):")
                 c = self.db.execute("SELECT id, text FROM tags ORDER BY text")
                 for row in c:
-                    out = "{0:>4}{1}: {2}".format(row[0], '*' if row[0] in self.currentTags else ' ', row[1])
+                    out = "{0:>4}{1}: {2}".format(row[0], self.colorstring("Yellow")+"*\033[0;0m" if row[0] in self.currentTags else ' ', row[1])
                     print(out)
             elif choice == "a":
                 text = self.getInput("\nTag text (empty to abort): ")
