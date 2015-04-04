@@ -28,7 +28,7 @@ class ShellUI:  # {{{1 interactive mode
             'cyan':   '36',
             'white':  '37'
         }
-        return "\033[{0};{1}m".format(
+        return "\033[{};{}m".format(
             "0" if color[0].islower() else "1",
             _colors.get(color.lower(), "0"))
 
@@ -184,7 +184,7 @@ class ShellUI:  # {{{1 interactive mode
                 print("\nALL AUTHORS (sorted by name):")
                 c = self.db.execute("SELECT id, name, born, died FROM authors ORDER BY name")
                 for row in c:
-                    out = "{0:>4}{1}: {2}".format(row[0], self.colorstring("Yellow")+"*\033[0;0m" if self.currentAuthor == row[0] else ' ', row[1])
+                    out = "{:>4}{}: {}".format(row[0], self.colorstring("Yellow")+"*\033[0;0m" if self.currentAuthor == row[0] else ' ', row[1])
                     if row[2] is not None or row[3] is not None:
                         out += " ("+str(row[2])+"-"+str(row[3])+")"
                     print(out)
@@ -204,7 +204,7 @@ class ShellUI:  # {{{1 interactive mode
                     try:
                         c = self.db.execute("INSERT INTO authors (name, born, died) VALUES (?,?,?)", (
                             name, born, died), True)
-                        print("Author added, new ID is {0}".format(c.lastrowid))
+                        print("Author added, new ID is {}".format(c.lastrowid))
                     except sqlite3.Error as e:
                         print("An sqlite3 error occurred:", e.args[0])
                     except Exception as e:
@@ -220,7 +220,7 @@ class ShellUI:  # {{{1 interactive mode
                     except ValueError:
                         print("Error: no integer ID.")
                     except Exception as e:
-                        print("Error while deleting author: {0}.".format(e.args[0],))
+                        print("Error while deleting author: {}.".format(e.args[0],))
 
             elif choice == "c":
                 id = self.getInput("\nID of new current author (empty to abort, 'u' to unset): ")
@@ -265,7 +265,7 @@ class ShellUI:  # {{{1 interactive mode
                 print("\nALL TAGS (sorted by text):")
                 c = self.db.execute("SELECT id, text FROM tags ORDER BY text")
                 for row in c:
-                    out = "{0:>4}{1}: {2}".format(row[0], self.colorstring("Yellow")+"*\033[0;0m" if row[0] in self.currentTags else ' ', row[1])
+                    out = "{:>4}{}: {}".format(row[0], self.colorstring("Yellow")+"*\033[0;0m" if row[0] in self.currentTags else ' ', row[1])
                     print(out)
             elif choice == "a":
                 text = self.getInput("\nTag text (empty to abort): ")
@@ -277,7 +277,7 @@ class ShellUI:  # {{{1 interactive mode
                     except sqlite3.Error as e:
                         print("An sqlite3 error occurred:", e.args[0])
                     except Exception as e:
-                        print("Error while adding tag: {0}.".format(e.args[0]))
+                        print("Error while adding tag: {}.".format(e.args[0]))
             elif choice == "d":
                 id = self.getInput("\nID to delete (empty to abort): ")
                 if id:
@@ -288,7 +288,7 @@ class ShellUI:  # {{{1 interactive mode
                         c = self.db.getOne("SELECT COUNT(*) FROM tag WHERE tag=?", (id,))
                         if c[0] > 0:
                             dellines = self.askYesNo(
-                                "Also delete the {0} taglines associated with that tag?".format(c[0],),
+                                "Also delete the {} taglines associated with that tag?".format(c[0],),
                                 allowCancel=True)
                             if dellines is False:
                                 print("Deletion aborted.")
@@ -302,16 +302,16 @@ class ShellUI:  # {{{1 interactive mode
                                     tl.id FROM taglines tl JOIN tag t ON t.tagline=tl.id WHERE t.tag=?)""", (id,))
                                 deleted = c.rowcount
                                 output = (" and one tagline" if deleted == 1
-                                          else " and {0} taglines".format(deleted))
+                                          else " and {} taglines".format(deleted))
                         self.db.execute("DELETE FROM tag WHERE tag=?", (id,))
                         self.db.execute("DELETE FROM tags WHERE id=?", (id,), True)
-                        print("Tag{0} deleted.".format(output))
+                        print("Tag{} deleted.".format(output))
                     except ValueError:
                         print("Error: no integer ID.")
                     except sqlite3.Error as e:
                         print("An sqlite3 error occurred:", e.args[0])
                     except Exception as e:
-                        print("Error while deleting tag: {0}.".format(e.args[0]))
+                        print("Error while deleting tag: {}.".format(e.args[0]))
             elif choice == "r":
                 self.currentTags = []
                 print("All tags deselected.")
@@ -332,10 +332,10 @@ class ShellUI:  # {{{1 interactive mode
                         if id in self.currentTags:
                             i = self.currentTags.index(id)
                             self.currentTags = self.currentTags[0:i]+self.currentTags[i+1:]
-                            print("Tag '{0}' disabled.".format(row[1]))
+                            print("Tag '{}' disabled.".format(row[1]))
                         else:
                             self.currentTags.append(id)
-                            print("Tag '{0}' enabled.".format(row[1]))
+                            print("Tag '{}' enabled.".format(row[1]))
 
     def taglinesMenu(self, breadcrumbs):  # {{{1
         """The menu with which to alter the actual taglines."""
@@ -366,14 +366,14 @@ class ShellUI:  # {{{1 interactive mode
                         limit = 5
                     c = self.db.execute("SELECT COUNT(id) FROM taglines")
                     r = c.fetchone()
-                    q += " ORDER BY t.id LIMIT {0},{1}".format(max(0,r[0]-limit), limit)
-                    print("LAST {0} TAGLINES".format(limit))
+                    q += " ORDER BY t.id LIMIT {},{}".format(max(0,r[0]-limit), limit)
+                    print("LAST {} TAGLINES".format(limit))
                 elif choice == "L":
                     q += " ORDER BY t.id"
                     print("ALL TAGLINES")
                 else:
                     id = int(choice)
-                    q += " WHERE t.id='{0}'".format(id)
+                    q += " WHERE t.id='{}'".format(id)
 
                 c = self.db.execute(q)
                 anzahl = -1
@@ -389,11 +389,11 @@ class ShellUI:  # {{{1 interactive mode
                     tags = [t[0] for t in tags]
                     if tags:
                         output.append(str("tags: "+",".join(tags)))
-                    print("#{0:>5}{1}".format(
+                    print("#{:>5}{}".format(
                         r[0], ": "+", ".join(output) if output else ""))
                     sub = self.db.execute("SELECT l.id, l.date, language, text FROM lines l LEFT JOIN taglines t ON l.tagline = t.id WHERE t.id=?", (r[0],))
                     for t in sub:
-                        print("     Line  # {0:>5}:{1}{2}: {3}".format(
+                        print("     Line  # {:>5}:{}{}: {}".format(
                             t[0],
                             " ("+t[1].isoformat()+")" if t[1] is not None else "",
                             " lang="+t[2] if t[2] is not None else "",
@@ -423,7 +423,7 @@ class ShellUI:  # {{{1 interactive mode
                     except ValueError:
                         print("Error: no integer ID.")
                     except sqlite3.Error as e:
-                        print("Error while deleting tagline: {0}.".format(e.args[0]))
+                        print("Error while deleting tagline: {}.".format(e.args[0]))
 
             elif choice == "A":
                 self.authorMenu(breadcrumbs)
@@ -484,7 +484,7 @@ class ShellUI:  # {{{1 interactive mode
                     if self.askYesNo("    There is already an item with this language. Overwrite it?") == "n":
                         continue
                 print("    Text ('r'=restart, 'c'=correct last line, 'a'=abort, 'f' or two empty lines=finish:")
-                print("".join(["         {0}".format(x) for x in range(1,9)]))
+                print("".join(["         {}".format(x) for x in range(1,9)]))
                 print("1234567890"*8)
                 lines = []
                 while True:
@@ -508,10 +508,10 @@ class ShellUI:  # {{{1 interactive mode
                     else: lines.append(line)
             elif choice == "m":
                 for lang, text in texts.items():
-                    print("\nLanguage: {0}\n{1}".format(lang, text))
+                    print("\nLanguage: {}\n{}".format(lang, text))
                 lang = self.getInput("\n   Language to delete (empty to do nothing): ")
                 if texts.pop(lang, None):
-                    print("Item with language '{0}' deleted.".format(lang))
+                    print("Item with language '{}' deleted.".format(lang))
             elif choice == "w":
                 if not texts:
                     self.printWarning("No lines to save.")

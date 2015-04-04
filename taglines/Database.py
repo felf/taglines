@@ -64,13 +64,14 @@ class Database:
             self.db.commit()
             self.isOpen = True
         except IOError as e:
-            print("\nError while creating the database file: {0}. Exiting.".
+            print("\nError while creating the database file: {}. Exiting.".
                   format(e.args[0]), file=sys.stderr)
             exit(1)
         except sqlite3.Error as e:
             print("An sqlite3 error occurred:", e.args[0])
         except Exception as e:
-            print("\nError while initialising the database file: {0}. Exiting.".format(e.args[0]), file=sys.stderr)
+            print("\nError while initialising the database file: {}. Exiting.".
+                  format(e.args[0]), file=sys.stderr)
             exit(1)
 
     def commit(self):  # {{{1
@@ -140,12 +141,12 @@ class Database:
 
         tags = self.filters.get("tags")
         if tags:
-            qtags = ["tag t{0}".format(x) for x in range(len(tags))]
+            qtags = ["tag t{}".format(x) for x in range(len(tags))]
             if self.tagsOrMode:
                 tagquery = ("SELECT t1.tagline FROM tag t1 JOIN tags s1 ON t1.tag=s1.id WHERE (" +
                             " OR ".join(["s1.text=?"]*len(tags)) + ")")
             else:
-                qwhere = ["t{0}='{1}'".format(
+                qwhere = ["t{}='{}'".format(
                     x, tags[x]) for x in range(len(tags))]
                 tagquery = (
                     "SELECT t1.tagline FROM " + " JOIN ".join([
@@ -179,7 +180,7 @@ class Database:
 
     def authors(self, orderByName=True):  # {{{1
         query = "SELECT name, born, died FROM authors ORDER BY name"
-        return (name+(" ({0}-{1})".
+        return (name+(" ({}-{})".
                 format(
                     born if born else "",
                     died if died else ""
