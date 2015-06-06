@@ -1,27 +1,24 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
+# Preamble {{{1
+""" Entry point for the Taglines program. """
+
 import taglines
 from taglines.ArgParser import ArgParser
 from taglines.ShellUI import ShellUI
 
-parser = ArgParser()
-args = parser.args
-
 import os
 from datetime import date
 
-#}}}1
+def init_database(filepath):  # {{{1
+    """ create a new sqlite database file """
 
-# create a new sqlite database file {{{1
-# ----------------------------------------------------------------
-
-if args.init:
-    if os.path.exists(args.file):
-        ok = input("Warning: "+args.file+" already exists. Overwrite? [y/N] ")
+    if os.path.exists(filepath):
+        ok = input("Warning: "+filepath+" already exists. Overwrite? [y/N] ")
         if ok and "yes".startswith(ok.lower()):
             try:
-                os.remove(args.file)
+                os.remove(filepath)
             except OSError as e:
                 exit("Error: could not delete old file: {}. Exiting.".format(
                      e.args[1]))
@@ -29,12 +26,11 @@ if args.init:
             print("good bye")
             exit(1)
     db = taglines.Database()
-    db.initialiseFile(args.file)
-    exit(0)
+    db.initialiseFile(filepath)
 
+def get_random_item(args):  # {{{1
+    """ retrieve one random tagline """
 
-# retrieve one random tagline, then exit {{{1
-if args.random:
     db = taglines.Database(args.file)
     if db:
         db.parseArguments(args)
@@ -42,8 +38,9 @@ if args.random:
         if tl:
             print(tl)
 
-# show list of taglines, then exit {{{1
-if args.list:
+def list_items(args):  # {{{1
+    """ show list of taglines """
+
     db = taglines.Database(args.file)
     if db:
         db.parseArguments(args)
@@ -55,28 +52,28 @@ if args.list:
             else:
                 print("%")
             print(r[0])
-        exit(0)
 
+def show_tags(filepath):  # {{{1
+    """ print all tags, sorted alphabetically """
 
-# stand-alone DB functions {{{1
-# ----------------------------------------------------------------
-if args.show_tags:
-    db = taglines.Database(args.file)
+    db = taglines.Database(filepath)
     if db:
         for tag in db.tags(orderByName=True):
             print(tag)
-    exit(0)
 
 
-if args.show_authors:
-    db = taglines.Database(args.file)
+def show_authors(filepath):  # {{{1
+    """ print all authors, sorted alphabetically """
+
+    db = taglines.Database(filepath)
     if db:
         for author in db.authors():
             print(author)
-    exit(0)
 
-if args.stats:
-    db = taglines.Database(args.file)
+def show_stats(filepath):  # {{{1
+    """ print tabular statistics about the given database file """
+
+    db = taglines.Database(filepath)
     if db:
         stats = db.stats()
 
@@ -91,13 +88,47 @@ if args.stats:
         print("Used languages:            {:6d}".format(stats["language count"],))
         exit(0)
 
-if args.interactive:
+def interactive_menu(filepath):  # {{{1
+    """ start interactive console menu mode and exit at the end """
+
     try:
-        db = taglines.Database(args.file)
+        db = taglines.Database(filepath)
         if db:
             shell = ShellUI(db)
         shell.mainMenu()
     except Exception as e:
-        print(e.args[0])
+        print(sys.exc_info()[1])
         exit(1)
     exit(0)
+
+
+if __name__ == "__main__":  # {{{1
+    parser = ArgParser()
+    args = parser.args
+
+    if args.init:
+        init_database(args.file)
+        exit(0)
+
+    if args.random:
+        ret_random_item(args)
+        exit(0)
+
+    if args.list:
+        list_items(args)
+        exit(0)
+
+    if args.show_tags:
+        show_tags(args.file)
+        exit(0)
+
+    if args.show_authors:
+        show_authors(args.file)
+        exit(0)
+
+    if args.stats:
+        show_stats(args.file)
+        exit(0)
+
+    if args.interactive:
+        interactive_menu(args.file)
