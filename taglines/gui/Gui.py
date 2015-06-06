@@ -259,7 +259,7 @@ class TaglinesModel(QAbstractItemModel): #{{{1
         where = " WHERE "
         # for author
         if self.author and self.author > -2:
-            query += where + "author="+self.author
+            query += where + "author=" + str(self.author)
             where = " AND "
         # and all selected languages
         if self.languages:
@@ -289,10 +289,13 @@ class TaglinesModel(QAbstractItemModel): #{{{1
             raise
         self.endResetModel()
     def setAuthor(self, author):
-        if author == "-2":
-            self.author = None
+        if isinstance(author, int):
+            if author == -2:
+                self.author = None
+            else:
+                self.author = author
         else:
-            self.author = str(author)
+            self.author = None
         self.refresh()
     def setLanguages(self, languages):
         self.languages = languages
@@ -921,7 +924,7 @@ class TaglinesWindow(QMainWindow): #{{{1
     def authorSelectionChanged(self, index):
         model = self.AuthorList.model()
         data = model.data(model.index(index, 0))
-        self.database.taglinesModel().setAuthor(data.toString())
+        self.database.taglinesModel().setAuthor(data)
     def taglineSelectionChanged(self, selected, deselected):
         enabled = len(selected.indexes())!=0
         if enabled:
