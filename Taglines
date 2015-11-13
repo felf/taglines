@@ -27,7 +27,10 @@ def init_database(filepath):  # {{{1
             print("good bye")
             exit(1)
     db = taglines.Database()
-    db.initialiseFile(filepath)
+    if db:
+        db.initialiseFile(filepath)
+        return True
+    return False
 
 def get_random_item(args):  # {{{1
     """ retrieve one random tagline """
@@ -38,6 +41,8 @@ def get_random_item(args):  # {{{1
         tl = db.randomTagline()
         if tl:
             print(tl)
+        return True
+    return False
 
 def list_items(args):  # {{{1
     """ show list of taglines """
@@ -53,6 +58,8 @@ def list_items(args):  # {{{1
             else:
                 print("%")
             print(r[0])
+        return True
+    return False
 
 def show_tags(filepath):  # {{{1
     """ print all tags, sorted alphabetically """
@@ -61,6 +68,8 @@ def show_tags(filepath):  # {{{1
     if db:
         for tag in db.tags(orderByName=True):
             print(tag)
+        return True
+    return False
 
 
 def show_authors(filepath):  # {{{1
@@ -70,6 +79,8 @@ def show_authors(filepath):  # {{{1
     if db:
         for author in db.authors():
             print(author)
+        return True
+    return False
 
 def show_stats(filepath):  # {{{1
     """ print tabular statistics about the given database file """
@@ -87,7 +98,8 @@ def show_stats(filepath):  # {{{1
             stats["tag assignments"], stats["tag assignments"]/stats["tagline count"]))
         print("Number of authors:         {:6d}".format(stats["author count"],))
         print("Used languages:            {:6d}".format(stats["language count"],))
-        exit(0)
+        return True
+    return False
 
 def interactive_menu(filepath):  # {{{1
     """ start interactive console menu mode and exit at the end """
@@ -99,8 +111,8 @@ def interactive_menu(filepath):  # {{{1
         shell.mainMenu()
     except Exception as e:
         print(sys.exc_info()[1])
-        exit(1)
-    exit(0)
+        return False
+    return True
 
 
 if __name__ == "__main__":  # {{{1
@@ -108,28 +120,27 @@ if __name__ == "__main__":  # {{{1
     args = parser.args
 
     if args.init:
-        init_database(args.file)
-        exit(0)
+        result = init_database(args.file)
 
     if args.random:
-        get_random_item(args)
-        exit(0)
+        result = get_random_item(args)
 
     if args.list:
-        list_items(args)
-        exit(0)
+        result = list_items(args)
 
     if args.show_tags:
-        show_tags(args.file)
-        exit(0)
+        result = show_tags(args.file)
 
     if args.show_authors:
-        show_authors(args.file)
-        exit(0)
+        result = show_authors(args.file)
 
     if args.stats:
-        show_stats(args.file)
-        exit(0)
+        result = show_stats(args.file)
 
     if args.interactive:
-        interactive_menu(args.file)
+        result = interactive_menu(args.file)
+
+    if result:
+        exit(0)
+    else:
+        exit(1)
