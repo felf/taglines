@@ -1,9 +1,10 @@
-#!/usr/bin/python3
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # Preamble {{{1
 """ Entry point for the Taglines program. """
 
+from __future__ import print_function
 import taglines
 from taglines.ArgParser import ArgParser
 from taglines.ShellUI import ShellUI

@@ -1,3 +1,4 @@
+from __future__ import print_function
 import taglines
 import sqlite3
 import sys

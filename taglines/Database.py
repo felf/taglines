@@ -1,3 +1,4 @@
+from __future__ import print_function
 import os
 import sqlite3
 # TODO: remove all output stuff from here
