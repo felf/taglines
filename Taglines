@@ -119,26 +119,32 @@ if __name__ == "__main__":  # {{{1
     parser = ArgParser()
     args = parser.args
 
-    if args.init:
-        result = init_database(args.file)
+    result = True
+    try:
+        if args.init:
+            result = init_database(args.file)
 
-    if args.random:
-        result = get_random_item(args)
+        if args.random:
+            result = get_random_item(args)
 
-    if args.list:
-        result = list_items(args)
+        if args.list:
+            result = list_items(args)
 
-    if args.show_tags:
-        result = show_tags(args.file)
+        if args.show_tags:
+            result = show_tags(args.file)
 
-    if args.show_authors:
-        result = show_authors(args.file)
+        if args.show_authors:
+            result = show_authors(args.file)
 
-    if args.stats:
-        result = show_stats(args.file)
+        if args.stats:
+            result = show_stats(args.file)
 
-    if args.interactive:
-        result = interactive_menu(args.file)
+        if args.interactive:
+            result = interactive_menu(args.file)
+    except Exception as error:
+        from sys import stderr
+        print(error, file=stderr)
+        result = False
 
     if result:
         exit(0)
