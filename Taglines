@@ -110,6 +110,7 @@ def interactive_menu(filepath):  # {{{1
             shell = ShellUI(db)
         shell.mainMenu()
     except Exception as e:
+        import sys
         print(sys.exc_info()[1])
         return False
     return True
