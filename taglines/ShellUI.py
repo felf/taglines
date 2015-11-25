@@ -1,4 +1,4 @@
-from __future__ import print_function
+from __future__ import print_function, unicode_literals
 import taglines
 import sqlite3
 import sys
@@ -107,7 +107,7 @@ class ShellUI:  # {{{1 interactive mode
                 continue
             elif i in keys:
                 return i
-            elif allowInts and i.isdecimal():
+            elif allowInts and i.isdigit():
                 return int(i)
             self.printWarning("Invalid choice.")
 
@@ -363,7 +363,7 @@ class ShellUI:  # {{{1 interactive mode
                     limit = self.getInput("  Number of taglines to list (default: 5): ")
                     if limit is False:
                         continue
-                    if limit.isdecimal():
+                    if limit.isdigit():
                         limit = int(limit)
                         if limit<0: limit = 5
                     else:
