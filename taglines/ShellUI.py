@@ -4,6 +4,9 @@ import sqlite3
 import sys
 from datetime import date
 
+if sys.version_info.major == 2:
+    input = raw_input
+
 
 class ShellUI:  # {{{1 interactive mode
     """ Shellmode class

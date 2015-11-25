@@ -7,7 +7,7 @@
 from __future__ import print_function
 import taglines
 from taglines.ArgParser import ArgParser
-from taglines.ShellUI import ShellUI
+from taglines.ShellUI import ShellUI, input
 
 import os
 from datetime import date
