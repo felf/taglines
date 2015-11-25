@@ -108,19 +108,20 @@ def interactive_menu(filepath):  # {{{1
         db = taglines.Database(filepath)
         if db:
             shell = ShellUI(db)
-        shell.mainMenu()
+        result = shell.mainMenu()
+
     except Exception as e:
         import sys
         print(sys.exc_info()[1])
-        return False
-    return True
+        result = False
+    return result
 
 
 if __name__ == "__main__":  # {{{1
     parser = ArgParser()
     args = parser.args
 
-    result = True
+    result = None
     try:
         if args.init:
             result = init_database(args.file)
@@ -142,12 +143,15 @@ if __name__ == "__main__":  # {{{1
 
         if args.interactive:
             result = interactive_menu(args.file)
+
     except Exception as error:
         from sys import stderr
         print(error, file=stderr)
         result = False
 
-    if result:
+    if result is None:
+        exit(-1)
+    elif result:
         exit(0)
     else:
         exit(1)

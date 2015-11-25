@@ -14,6 +14,14 @@ class ShellUI:  # {{{1 interactive mode
     It provides a hierarchy of menus which are used to inspect
     and modify the content of the database."""
 
+
+    class ExitShellUI(Exception):  # {{{1
+        """ Exception that is raised to leave the menu hierarchy. """
+
+        def __init__(self):
+            Exception()
+
+
     def __init__(self, db):  # {{{1
         self.currentAuthor = None
         self.currentTags = []
@@ -167,8 +175,7 @@ class ShellUI:  # {{{1 interactive mode
             print()
             return
         if ok and "yes".startswith(ok.lower()):
-            print("bye")
-            sys.exit()
+            raise self.ExitShellUI()
 
     def authorMenu(self, breadcrumbs):  # {{{1
         """The menu with which to alter author information."""
@@ -539,18 +546,21 @@ class ShellUI:  # {{{1 interactive mode
                         choice = ""
 
     def mainMenu(self):  # {{{1
-        while True:
-            bc = ["Main"]
-            choice = self.menu(bc,
-                    ["   a - Author menu    ", "t - Tag menu    ", "l - taglines menu"],
-                    "By your command: ")
-            if choice == "q":
-                self.exitTaglines()
-            if choice == "a":
-                self.authorMenu(bc)
-            elif choice == "t":
-                self.tagMenu(bc)
-            elif choice == "l":
-                self.taglinesMenu(bc)
+        try:
+            while True:
+                bc = ["Main"]
+                choice = self.menu(bc,
+                        ["   a - Author menu    ", "t - Tag menu    ", "l - taglines menu"],
+                        "By your command: ")
+                if choice == "q":
+                    self.exitTaglines()
+                if choice == "a":
+                    self.authorMenu(bc)
+                elif choice == "t":
+                    self.tagMenu(bc)
+                elif choice == "l":
+                    self.taglinesMenu(bc)
+        except self.ExitShellUI:
+            return True
         # }}}2
     # }}}1
