@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from __future__ import print_function, unicode_literals
 import taglines
 import sqlite3
@@ -128,7 +130,7 @@ class ShellUI:  # {{{1 interactive mode
                 if not allowEmpty and not i:
                     print("Empty string not allowed here.")
                 else:
-                    return i
+                    return i.decode("utf-8")
             # Ctrl+C
             except KeyboardInterrupt:
                 print()
