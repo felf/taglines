@@ -189,7 +189,13 @@ class ShellUI:  # {{{1 interactive mode
                 breadcrumbs,
                 ["a - add author      ", "l - list all authors\n",
                  "d - delete author   ", "c - set current author for new taglines\n"],
-                silent=choice != "h")
+                silent=choice != "h", allowInts=True)
+
+            if type(choice) is int:
+                id = choice
+                choice = "c"
+            else:
+                id = None
 
             if choice == "q":
                 return
@@ -236,21 +242,26 @@ class ShellUI:  # {{{1 interactive mode
                         print("Error while deleting author: {}.".format(e.args[0],))
 
             elif choice == "c":
-                id = self.getInput("\nID of new current author (empty to abort, 'u' to unset): ")
-                if id:
-                    if id == "u":
+                if id is None:
+                    id = self.getInput("\nID of new current author (empty to abort, 'u' to unset): ")
+                    if id == "":
+                        continue
+                    elif id == "u":
                         self.currentAuthor = None
+                        print("Current author reset.")
+                        continue
                     else:
                         try:
-                            c = self.db.execute("SELECT id, name FROM authors WHERE id=?", (id,))
-                            row = c.fetchone()
-                            if row is None:
-                                print("Error: no valid ID.")
-                            else:
-                                self.currentAuthor = int(id)
-                                print("New current author:", row[1])
+                            id = int(id)
                         except ValueError:
                             print("Error: no integer ID.")
+                c = self.db.execute("SELECT id, name FROM authors WHERE id=?", (id,))
+                row = c.fetchone()
+                if row is None:
+                    print("Error: ID {} is not valid.".format(id))
+                else:
+                    self.currentAuthor = int(id)
+                    print("New current author:", row[1])
 
     def tagMenu(self, breadcrumbs):  # {{{1
         """The menu with which to alter tag information."""
