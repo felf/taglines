@@ -91,11 +91,13 @@ def show_stats(filepath):  # {{{1
 
         print("Number of taglines:        {:6d}".format(stats["tagline count"],))
         print("Number of texts:           {:6d}   (ø {:5.2f} per tagline)".format(
-            stats["line count"], stats["line count"]/stats["tagline count"]))
+            stats["line count"], stats["line count"]/stats["tagline count"] if \
+                stats["line count"] != 0 else 0))
         print("Average text length:       {:8.1f}".format(stats["avg tagline length"],))
         print("Number of tags:            {:6d}".format(stats["tag count"],))
         print("Number of tag assignments: {:6d}   (ø {:5.2f} per tagline)".format(
-            stats["tag assignments"], stats["tag assignments"]/stats["tagline count"]))
+            stats["tag assignments"], stats["tag assignments"]/stats["tagline count"] if \
+                stats["tagline count"] != 0 else 0))
         print("Number of authors:         {:6d}".format(stats["author count"],))
         print("Used languages:            {:6d}".format(stats["language count"],))
         return True

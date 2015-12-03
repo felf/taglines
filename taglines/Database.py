@@ -199,6 +199,7 @@ class Database:
 
         c = self.execute("SELECT text FROM lines")
         linelengthsum = sum(len(r[0]) for r in c)
-        stats["avg tagline length"] = linelengthsum/stats["line count"]
+        stats["avg tagline length"] = linelengthsum/stats["line count"] if \
+                stats["line count"] != 0 else 0
 
         return stats
