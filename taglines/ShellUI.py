@@ -211,13 +211,21 @@ class ShellUI:  # {{{1 interactive mode
             elif choice == "a":
                 name = self.getInput("\nName (empty to abort): ")
                 # TODO: validate input
-                if name != "":
+                if name != False and name != "":
                     try:
-                        born = int(self.getInput("Year of birth: "))
+                        born = self.getInput("Year of birth: ")
+                        if born == False:
+                            continue
+                        else:
+                            born = int(born)
                     except ValueError:
                         born = None
                     try:
-                        died = int(self.getInput("Year of death: "))
+                        died = self.getInput("Year of death: ")
+                        if died == False:
+                            continue
+                        else:
+                            died = int(died)
                     except ValueError:
                         died = None
                     try:
