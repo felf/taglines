@@ -5,9 +5,12 @@
 """ Entry point for the Taglines program. """
 
 from __future__ import print_function, division
+from sys import version_info
 import taglines
 from taglines.ArgParser import ArgParser
-from taglines.ShellUI import ShellUI, input
+from taglines.ShellUI import ShellUI
+if version_info.major < 3:
+    from taglines.ShellUI import input
 
 import os
 from datetime import date
