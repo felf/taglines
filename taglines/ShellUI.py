@@ -386,7 +386,7 @@ class ShellUI:  # {{{1 interactive mode
 
             elif choice in ("l", "L") or type(choice) is int:
                 print()
-                q = "SELECT t.id, a.name, source, remark, date FROM taglines t LEFT JOIN authors a ON t.author=a.id"
+                q = "SELECT t.id, a.name, source, remark, date FROM taglines AS t LEFT JOIN authors AS a ON t.author=a.id"
                 if choice == "l":
                     limit = self.getInput("  Number of taglines to list (default: 5): ")
                     if limit is False:
