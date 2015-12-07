@@ -537,19 +537,14 @@ class ShellUI:  # {{{1 interactive mode
 
         choice = "h"
         while choice != "q":
-            choice = self.menu(breadcrumbs,
-                   ["a - add an item            ", "w - save lines to database and quit menu\n",
-                    "m - manage entered items   ", "q - quit to previous menu, discarding changes\n"],
-                    silent=choice != "h", noHeader=noHeader)
-            noHeader = False
 
-            if choice == "a":
-                print("    ENTER A NEW ITEM")
+            def enter_text(heading):
+                print("    " + heading)
                 language = self.getInput("    Language (ISO code): ", allowEmpty=False)
-                if not language: continue
+                if not language: return
                 if texts.get(language):
                     if self.askYesNo("    There is already an item with this language. Overwrite it?") == "n":
-                        continue
+                        return
                 print("    Text ('r'=restart, 'c'=correct last line, 'a'=abort, 'f' or two empty lines=finish:")
                 print("".join(["         {}".format(x) for x in range(1,9)]))
                 print("1234567890"*8)
@@ -573,6 +568,16 @@ class ShellUI:  # {{{1 interactive mode
                         lines = []
                     elif line == "a": break
                     else: lines.append(line)
+
+            choice = self.menu(breadcrumbs,
+                   ["a - add an item            ", "w - save lines to database and quit menu\n",
+                    "m - manage entered items   ", "q - quit to previous menu, discarding changes\n"],
+                    silent=choice != "h", noHeader=noHeader)
+            noHeader = False
+
+            if choice == "a":
+                enter_text("ENTER A NEW ITEM")
+
             elif choice == "m":
                 if len(texts) == 0:
                     print("No taglines available.")
