@@ -469,41 +469,73 @@ class ShellUI:  # {{{1 interactive mode
     def taglineEditMenu(self, breadcrumbs, id=None):  # {{{1
         """ Edit the content of a tagline or add a new one. """
 
-        breadcrumbs = breadcrumbs[:] + ["Edit tagline" if id else "New tagline"]
-        choice = "h"
+        def ask_optional_info(source, remark, when):
+            """ Ask user for content of those three field. """
 
+            result = self.getInput("  Tagline source{}: ".format(
+                "" if source is None else " [" + source + "]"))
+            if result is False: return None
+            source = result
+
+            result = self.getInput("  Tagline remark{}: ".format(
+                "" if remark is None else " [" + remark + "]"))
+            if result is False: return None
+            remark = result
+
+            result = self.getInput("  Tagline date (yyyy-mm-dd){}: ".format(
+                "" if when is None else " [" + when + "]"))
+            if result is False: return None
+            when = result
+
+            return source, remark, when
+
+        breadcrumbs = breadcrumbs[:] + ["New tagline" if id is None else "Edit tagline"]
         self.menu(breadcrumbs)
 
-        if not id:
-            print("Current author:", end=' ')
-            if self.currentAuthor is None: print("None")
-            else:
-                c = self.db.execute("SELECT name FROM authors WHERE id=?", (self.currentAuthor,))
-                print(c.fetchone()[0])
-            print("Current Tags:  ", end=' ')
-            if len(self.currentTags) == 0: print("None")
-            else:
-                tags = ",".join([str(t) for t in self.currentTags])
-                c = self.db.execute("SELECT text FROM tags WHERE id IN ("+tags+") ORDER BY text")
-                tags = c.fetchall()
-                tags = [t[0] for t in tags]
-                print(", ".join(tags))
-            self.print(("White", "\nOptional information:"))
-            source = self.getInput("  Tagline source: ")
-            if source is False: return
-            remark = self.getInput("  Tagline remark: ")
-            if remark is False: return
-            when   = self.getInput("  Tagline date (yyyy-mm-dd): ")
-            if when is False: return
-            print()
+        author_name = None
+        texts = {}
+
+        if id is None:
+            author_id = self.currentAuthor
+            tags = self.currentTags[:]
+            source = remark = when = None
         else:
             # TODO: get source, remark, when from database for given id
             pass
 
+        if author_id is not None:
+            c = self.db.execute("SELECT name FROM authors WHERE id=?", (author_id,))
+            row = c.fetchone()
+            if row:
+                author_name = row[0]
+
+        if len(tags) == 0:
+            tag_texts = "None"
+        else:
+            tag_texts = ",".join([str(t) for t in tags])
+            c = self.db.execute("SELECT text FROM tags WHERE id IN ("+tag_texts+") ORDER BY text")
+            tag_texts = c.fetchall()
+            tag_texts = ", ".join([t[0] for t in tag_texts])
+
+        prefix = "Current" if id is None else "Tagline"
+        print("{} author: {}".format(prefix, "None" if author_name is None else author_name))
+        print("{} tags: {}".format(prefix, tag_texts))
+
+        self.print(("White", "\nOptional information:"))
+        if id is None:
+            result = ask_optional_info(source, remark, when)
+            if result is None:
+                return
+            source, remark, when = result
+        else:
+            # TODO
+            pass
+        print()
+
         noHeader = True
         # TODO: validate date
-        texts = {}
 
+        choice = "h"
         while choice != "q":
             choice = self.menu(breadcrumbs,
                    ["a - add an item            ", "w - save lines to database and quit menu\n",
@@ -542,6 +574,8 @@ class ShellUI:  # {{{1 interactive mode
                     elif line == "a": break
                     else: lines.append(line)
             elif choice == "m":
+                if len(texts) == 0:
+                    print("No taglines available.")
                 for lang, text in texts.items():
                     print("\nLanguage: {}\n{}".format(lang, text))
                 lang = self.getInput("\n   Language to delete (empty to do nothing): ")
@@ -551,18 +585,19 @@ class ShellUI:  # {{{1 interactive mode
                 if not texts:
                     self.printWarning("No lines to save.")
                     continue
-                c = self.db.execute("INSERT INTO taglines (author,source,remark,date) values (?,?,?,?)", (
-                    self.currentAuthor if self.currentAuthor else None,
-                    source if source != "" else None,
-                    remark if remark != "" else None,
-                    when if when != "" else None), commit=True)
-                id = c.lastrowid
-                for lang, text in texts.items():
-                    self.db.execute("INSERT INTO lines (tagline, date, language, text) values (?,?,?,?)",
+                if id is None:
+                    c = self.db.execute("INSERT INTO taglines (author,source,remark,date) values (?,?,?,?)", (
+                        self.currentAuthor if self.currentAuthor else None,
+                        source if source != "" else None,
+                        remark if remark != "" else None,
+                        when if when != "" else None), commit=True)
+                    id = c.lastrowid
+                    for lang, text in texts.items():
+                        self.db.execute("INSERT INTO lines (tagline, date, language, text) values (?,?,?,?)",
                             (id, date.today().isoformat(), lang, text))
-                for t in self.currentTags:
-                    self.db.execute("INSERT INTO tag (tag, tagline) values (?,?)", (t, id))
-                self.db.commit()
+                    for t in tags:
+                        self.db.execute("INSERT INTO tag (tag, tagline) values (?,?)", (t, id))
+                    self.db.commit()
                 break
             elif choice == "q":
                 if texts:
