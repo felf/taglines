@@ -12,7 +12,7 @@ class ArgParser:
         group = parser.add_mutually_exclusive_group()
         group.add_argument(
             '-L', '--list', action='store_true',
-            help='List all found items')
+            help='List all found items in fortunes format')
         group.add_argument(
             '-r', '--random', action='store_true',
             help='From the found items, show one at random (default)')
