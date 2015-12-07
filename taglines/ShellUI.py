@@ -194,10 +194,10 @@ class ShellUI:  # {{{1 interactive mode
                 silent=choice != "h", allowInts=True)
 
             if type(choice) is int:
-                id = choice
+                author_id = choice
                 choice = "c"
             else:
-                id = None
+                author_id = None
 
             if choice == "q":
                 return
@@ -240,13 +240,13 @@ class ShellUI:  # {{{1 interactive mode
                         print("Error while adding author:", e.args[0])
 
             elif choice == "d":
-                id = self.getInput("\nID to delete (empty to abort): ")
-                if id:
+                author_id = self.getInput("\nID to delete (empty to abort): ")
+                if author_id:
                     try:
-                        id = int(id)
-                        self.db.execute('DELETE FROM authors WHERE id=?', (id,), True)
+                        author_id = int(author_id)
+                        self.db.execute('DELETE FROM authors WHERE id=?', (author_id,), True)
                         print("Author deleted.")
-                        if id == self.currentAuthor:
+                        if author_id == self.currentAuthor:
                             self.currentAuthor = None
                             print("Current author reset.")
                     except ValueError:
@@ -255,25 +255,25 @@ class ShellUI:  # {{{1 interactive mode
                         print("Error while deleting author: {}.".format(e.args[0],))
 
             elif choice == "c":
-                if id is None:
-                    id = self.getInput("\nID of new current author (empty to abort, 'u' to unset): ")
-                    if id == "":
+                if author_id is None:
+                    author_id = self.getInput("\nID of new current author (empty to abort, 'u' to unset): ")
+                    if author_id == "":
                         continue
-                    elif id == "u":
+                    elif author_id == "u":
                         self.currentAuthor = None
                         print("Current author reset.")
                         continue
                     else:
                         try:
-                            id = int(id)
+                            author_id = int(author_id)
                         except ValueError:
                             print("Error: no integer ID.")
-                c = self.db.execute("SELECT id, name FROM authors WHERE id=?", (id,))
+                c = self.db.execute("SELECT id, name FROM authors WHERE id=?", (author_id,))
                 row = c.fetchone()
                 if row is None:
-                    print("Error: ID {} is not valid.".format(id))
+                    print("Error: ID {} is not valid.".format(author_id))
                 else:
-                    self.currentAuthor = int(id)
+                    self.currentAuthor = int(author_id)
                     print("New current author:", row[1])
 
     def tagMenu(self, breadcrumbs):  # {{{1
@@ -291,10 +291,10 @@ class ShellUI:  # {{{1 interactive mode
 
             # instead of entering "t" and then the ID, simply enter the ID
             if type(choice) is int:
-                id = choice
+                tag = choice
                 choice = "t"
             else:
-                id = None
+                tag = None
 
             if choice == "q":
                 return
@@ -316,13 +316,13 @@ class ShellUI:  # {{{1 interactive mode
                     except Exception as e:
                         print("Error while adding tag: {}.".format(e.args[0]))
             elif choice == "d":
-                id = self.getInput("\nID to delete (empty to abort): ")
-                if id:
+                tag = self.getInput("\nID to delete (empty to abort): ")
+                if tag:
                     try:
-                        id = int(id)
+                        tag = int(tag)
                         output = ""
 
-                        c = self.db.getOne("SELECT COUNT(*) FROM tag WHERE tag=?", (id,))
+                        c = self.db.getOne("SELECT COUNT(*) FROM tag WHERE tag=?", (tag,))
                         if c[0] > 0:
                             dellines = self.askYesNo(
                                 "Also delete the {} taglines associated with that tag?".format(c[0],),
@@ -333,15 +333,15 @@ class ShellUI:  # {{{1 interactive mode
                             if dellines == "y":
                                 # delete lines of associated taglines
                                 self.db.execute("""DELETE FROM lines WHERE id IN (SELECT
-                                    l.id FROM lines l JOIN tag t ON t.tagline=l.tagline WHERE t.tag=?)""", (id,))
+                                    l.id FROM lines l JOIN tag t ON t.tagline=l.tagline WHERE t.tag=?)""", (tag,))
                                 # delete associated taglines
                                 c = self.db.execute("""DELETE FROM taglines WHERE id IN (SELECT
-                                    tl.id FROM taglines tl JOIN tag t ON t.tagline=tl.id WHERE t.tag=?)""", (id,))
+                                    tl.id FROM taglines tl JOIN tag t ON t.tagline=tl.id WHERE t.tag=?)""", (tag,))
                                 deleted = c.rowcount
                                 output = (" and one tagline" if deleted == 1
                                           else " and {} taglines".format(deleted))
-                        self.db.execute("DELETE FROM tag WHERE tag=?", (id,))
-                        self.db.execute("DELETE FROM tags WHERE id=?", (id,), True)
+                        self.db.execute("DELETE FROM tag WHERE tag=?", (tag,))
+                        self.db.execute("DELETE FROM tags WHERE id=?", (tag,), True)
                         print("Tag{} deleted.".format(output))
                     except ValueError:
                         print("Error: no integer ID.")
@@ -353,25 +353,25 @@ class ShellUI:  # {{{1 interactive mode
                 self.currentTags = []
                 print("All tags deselected.")
             elif choice == "t":
-                if type(id) is not int:
-                    id = self.getInput("\nID to toggle (empty to abort): ")
-                    if id:
+                if type(tag) is not int:
+                    tag = self.getInput("\nID to toggle (empty to abort): ")
+                    if tag:
                         try:
-                            id = int(id)
+                            tag = int(tag)
                         except ValueError:
                             print("Error: no integer ID.")
-                if type(id) is int:
-                    c = self.db.execute("SELECT id, text FROM tags WHERE id=?", (id,))
+                if type(tag) is int:
+                    c = self.db.execute("SELECT id, text FROM tags WHERE id=?", (tag,))
                     row = c.fetchone()
                     if not row:
                         print("Error: no valid ID.")
                     else:
-                        if id in self.currentTags:
-                            i = self.currentTags.index(id)
+                        if tag in self.currentTags:
+                            i = self.currentTags.index(tag)
                             self.currentTags = self.currentTags[0:i]+self.currentTags[i+1:]
                             print("Tag '{}' disabled.".format(row[1]))
                         else:
-                            self.currentTags.append(id)
+                            self.currentTags.append(tag)
                             print("Tag '{}' enabled.".format(row[1]))
 
     def taglinesMenu(self, breadcrumbs):  # {{{1
@@ -409,8 +409,8 @@ class ShellUI:  # {{{1 interactive mode
                     q += " ORDER BY t.id"
                     print("ALL TAGLINES")
                 else:
-                    id = int(choice)
-                    q += " WHERE t.id='{}'".format(id)
+                    tagline = int(choice)
+                    q += " WHERE t.id='{}'".format(tagline)
 
                 c = self.db.execute(q)
                 anzahl = -1
@@ -445,17 +445,17 @@ class ShellUI:  # {{{1 interactive mode
                 print("TODO :)")
 
             elif choice == "d":
-                id = self.getInput("\nID to delete (d=last tagline in list, empty to abort): ")
-                if id == "d":
-                    id = self.db.getOne("SELECT MAX(id) FROM taglines")[0]
-                if id != "":
+                tagline = self.getInput("\nID to delete (d=last tagline in list, empty to abort): ")
+                if tagline == "d":
+                    tagline = self.db.getOne("SELECT MAX(id) FROM taglines")[0]
+                if tagline != "":
                     try:
-                        id = int(id)
-                        c = self.db.execute("SELECT id FROM taglines WHERE id=?", (id,))
+                        tagline = int(tagline)
+                        c = self.db.execute("SELECT id FROM taglines WHERE id=?", (tagline,))
                         if c.fetchone():
-                            self.db.execute("DELETE FROM tag WHERE tagline=?", (id,))
-                            self.db.execute("DELETE FROM lines WHERE tagline=?", (id,), commit=True)
-                            self.db.execute('DELETE FROM taglines WHERE id=?', (id,))
+                            self.db.execute("DELETE FROM tag WHERE tagline=?", (tagline,))
+                            self.db.execute("DELETE FROM lines WHERE tagline=?", (tagline,), commit=True)
+                            self.db.execute('DELETE FROM taglines WHERE id=?', (tagline,))
                         print("Tagline and all its tag assignments deleted.")
                     except ValueError:
                         print("Error: no integer ID.")
@@ -468,7 +468,7 @@ class ShellUI:  # {{{1 interactive mode
             elif choice == "T":
                 self.tagMenu(breadcrumbs)
 
-    def taglineEditMenu(self, breadcrumbs, id=None):  # {{{1
+    def taglineEditMenu(self, breadcrumbs, tagline_id=None):  # {{{1
         """ Edit the content of a tagline or add a new one. """
 
         def ask_optional_info(source, remark, when):
@@ -491,13 +491,13 @@ class ShellUI:  # {{{1 interactive mode
 
             return source, remark, when
 
-        breadcrumbs = breadcrumbs[:] + ["New tagline" if id is None else "Edit tagline"]
+        breadcrumbs = breadcrumbs[:] + ["New tagline" if tagline_id is None else "Edit tagline"]
         self.menu(breadcrumbs)
 
         author_name = None
         texts = {}
 
-        if id is None:
+        if tagline_id is None:
             author_id = self.currentAuthor
             tags = self.currentTags[:]
             source = remark = when = None
@@ -519,12 +519,12 @@ class ShellUI:  # {{{1 interactive mode
             tag_texts = c.fetchall()
             tag_texts = ", ".join([t[0] for t in tag_texts])
 
-        prefix = "Current" if id is None else "Tagline"
+        prefix = "Current" if tagline_id is None else "Tagline"
         print("{} author: {}".format(prefix, "None" if author_name is None else author_name))
         print("{} tags: {}".format(prefix, tag_texts))
 
         self.print(("White", "\nOptional information:"))
-        if id is None:
+        if tagline_id is None:
             result = ask_optional_info(source, remark, when)
             if result is None:
                 return
@@ -592,18 +592,18 @@ class ShellUI:  # {{{1 interactive mode
                 if not texts:
                     self.printWarning("No lines to save.")
                     continue
-                if id is None:
+                if tagline_id is None:
                     c = self.db.execute("INSERT INTO taglines (author,source,remark,date) values (?,?,?,?)", (
                         self.currentAuthor if self.currentAuthor else None,
                         source if source != "" else None,
                         remark if remark != "" else None,
                         when if when != "" else None), commit=True)
-                    id = c.lastrowid
+                    tagline_id = c.lastrowid
                     for lang, text in texts.items():
                         self.db.execute("INSERT INTO lines (tagline, date, language, text) values (?,?,?,?)",
-                            (id, date.today().isoformat(), lang, text))
+                            (tagline_id, date.today().isoformat(), lang, text))
                     for t in tags:
-                        self.db.execute("INSERT INTO tag (tag, tagline) values (?,?)", (t, id))
+                        self.db.execute("INSERT INTO tag (tag, tagline) values (?,?)", (t, tagline_id))
                     self.db.commit()
                 break
             elif choice == "q":
