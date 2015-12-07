@@ -130,7 +130,9 @@ class ShellUI:  # {{{1 interactive mode
                 if not allowEmpty and not i:
                     print("Empty string not allowed here.")
                 else:
-                    return i.decode("utf-8")
+                    if sys.version_info.major == 2:
+                        i = i.decode("utf-8")
+                    return i
             # Ctrl+C
             except KeyboardInterrupt:
                 print()
