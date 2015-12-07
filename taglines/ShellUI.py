@@ -244,6 +244,9 @@ class ShellUI:  # {{{1 interactive mode
                         id = int(id)
                         self.db.execute('DELETE FROM authors WHERE id=?', (id,), True)
                         print("Author deleted.")
+                        if id == self.currentAuthor:
+                            self.currentAuthor = None
+                            print("Current author reset.")
                     except ValueError:
                         print("Error: no integer ID.")
                     except Exception as e:
