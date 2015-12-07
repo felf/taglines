@@ -96,8 +96,13 @@ class Database:
             print(query)
         if args:
             if debug:
-                print(qargs)
-            r = c.execute(query, args)
+                print(args)
+            try:
+                r = c.execute(query, args)
+            except sqlite3.InterfaceError:
+                print("Query:", query)
+                print("args:", args)
+                raise
         else:
             r = c.execute(query)
         if commit and query.lower()[0:6] in ("insert", "update", "delete"):
