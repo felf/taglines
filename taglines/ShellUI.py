@@ -248,6 +248,10 @@ class ShellUI:  # {{{1 interactive mode
             elif choice == "d":
                 author_id = self.getInput("\nID to delete (empty to abort): ", allowInt=True)
                 if type(author_id) is int:
+                    row = self.db.getOne("SELECT id FROM authors WHERE id=?", (author_id,))
+                    if row is None:
+                        print("Author with given ID does not exist.")
+                        continue
                     try:
                         self.db.execute('DELETE FROM authors WHERE id=?', (author_id,), True)
                         print("Author deleted.")
@@ -320,7 +324,9 @@ class ShellUI:  # {{{1 interactive mode
                         print("Error while adding tag: {}.".format(e.args[0]))
             elif choice == "d":
                 tag = self.getInput("\nID to delete (empty to abort): ", allowInt=True)
-                if type(tag) is int:
+                if type(tag) is not int:
+                    print("Error: no integer ID.")
+                else:
                     try:
                         output = ""
 
@@ -447,6 +453,8 @@ class ShellUI:  # {{{1 interactive mode
                     continue
                 if tagline == "d":
                     tagline = self.db.getOne("SELECT MAX(id) FROM taglines")[0]
+                    if tagline is None:
+                        print("Nothing to delete.")
                 if type(tagline) is int:
                     try:
                         c = self.db.execute("SELECT id FROM taglines WHERE id=?", (tagline,))
