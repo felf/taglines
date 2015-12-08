@@ -7,7 +7,7 @@
 from __future__ import print_function, division
 from sys import version_info
 import taglines
-from taglines.ArgParser import ArgParser
+from taglines.ArgParser import parse_arguments
 from taglines.ShellUI import ShellUI
 if version_info.major < 3:
     from taglines.ShellUI import input
@@ -123,8 +123,7 @@ def interactive_menu(filepath):  # {{{1
 
 
 if __name__ == "__main__":  # {{{1
-    parser = ArgParser()
-    args = parser.args
+    args = parse_arguments()
 
     result = None
     try:
