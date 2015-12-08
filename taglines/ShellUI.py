@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+""" The terminal-based menu interface. """
+
 from __future__ import print_function, unicode_literals
 import taglines
 import sqlite3
@@ -32,6 +34,7 @@ class ShellUI:  # {{{1 interactive mode
 
     def colorstring(self, color):  # {{{1
         """ Return terminal escape sequences for colourful output. """
+
         _colors = {
             'black':  '30',
             'red':    '31',
@@ -48,6 +51,7 @@ class ShellUI:  # {{{1 interactive mode
 
     def print(self, what, newline=True):  # {{{1
         """ Print a string or a list of coloured strings. """
+
         ending = "\n" if newline else ""
         if isinstance(what, str):
             print(what, end=ending)
@@ -64,9 +68,12 @@ class ShellUI:  # {{{1 interactive mode
 
     def printWarning(self, what):  # {{{1
         """ Convenience function to print a red warning message. """
+
         self.print(("Red", what))
 
     def menu(self, breadcrumbs, choices=None, prompt="", silent=False, noHeader=False, allowInt=False):  # {{{1
+        """ Display a list of possible choices and ask user for a selection. """
+
         if not (silent or noHeader):
             length = 10
             self.print(("White", "\n Taglines: "), False)
@@ -122,7 +129,13 @@ class ShellUI:  # {{{1 interactive mode
             self.printWarning("Invalid choice.")
 
     def getInput(self, text="", allowEmpty=True, allowInt=False):  # {{{1
-        """ This is a common function to get input and catch Ctrl+C/D. """
+        """ This is a shared function to get user input and catch Ctrl+C/D.
+
+        @param allowEmpty: whether the input may be the empty string
+        @param allowInt: whether to accept numeric input and convert it to int
+                         automatically
+        """
+
         while True:
             try:
                 self.print(("green", text), False)
@@ -178,6 +191,8 @@ class ShellUI:  # {{{1 interactive mode
                 return i
 
     def exitTaglines(self):  # {{{1
+        """ Ask for exit confirmation and exit on positive answer. """
+
         try:
             # not using askYesNo b/c of own handling of Ctrl+C/D
             ok = input("\nReally quit Taglines?  [y/N] ")
@@ -549,6 +564,8 @@ class ShellUI:  # {{{1 interactive mode
         while choice != "q":
 
             def enter_text(heading):
+                """ Tagline entry mask to enter several lines of text. """
+
                 print("    " + heading)
                 language = self.getInput("    Language (ISO code): ", allowEmpty=False)
                 if not language: return
@@ -628,6 +645,8 @@ class ShellUI:  # {{{1 interactive mode
                 break
 
     def mainMenu(self):  # {{{1
+        """ The main menu loop for the terminal interface. """
+
         try:
             while True:
                 bc = ["Main"]

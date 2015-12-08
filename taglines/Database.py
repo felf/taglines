@@ -1,3 +1,5 @@
+""" Encapsulation of tagline data in an sqlite database file. """
+
 from __future__ import print_function
 import os
 import sqlite3
@@ -6,6 +8,8 @@ import sys
 
 
 class Database:  # {{{1
+    """ General management of the database. """
+
     def __init__(self, dbfilename=None):  # {{{2
         self.isOpen = False
         self.db = None
@@ -47,6 +51,7 @@ class Database:  # {{{1
 
     def initialiseFile(self, filename):  # {{{2
         """Initialises a new, empty database"""
+
         if self.isOpen:
             self.close()
 
@@ -76,6 +81,8 @@ class Database:  # {{{1
             exit(1)
 
     def commit(self):  # {{{2
+        """ Save any changes to the database that have not yet been committed. """
+
         if self.isOpen:
             self.db.commit()
 
@@ -89,6 +96,8 @@ class Database:  # {{{1
             self.isOpen = False
 
     def execute(self, query, args=None, commit=False, debug=False):  # {{{2
+        """ Execute a query on the database and evaluate the result. """
+
         if not self.isOpen and not self.open():
             return False
         c = self.db.cursor()
@@ -111,10 +120,13 @@ class Database:  # {{{1
 
     def getOne(self, query, args=None):  # {{{2
         """ Shortcut function for a simply one-line retrieve. """
+
         c = self.execute(query, args)
         return c.fetchone() if c else None
 
     def parseArguments(self, args):  # {{{2
+        """ Evaluate given arguments and set appropriate option variables. """
+
         self.filters = {}
         self.exactAuthorMode = args.exactauthor
         self.tagsOrMode = args.ortag
@@ -126,6 +138,8 @@ class Database:  # {{{1
             self.filters["language"] = args.lang
 
     def randomTagline(self):  # {{{2
+        """ Retrieve and return a random tagline text from the database. """
+
         c = self.taglines(True)
         if c:
             return c.fetchone()[0]
@@ -179,12 +193,16 @@ class Database:  # {{{1
         return self.execute(query, (qargs))
 
     def tags(self, orderByName=True):  # {{{2
+        """ Retrieve and return all tags and their names from the database. """
+
         query = "SELECT text FROM tags"
         if orderByName:
             query += " ORDER by text"
         return (r[0] for r in self.execute(query))
 
     def authors(self, orderByName=True):  # {{{2
+        """ Retrieve and return all authors and their data from the database. """
+
         query = "SELECT name, born, died FROM authors ORDER BY name"
         return (name+(" ({}-{})".
                 format(
@@ -194,6 +212,8 @@ class Database:  # {{{1
                 for name, born, died in self.execute(query))
 
     def stats(self):  # {{{2
+        """ Calculate and return some statistical data on the database. """
+
         stats = {}
         stats["tag assignments"] = int(self.getOne("SELECT count(*) FROM tag")[0])
         stats["tag count"] = int(self.getOne("SELECT count(*) FROM tags")[0])
