@@ -22,7 +22,7 @@ class ShellUI:  # {{{1 interactive mode
         """ Exception that is raised to leave the menu hierarchy. """
 
         def __init__(self):
-            Exception()
+            Exception.__init__()
 
 
     def __init__(self, db):  # {{{1
@@ -95,8 +95,7 @@ class ShellUI:  # {{{1 interactive mode
             if not silent:
                 self.print([("Yellow", key), " - "+text if key else text], False)
 
-        """ main menu """
-        if len(breadcrumbs) == 1:
+        if len(breadcrumbs) == 1:  # only show in main menu
             print("\nAlso available in all menus:")
             for choice in ["   q/^d - quit to parent menu   ", "Q/^c - quit program   ", "h/? - show menu help"]:
                 key, text = choice.split(" - ")
@@ -221,7 +220,6 @@ class ShellUI:  # {{{1 interactive mode
 
             if choice == "a":
                 name = self.getInput("\nName (empty to abort): ")
-                # TODO: validate input
                 if name != False and name != "":
                     try:
                         born = self.getInput("Year of birth: ")
@@ -245,8 +243,6 @@ class ShellUI:  # {{{1 interactive mode
                         print("Author added, new ID is {}".format(c.lastrowid))
                     except sqlite3.Error as e:
                         print("An sqlite3 error occurred:", e.args[0])
-                    except Exception as e:
-                        print("Error while adding author:", e.args[0])
 
             elif choice == "c":
                 if author_id is None:
@@ -282,8 +278,6 @@ class ShellUI:  # {{{1 interactive mode
                             print("Current author reset.")
                     except ValueError:
                         print("Error: no integer ID.")
-                    except Exception as e:
-                        print("Error while deleting author: {}.".format(e.args[0],))
 
             elif choice == "l":
                 print("\nALL AUTHORS (sorted by name):")
@@ -319,15 +313,12 @@ class ShellUI:  # {{{1 interactive mode
 
             if choice == "a":
                 text = self.getInput("\nTag text (empty to abort): ")
-                # TODO: validate input
                 if text:
                     try:
                         c = self.db.execute("INSERT INTO tags (text) VALUES (?)", (text,), True)
                         print("Tag added, new ID is", c.lastrowid)
                     except sqlite3.Error as e:
                         print("An sqlite3 error occurred:", e.args[0])
-                    except Exception as e:
-                        print("Error while adding tag: {}.".format(e.args[0]))
 
             elif choice == "d":
                 tag = self.getInput("\nID to delete (empty to abort): ", allowInt=True)
@@ -360,8 +351,6 @@ class ShellUI:  # {{{1 interactive mode
                         print("Tag{} deleted.".format(output))
                     except sqlite3.Error as e:
                         print("An sqlite3 error occurred:", e.args[0])
-                    except Exception as e:
-                        print("Error while deleting tag: {}.".format(e.args[0]))
 
             elif choice == "l":
                 print("\nALL TAGS (sorted by text):")
