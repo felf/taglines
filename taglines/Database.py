@@ -144,41 +144,37 @@ class Database:  # {{{1
     def taglines(self, random=False):  # {{{2
         """ Retrieve and return taglines according to set filters. """
 
-        query = "SELECT text FROM lines l, taglines tl"
+        query = "SELECT text FROM lines AS l"
         qargs = []
+        where = False
 
         author = self.filters.get("author")
         if author:
+            query += " JOIN taglines AS tl ON l.tagline=tl.id"
             if self.exactAuthorMode:
                 query += " JOIN authors a ON a.name=? AND tl.author=a.id"
                 qargs.append(author)
             else:
                 query += " JOIN authors a ON a.name LIKE ? AND tl.author=a.id"
-                qargs.append("%"+author+"%")
+                qargs.append("%" + author + "%")
 
         tags = self.filters.get("tags")
         if tags:
-            if self.tagsOrMode:
-                tagquery = ("SELECT t1.tagline FROM tag t1 JOIN tags s1 ON t1.tag=s1.id WHERE (" +
-                            " OR ".join(["s1.text=?"]*len(tags)) + ")")
-            else:
-                tagquery = (
-                    "SELECT t1.tagline FROM " + " JOIN ".join([
-                        "tag t{0}, tags s{0} on s{0}.id=t{0}.tag AND s{0}.text=? AND t1.tagline=t{0}.tagline".format(x+1, tags[x]) for x in range(len(tags))])
-                    )
+            query += """ WHERE l.tagline IN (
+                SELECT tagline FROM tag JOIN tags ON tag.tag=tags.id WHERE text IN ({tag_texts}) GROUP BY tagline{having}
+            )""".format(
+                tag_texts=",".join(["?"] * len(tags)),
+                having="" if self.tagsOrMode else " HAVING count(*)=?",
+                )
             qargs += tags
-        else:
-            tagquery = None
-
-    #    query="SELECT text FROM lines l, taglines tl"
-
-        query += " WHERE tl.id=l.tagline"
-        if tagquery:
-            query += " AND tl.id IN ("+tagquery+")"
+            if not self.tagsOrMode:
+                qargs.append(len(tags))
+            where = True
 
         lang = self.filters.get("language")
         if lang:
-            query += " AND l.language=?"
+            query += "{} l.language=?".format(" AND" if where else " WHERE")
+            where = True
             qargs.append(lang)
 
         if random:
