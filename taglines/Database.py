@@ -16,6 +16,7 @@ class Database:  # {{{1
         self.filename = None
         self.filters = {}
         self.exactAuthorMode = False
+        self.tagsOrMode = False
 
         if dbfilename and not self.setPath(dbfilename):
             raise Exception("The given filename could not be opened.")
@@ -75,10 +76,6 @@ class Database:  # {{{1
             exit(1)
         except sqlite3.Error as e:
             print("An sqlite3 error occurred:", e.args[0])
-        except Exception as e:
-            print("\nError while initialising the database file: {}. Exiting.".
-                  format(e.args[0]), file=sys.stderr)
-            exit(1)
 
     def commit(self):  # {{{2
         """ Save any changes to the database that have not yet been committed. """
@@ -161,13 +158,10 @@ class Database:  # {{{1
 
         tags = self.filters.get("tags")
         if tags:
-            qtags = ["tag t{}".format(x) for x in range(len(tags))]
             if self.tagsOrMode:
                 tagquery = ("SELECT t1.tagline FROM tag t1 JOIN tags s1 ON t1.tag=s1.id WHERE (" +
                             " OR ".join(["s1.text=?"]*len(tags)) + ")")
             else:
-                qwhere = ["t{}='{}'".format(
-                    x, tags[x]) for x in range(len(tags))]
                 tagquery = (
                     "SELECT t1.tagline FROM " + " JOIN ".join([
                         "tag t{0}, tags s{0} on s{0}.id=t{0}.tag AND s{0}.text=? AND t1.tagline=t{0}.tagline".format(x+1, tags[x]) for x in range(len(tags))])
@@ -203,7 +197,9 @@ class Database:  # {{{1
     def authors(self, orderByName=True):  # {{{2
         """ Retrieve and return all authors and their data from the database. """
 
-        query = "SELECT name, born, died FROM authors ORDER BY name"
+        query = "SELECT name, born, died FROM authors"
+        if orderByName:
+            query += " ORDER BY name"
         return (name+(" ({}-{})".format(
             born if born else "",
             died if died else ""

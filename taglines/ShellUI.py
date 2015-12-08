@@ -3,7 +3,6 @@
 """ The terminal-based menu interface. """
 
 from __future__ import print_function, unicode_literals
-import taglines
 import sqlite3
 import sys
 from datetime import date
