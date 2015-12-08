@@ -5,8 +5,8 @@ import sqlite3
 import sys
 
 
-class Database:
-    def __init__(self, dbfilename=None):  # {{{1
+class Database:  # {{{1
+    def __init__(self, dbfilename=None):  # {{{2
         self.isOpen = False
         self.db = None
         self.filename = None
@@ -16,10 +16,10 @@ class Database:
         if dbfilename and not self.setPath(dbfilename):
             raise Exception("The given filename could not be opened.")
 
-    def __del__(self):  # {{{1
+    def __del__(self):  # {{{2
         self.close()
 
-    def setPath(self, path):  # {{{1
+    def setPath(self, path):  # {{{2
         """ Sets the instance's database filename.
 
         If the path is valid, it is stored and True is returned. """
@@ -33,7 +33,7 @@ class Database:
         else:
             return False
 
-    def open(self):  # {{{1
+    def open(self):  # {{{2
         """ Opens a connection to an existing database.
 
         Returns False if unsuccessful. """
@@ -45,7 +45,7 @@ class Database:
         # TODO: handle invalid DB
         return self.isOpen
 
-    def initialiseFile(self, filename):  # {{{1
+    def initialiseFile(self, filename):  # {{{2
         """Initialises a new, empty database"""
         if self.isOpen:
             self.close()
@@ -75,11 +75,11 @@ class Database:
                   format(e.args[0]), file=sys.stderr)
             exit(1)
 
-    def commit(self):  # {{{1
+    def commit(self):  # {{{2
         if self.isOpen:
             self.db.commit()
 
-    def close(self):  # {{{1
+    def close(self):  # {{{2
         """ Closes the instance's database connection. """
 
         if self.db and self.isOpen:
@@ -88,7 +88,7 @@ class Database:
             self.db = None
             self.isOpen = False
 
-    def execute(self, query, args=None, commit=False, debug=False):  # {{{1
+    def execute(self, query, args=None, commit=False, debug=False):  # {{{2
         if not self.isOpen and not self.open():
             return False
         c = self.db.cursor()
@@ -109,12 +109,12 @@ class Database:
             self.db.commit()
         return r
 
-    def getOne(self, query, args=None):  # {{{1
+    def getOne(self, query, args=None):  # {{{2
         """ Shortcut function for a simply one-line retrieve. """
         c = self.execute(query, args)
         return c.fetchone() if c else None
 
-    def parseArguments(self, args):  # {{{1
+    def parseArguments(self, args):  # {{{2
         self.filters = {}
         self.exactAuthorMode = args.exactauthor
         self.tagsOrMode = args.ortag
@@ -125,12 +125,12 @@ class Database:
         if args.lang:
             self.filters["language"] = args.lang
 
-    def randomTagline(self):  # {{{1
+    def randomTagline(self):  # {{{2
         c = self.taglines(True)
         if c:
             return c.fetchone()[0]
 
-    def taglines(self, random=False):  # {{{1
+    def taglines(self, random=False):  # {{{2
         """ Returns taglines according to set filters. """
 
         query = "SELECT text FROM lines l, taglines tl"
@@ -178,13 +178,13 @@ class Database:
 
         return self.execute(query, (qargs))
 
-    def tags(self, orderByName=True):  # {{{1
+    def tags(self, orderByName=True):  # {{{2
         query = "SELECT text FROM tags"
         if orderByName:
             query += " ORDER by text"
         return (r[0] for r in self.execute(query))
 
-    def authors(self, orderByName=True):  # {{{1
+    def authors(self, orderByName=True):  # {{{2
         query = "SELECT name, born, died FROM authors ORDER BY name"
         return (name+(" ({}-{})".
                 format(
@@ -193,7 +193,7 @@ class Database:
                 ) if born or died else "")
                 for name, born, died in self.execute(query))
 
-    def stats(self):  # {{{1
+    def stats(self):  # {{{2
         stats = {}
         stats["tag assignments"] = int(self.getOne("SELECT count(*) FROM tag")[0])
         stats["tag count"] = int(self.getOne("SELECT count(*) FROM tags")[0])
