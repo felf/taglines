@@ -49,16 +49,16 @@ class ShellUI:  # {{{1 interactive mode
     def print(self, what, newline=True):  # {{{1
         """ Print a string or a list of coloured strings. """
         ending = "\n" if newline else ""
-        if type(what) is str:
+        if isinstance(what, str):
             print(what, end=ending)
         else:
-            if type(what) is tuple:
+            if isinstance(what, tuple):
                 what = [what]
             o = ""
             for part in what:
                 o += "".join([
                     self.colorstring(part[0]) + part[1] + "\033[0;0m"
-                        if type(part) is tuple else part
+                    if isinstance(part, tuple) else part
                     ]) + "\033[0;0m"
             print(o, end=ending)
 
@@ -117,7 +117,7 @@ class ShellUI:  # {{{1 interactive mode
                 continue
             elif i in keys:
                 return i
-            elif allowInt and type(i) is int:
+            elif allowInt and isinstance(i, int):
                 return i
             self.printWarning("Invalid choice.")
 
@@ -199,7 +199,7 @@ class ShellUI:  # {{{1 interactive mode
                  "d - delete author   ", "c - set current author for new taglines\n"],
                 silent=choice != "h", allowInt=True)
 
-            if type(choice) is int:
+            if isinstance(choice, int):
                 author_id = choice
                 choice = "c"
             else:
@@ -243,7 +243,7 @@ class ShellUI:  # {{{1 interactive mode
                         self.currentAuthor = None
                         print("Current author reset.")
                         continue
-                    elif type(author_id) is not int:
+                    elif not isinstance(author_id, int):
                         print("Error: not a valid integer ID.")
                         continue
                 row = self.db.getOne("SELECT id, name FROM authors WHERE id=?", (author_id,))
@@ -255,7 +255,7 @@ class ShellUI:  # {{{1 interactive mode
 
             elif choice == "d":
                 author_id = self.getInput("\nID to delete (empty to abort): ", allowInt=True)
-                if type(author_id) is int:
+                if isinstance(author_id, int):
                     row = self.db.getOne("SELECT id FROM authors WHERE id=?", (author_id,))
                     if row is None:
                         print("Author with given ID does not exist.")
@@ -297,7 +297,7 @@ class ShellUI:  # {{{1 interactive mode
                 silent=choice != "h", allowInt=True)
 
             # instead of entering "t" and then the ID, simply enter the ID
-            if type(choice) is int:
+            if isinstance(choice, int):
                 tag = choice
                 choice = "t"
             else:
@@ -317,7 +317,7 @@ class ShellUI:  # {{{1 interactive mode
 
             elif choice == "d":
                 tag = self.getInput("\nID to delete (empty to abort): ", allowInt=True)
-                if type(tag) is not int:
+                if not isinstance(tag, int):
                     print("Error: no integer ID.")
                 else:
                     try:
@@ -361,9 +361,9 @@ class ShellUI:  # {{{1 interactive mode
                 print("All tags deselected.")
 
             elif choice == "t":
-                if type(tag) is not int:
+                if not isinstance(tag, int):
                     tag = self.getInput("\nID to toggle (empty to abort): ", allowInt=True)
-                if type(tag) is int:
+                if isinstance(tag, int):
                     row = self.db.getOne("SELECT id, text FROM tags WHERE id=?", (tag,))
                     if not row:
                         print("Error: no valid ID.")
@@ -411,7 +411,7 @@ class ShellUI:  # {{{1 interactive mode
                     tagline = self.db.getOne("SELECT MAX(id) FROM taglines")[0]
                     if tagline is None:
                         print("Nothing to delete.")
-                if type(tagline) is int:
+                if isinstance(tagline, int):
                     try:
                         if self.db.getOne("SELECT id FROM taglines WHERE id=?", (tagline,)):
                             self.db.execute("DELETE FROM tag WHERE tagline=?", (tagline,))
@@ -426,14 +426,14 @@ class ShellUI:  # {{{1 interactive mode
             elif choice == "e":
                 print("TODO :)")
 
-            elif choice in ("l", "L") or type(choice) is int:
+            elif choice in ("l", "L") or isinstance(choice, int):
                 print()
                 q = "SELECT t.id, a.name, source, remark, date FROM taglines AS t LEFT JOIN authors AS a ON t.author=a.id"
                 if choice == "l":
                     limit = self.getInput("  Number of taglines to list (default: 5): ", allowInt=True)
                     if limit is False:
                         continue
-                    if type(limit) is int:
+                    if isinstance(limit, int):
                         if limit < 0:
                             limit = 5
                     else:

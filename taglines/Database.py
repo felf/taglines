@@ -41,7 +41,7 @@ class Database:  # {{{1
         if self.isOpen:
             return
         self.db = sqlite3.connect(self.filename, detect_types=True)
-        self.isOpen = type(self.db) is sqlite3.Connection
+        self.isOpen = isinstance(self.db, sqlite3.Connection)
         # TODO: handle invalid DB
         return self.isOpen
 
