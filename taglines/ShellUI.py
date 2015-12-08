@@ -400,14 +400,14 @@ class ShellUI:  # {{{1 interactive mode
         """The menu with which to alter the actual taglines."""
 
         breadcrumbs = breadcrumbs[:]+["Tagline"]
-        choice ="h"
+        choice = "h"
         while True:
-            choice = self.menu(breadcrumbs,
-                   ["l - list last taglines     ", "L - list all taglines\n",
-                    "a - add new tagline        ", "any number - show tagline of that ID\n",
-                    "e - edit tagline           ", "A - go to author menu\n",
-                    "d - delete tagline         ", "T - go to tag menu\n"],
-                    silent=choice != "h", allowInt=True)
+            choice = self.menu(breadcrumbs, [
+                "l - list last taglines     ", "L - list all taglines\n",
+                "a - add new tagline        ", "any number - show tagline of that ID\n",
+                "e - edit tagline           ", "A - go to author menu\n",
+                "d - delete tagline         ", "T - go to tag menu\n"
+                ], silent=choice != "h", allowInt=True)
 
             if choice == "A":
                 self.authorMenu(breadcrumbs)
@@ -454,7 +454,7 @@ class ShellUI:  # {{{1 interactive mode
                     else:
                         limit = 5
                     row = self.db.getOne("SELECT COUNT(id) FROM taglines")
-                    q += " ORDER BY t.id LIMIT {},{}".format(max(0,row[0]-limit), limit)
+                    q += " ORDER BY t.id LIMIT {},{}".format(max(0, row[0] - limit), limit)
                     print("LAST {} TAGLINES".format(limit))
                 elif choice == "L":
                     q += " ORDER BY t.id"
@@ -486,7 +486,7 @@ class ShellUI:  # {{{1 interactive mode
                             " ("+t[1].isoformat()+")" if t[1] is not None else "",
                             " lang="+t[2] if t[2] is not None else "",
                             t[3] if t[3] else ""))
-                if (anzahl == -1):
+                if anzahl == -1:
                     print("No match found.")
 
             elif choice == "q":
@@ -574,7 +574,7 @@ class ShellUI:  # {{{1 interactive mode
                         return
 
                 print("    Text ('r'=restart, 'c'=correct last line, 'a'=abort, 'f' or two empty lines=finish:")
-                print("".join(["         {}".format(x) for x in range(1,9)]))
+                print("".join(["         {}".format(x) for x in range(1, 9)]))
                 print("1234567890"*8)
                 lines = []
                 while True:
@@ -587,7 +587,7 @@ class ShellUI:  # {{{1 interactive mode
                             lines.pop()
                         print("--> Last line deleted.")
 
-                    elif line == "f" or line == "" and len(lines)>0 and lines[-1] == "":
+                    elif line == "f" or line == "" and len(lines) > 0 and lines[-1] == "":
                         texts[language] = "\n".join(lines).strip()
                         break
 
@@ -602,10 +602,10 @@ class ShellUI:  # {{{1 interactive mode
                         lines = []
                     else: lines.append(line)
 
-            choice = self.menu(breadcrumbs,
-                   ["a - add an item            ", "w - save lines to database and quit menu\n",
-                    "m - manage entered items   ", "q - quit to previous menu, discarding changes\n"],
-                    silent=choice != "h", noHeader=noHeader)
+            choice = self.menu(breadcrumbs, [
+                "a - add an item            ", "w - save lines to database and quit menu\n",
+                "m - manage entered items   ", "q - quit to previous menu, discarding changes\n"
+                ], silent=choice != "h", noHeader=noHeader)
             noHeader = False
 
             if choice == "a":
@@ -637,7 +637,8 @@ class ShellUI:  # {{{1 interactive mode
                         when if when != "" else None), commit=True)
                     tagline_id = c.lastrowid
                     for lang, text in texts.items():
-                        self.db.execute("INSERT INTO lines (tagline, date, language, text) values (?,?,?,?)",
+                        self.db.execute(
+                            "INSERT INTO lines (tagline, date, language, text) values (?,?,?,?)",
                             (tagline_id, date.today().isoformat(), lang, text))
                     for t in tags:
                         self.db.execute("INSERT INTO tag (tag, tagline) values (?,?)", (t, tagline_id))
@@ -650,9 +651,9 @@ class ShellUI:  # {{{1 interactive mode
         try:
             while True:
                 bc = ["Main"]
-                choice = self.menu(bc,
-                        ["   a - Author menu    ", "t - Tag menu    ", "l - taglines menu"],
-                        "By your command: ")
+                choice = self.menu(bc, [
+                    "   a - Author menu    ", "t - Tag menu    ", "l - taglines menu",
+                    ], "By your command: ")
                 if choice == "a":
                     self.authorMenu(bc)
                 elif choice == "l":

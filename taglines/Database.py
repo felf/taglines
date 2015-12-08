@@ -204,12 +204,10 @@ class Database:  # {{{1
         """ Retrieve and return all authors and their data from the database. """
 
         query = "SELECT name, born, died FROM authors ORDER BY name"
-        return (name+(" ({}-{})".
-                format(
-                    born if born else "",
-                    died if died else ""
-                ) if born or died else "")
-                for name, born, died in self.execute(query))
+        return (name+(" ({}-{})".format(
+            born if born else "",
+            died if died else ""
+            ) if born or died else "") for name, born, died in self.execute(query))
 
     def stats(self):  # {{{2
         """ Calculate and return some statistical data on the database. """
