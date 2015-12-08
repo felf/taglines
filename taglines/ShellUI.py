@@ -275,8 +275,7 @@ class ShellUI:  # {{{1 interactive mode
                     elif type(author_id) is not int:
                         print("Error: not a valid integer ID.")
                         continue
-                c = self.db.execute("SELECT id, name FROM authors WHERE id=?", (author_id,))
-                row = c.fetchone()
+                row = self.db.getOne("SELECT id, name FROM authors WHERE id=?", (author_id,))
                 if row is None:
                     print("Author with ID {} does not exist.".format(author_id))
                 else:
@@ -362,8 +361,7 @@ class ShellUI:  # {{{1 interactive mode
                 if type(tag) is not int:
                     tag = self.getInput("\nID to toggle (empty to abort): ", allowInt=True)
                 if type(tag) is int:
-                    c = self.db.execute("SELECT id, text FROM tags WHERE id=?", (tag,))
-                    row = c.fetchone()
+                    row = self.db.getOne("SELECT id, text FROM tags WHERE id=?", (tag,))
                     if not row:
                         print("Error: no valid ID.")
                     else:
@@ -404,9 +402,8 @@ class ShellUI:  # {{{1 interactive mode
                             limit = 5
                     else:
                         limit = 5
-                    c = self.db.execute("SELECT COUNT(id) FROM taglines")
-                    r = c.fetchone()
-                    q += " ORDER BY t.id LIMIT {},{}".format(max(0,r[0]-limit), limit)
+                    row = self.db.getOne("SELECT COUNT(id) FROM taglines")
+                    q += " ORDER BY t.id LIMIT {},{}".format(max(0,row[0]-limit), limit)
                     print("LAST {} TAGLINES".format(limit))
                 elif choice == "L":
                     q += " ORDER BY t.id"
@@ -457,8 +454,7 @@ class ShellUI:  # {{{1 interactive mode
                         print("Nothing to delete.")
                 if type(tagline) is int:
                     try:
-                        c = self.db.execute("SELECT id FROM taglines WHERE id=?", (tagline,))
-                        if c.fetchone():
+                        if self.db.getOne("SELECT id FROM taglines WHERE id=?", (tagline,)):
                             self.db.execute("DELETE FROM tag WHERE tagline=?", (tagline,))
                             self.db.execute("DELETE FROM lines WHERE tagline=?", (tagline,), commit=True)
                             self.db.execute('DELETE FROM taglines WHERE id=?', (tagline,))
@@ -512,8 +508,7 @@ class ShellUI:  # {{{1 interactive mode
             pass
 
         if author_id is not None:
-            c = self.db.execute("SELECT name FROM authors WHERE id=?", (author_id,))
-            row = c.fetchone()
+            row = self.db.getOne("SELECT name FROM authors WHERE id=?", (author_id,))
             if row:
                 author_name = row[0]
 
