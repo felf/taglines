@@ -425,7 +425,7 @@ class ShellUI:  # {{{1 interactive mode
                     tags = sub.fetchall()
                     tags = [t[0] for t in tags]
                     if tags:
-                        output.append(str("tags: "+",".join(tags)))
+                        output.append(str("tags: "+", ".join(tags)))
                     print("#{:>5}{}".format(
                         r[0], ": "+", ".join(output) if output else ""))
                     sub = self.db.execute("SELECT l.id, l.date, language, text FROM lines l LEFT JOIN taglines t ON l.tagline = t.id WHERE t.id=?", (r[0],))
