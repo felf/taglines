@@ -105,7 +105,7 @@ class Database:  # {{{1
                 print(args)
             try:
                 r = c.execute(query, args)
-            except sqlite3.InterfaceError:
+            except (sqlite3.OperationalError, sqlite3.InterfaceError):
                 print("Query:", query)
                 print("args:", args)
                 raise
