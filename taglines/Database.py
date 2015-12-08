@@ -145,7 +145,7 @@ class Database:  # {{{1
             return c.fetchone()[0]
 
     def taglines(self, random=False):  # {{{2
-        """ Returns taglines according to set filters. """
+        """ Retrieve and return taglines according to set filters. """
 
         query = "SELECT text FROM lines l, taglines tl"
         qargs = []
