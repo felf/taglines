@@ -37,7 +37,7 @@ def parse_arguments():
         help='Combine several tags with OR instead of AND')
     parser.add_argument(
         '-t', '--tag', action='append',
-        help='Only show items with the given tag')
+        help='Only show items with the given tag(s)')
     parser.add_argument(
         '-a', '--author',
         help='Only show items by the given author')
