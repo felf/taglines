@@ -6,6 +6,7 @@ from __future__ import print_function, unicode_literals
 import sqlite3
 import sys
 
+from taglines.Database import DatabaseTagline
 
 class ShellUI:  # {{{1 interactive mode
     """ Shellmode class
@@ -440,7 +441,21 @@ class ShellUI:  # {{{1 interactive mode
                     self.printWarning("Invalid choice.")
 
             elif choice == "e":
-                print("TODO :)")
+                tagline = self.getInput("  ID of tagline to edit (empty to abort, -1 for the most recent tagline change): ", allowInt=True)
+                if not tagline:
+                    continue
+                if isinstance(tagline, int):
+                    if tagline == -1:
+                        row = self.db.getOne("SELECT tagline FROM lines ORDER BY date DESC LIMIT 1")
+                    else:
+                        row = self.db.getOne("SELECT id FROM taglines WHERE id=?", (tagline,))
+                    if row:
+                        tagline = row[0]
+                        self.taglineEditMenu(breadcrumbs, tagline)
+                    else:
+                        print("Invalid ID.")
+                else:
+                    print("Invalid ID.")
 
             elif choice in ("l", "L") or isinstance(choice, int):
                 print()
@@ -519,58 +534,47 @@ class ShellUI:  # {{{1 interactive mode
         breadcrumbs = breadcrumbs[:] + ["New tagline" if tagline_id is None else "Edit tagline"]
         self.menu(breadcrumbs)
 
-        author_name = None
-        texts = {}
+        tagline = DatabaseTagline(
+            self.db, tagline_id, self.currentAuthor, self.currentTags[:])
 
-        if tagline_id is None:
-            author_id = self.currentAuthor
-            tags = self.currentTags[:]
-            source = remark = when = None
-        else:
-            # TODO: get source, remark, when from database for given id
-            pass
-
-        if author_id is not None:
-            row = self.db.getOne("SELECT name FROM authors WHERE id=?", (author_id,))
-            if row:
-                author_name = row[0]
-
-        if len(tags) == 0:
+        if len(tagline.tags) == 0:
             tag_texts = "None"
         else:
-            tag_texts = ",".join([str(t) for t in tags])
-            c = self.db.execute("SELECT text FROM tags WHERE id IN ("+tag_texts+") ORDER BY text")
-            tag_texts = c.fetchall()
-            tag_texts = ", ".join([t[0] for t in tag_texts])
+            tag_texts = ",".join([str(t) for t in tagline.tags])
+            c = self.db.execute("SELECT text FROM tags WHERE id IN (" + tag_texts + ") ORDER BY text")
+            tag_texts = ", ".join([t[0] for t in c.fetchall()])
 
         prefix = "Current" if tagline_id is None else "Tagline"
-        print("{} author: {}".format(prefix, "None" if author_name is None else author_name))
+        print("{} author: {}".format(prefix, "None" if tagline.author_name is None else tagline.author_name))
         print("{} tags: {}".format(prefix, tag_texts))
 
         self.print(("White", "\nOptional information:"))
         if tagline_id is None:
-            result = ask_optional_info(source, remark, when)
+            result = ask_optional_info(tagline.source, tagline.remark, tagline.when)
             if result is None:
                 return
-            source, remark, when = result
+            tagline.set_information(*result)
         else:
-            # TODO
-            pass
+            self.print("  Tagline source:", tagline.source)
+            self.print("  Tagline remark:", tagline.remark)
+            self.print("  Tagline date:", tagline.when)
         print()
 
         noHeader = True
-        # TODO: validate date
-
         choice = "h"
         while choice != "q":
 
-            def enter_text(heading):
+            def enter_text(heading, language="", existing_langs=None):
                 """ Tagline entry mask to enter several lines of text. """
 
                 print("    " + heading)
-                language = self.getInput("    Language (ISO code): ", allowEmpty=False)
-                if not language: return
-                if texts.get(language):
+                new_language = self.getInput("    Language (ISO code){}: ".format(
+                    " [" + language + "]" if language else ""), allowEmpty=False)
+                if new_language == "":
+                    new_language = language
+                if not new_language:
+                    return
+                if existing_langs and new_language in existing_langs and new_language != language:
                     if self.askYesNo("    There is already an item with this language. Overwrite it?") == "n":
                         return
 
@@ -589,61 +593,94 @@ class ShellUI:  # {{{1 interactive mode
                         print("--> Last line deleted.")
 
                     elif line == "f" or line == "" and len(lines) > 0 and lines[-1] == "":
-                        texts[language] = "\n".join(lines).strip()
-                        break
+                        return (new_language, "\n".join(lines).strip())
 
                     elif line == "r":
                         lines = []
                         print("--> Input restarted.")
 
-                    # special case for importing from a text file via copy+paste more easily
-                    elif line == "---":
-                        texts["de"] = "\n".join(lines).strip()
-                        language = "en"
-                        lines = []
-                    else: lines.append(line)
+                    else:
+                        lines.append(line)
 
             choice = self.menu(breadcrumbs, [
-                "a - add an item            ", "w - save lines to database and quit menu\n",
-                "m - manage entered items   ", "q - quit to previous menu, discarding changes\n"
+                "a - add a tagline text      ", "t - edit tags\n",
+                "m - manage tagline texts    ", "w - save changes to database and quit menu\n",
+                "o - edit optional inform.   ", "q - quit to previous menu, discarding changes\n"
                 ], silent=choice != "h", noHeader=noHeader)
             noHeader = False
 
             if choice == "a":
-                enter_text("ENTER A NEW ITEM")
+                result = enter_text("ENTER A NEW ITEM", existing_langs=tagline.texts)
+                if result is not None:
+                    tagline.set_text(*result)
 
             elif choice == "m":
-                if len(texts) == 0:
+                if len(tagline.texts) == 0:
                     print("No taglines available.")
-                for lang, text in texts.items():
-                    print("\nLanguage: {}\n{}".format(lang, text))
-                lang = self.getInput("\n   Language to delete (empty to do nothing): ")
-                if texts.pop(lang, None):
-                    print("Item with language '{}' deleted.".format(lang))
+                for lang in tagline.texts:
+                    text = tagline.texts.get(lang)
+                    print("\nLanguage: {}{}\n{}".format(
+                        lang, " (unsaved)" if text[1] else "", text[0]))
+
+                choice = "h"
+                while True:
+                    choice = self.menu(breadcrumbs + ["Modify tagline texts"], [
+                        "d - delete a text   ", "l - list texts\n",
+                        "m - modify a text   ", "q - quit menu\n",
+                        ], silent=choice != "h", noHeader=noHeader)
+
+                    if choice == "":
+                        continue
+
+                    elif choice == "d":
+                        lang = self.getInput("   Language to delete ({}): ".format(
+                            ", ".join(tagline.texts.keys())))
+                        if tagline.pop_text(lang) is None:
+                            print("Invalid language.")
+                        else:
+                            print("Item with language '{}' deleted.".format(lang))
+
+                    elif choice == "l":
+                        if len(tagline.texts) == 0:
+                            print("No taglines available.")
+                            continue
+                        for lang in tagline.texts:
+                            text = tagline.texts[lang]
+                            print("\nLanguage: {}{}\n{}".format(
+                                lang, " (unsaved)" if text[1] else "", text[0]))
+
+                    elif choice == "m":
+                        lang = self.getInput("   Language to modify ({}): ".format(
+                            ", ".join(tagline.texts)))
+                        if lang in tagline.texts:
+                            result = enter_text("EDIT TEXT", lang, tagline.texts)
+                            if result is not None:
+                                tagline.set_text(*result, old_language=lang)
+                        else:
+                            print("Invalid language.")
+
+                    elif choice == "q":
+                        break
+
+                choice = "h"
+
+            elif choice == "o":
+                result = ask_optional_info(
+                    tagline.source, tagline.remark, tagline.when)
+                if result is not None:
+                    tagline.set_information(*result)
 
             elif choice == "q":
-                if texts:
-                    if self.askYesNo("    This will discard your changes. Continue?", "n") != "y":
+                if tagline.is_changed:
+                    if self.askYesNo("    Tagline has unsaved changes. Continue?", "n") != "y":
                         choice = ""
 
             elif choice == "w":
-                if not texts:
-                    self.printWarning("No lines to save.")
-                    continue
-                if tagline_id is None:
-                    c = self.db.execute("INSERT INTO taglines (author,source,remark,date) values (?,?,?,?)", (
-                        self.currentAuthor if self.currentAuthor else None,
-                        source if source != "" else None,
-                        remark if remark != "" else None,
-                        when if when != "" else None), commit=True)
-                    tagline_id = c.lastrowid
-                    for lang, text in texts.items():
-                        self.db.execute(
-                            "INSERT INTO lines (tagline, date, language, text) values (?,?,?,?)",
-                            (tagline_id, date.today().isoformat(), lang, text))
-                    for t in tags:
-                        self.db.execute("INSERT INTO tag (tag, tagline) values (?,?)", (t, tagline_id))
-                    self.db.commit()
+                if not tagline.is_changed:
+                    print("No changes to save.")
+                else:
+                    tagline.commit()
+                    print("Changes saved.")
                 break
 
     def mainMenu(self):  # {{{1

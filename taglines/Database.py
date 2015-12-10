@@ -5,6 +5,7 @@ import os
 import sqlite3
 # TODO: remove all output stuff from here
 import sys
+from datetime import date
 
 
 class Database:  # {{{1
@@ -218,3 +219,165 @@ class Database:  # {{{1
                 stats["line count"] != 0 else 0
 
         return stats
+
+
+class DatabaseTagline:  # {{{1
+    """ Encapsulate a tagline in the database. """
+
+    def __init__(self, db, tagline_id=None, author=None, tags=None):  # {{{2
+        """ Initialise data values depending on given id.
+
+        @param _db: Handle to the sqlite database.
+        @param _id: The ID of the tagline in the database.
+                    If _id is None, the object is initialised empty. """
+
+        self.db = db
+        self.id = tagline_id
+        self.is_changed = False
+
+        if self.id is None:
+            self.author = author
+            self.author_name = None
+            self.source = None
+            self.remark = None
+            self.when = None
+            # pylint: tags=set() in function interface is dangerous
+            self.tags = set() if tags is None else tags
+            self.texts = {}
+        else:
+            c = self.db.execute(
+                """SELECT author, name, source, remark, date
+                    FROM taglines AS t LEFT JOIN authors AS a ON a.id=t.author
+                    WHERE t.id=?""",
+                (self.id,))
+            row = c.fetchone()
+            if row:
+                self.author = row[0]
+                self.author_name = row[1]
+                self.source = row[2]
+                self.remark = row[3]
+                self.when = row[4]
+            self.texts = {}
+
+            c = self.db.execute(
+                "SELECT tag FROM tag WHERE tagline=?", (self.id,))
+            self.tags = set(tag[0] for tag in c)
+
+            c = self.db.execute(
+                "SELECT language, text FROM lines WHERE tagline=?", (self.id,))
+            for row in c:
+                self.texts[row[0]] = [row[1], False]
+
+        # todo
+        #self.last_changed = None
+
+    def get_texts(self):
+        """ Return a dict {language: text} from the internal list.
+
+        The difference to self.texts is that the latter also contains a flag to
+        store the changed state. """
+
+        return {language: self.texts[language][0] for language in self.texts}
+
+    def get_text(self, language):  # {{{2
+        """ Retrieve the text with the given language from the internal list. """
+
+        text = self.texts.get(language, None)
+        if text is None:
+            return None
+        return text[0]
+
+    def pop_text(self, language):  # {{{2
+        """ Retrieve and remove the text with the given language from the internal list. """
+
+        text = self.texts.pop(language, None)
+        if text is None:
+            return None
+        self.is_changed = True
+        return text[0]
+
+    def set_text(self, language, text, old_language=None):  # {{{2
+        """ Add a new text item for the given language.
+
+        If old_language is given, replace it by the new item. """
+
+        old_text = self.texts.get(language, None)
+        if old_text is not None:
+            if old_text[0] == text:
+                return
+        if old_language is not None:
+            if old_language != language:
+                self.texts.pop(old_language)
+        self.texts[language] = [text, True]
+        self.is_changed = True
+
+    def text(self, language):  # {{{2
+        """ Get tagline text associated with the given language. """
+
+        return self.texts.get(language, None)
+
+    def set_information(self, source, remark, when):  # {{{2
+        """ Assign values to the tagline's source, remark and date field. """
+
+        if source == "":
+            source = None
+        if remark == "":
+            remark = None
+        if when == "":
+            when = None
+        self.is_changed = self.source != source or \
+                          self.remark != remark or \
+                          self.when != when
+        self.source = source
+        self.remark = remark
+        self.when = when
+        #TODO: set changed
+
+    def commit(self):  #{{{2
+        """ Write changed data to database. """
+
+        if self.id is None:
+            c = self.db.execute("INSERT INTO taglines (author,source,remark,date) VALUES (?,?,?,?)", (
+                self.author,
+                self.source if self.source != "" else None,
+                self.remark if self.remark != "" else None,
+                self.when if self.when != "" else None))
+            self.id = c.lastrowid
+
+            present_languages = set()
+            present_tags = set()
+        else:
+            c = self.db.execute("UPDATE taglines set author=?, source=?, remark=?, date=?", (
+                self.author, self.source, self.remark, self.when))
+
+            c = self.db.execute("SELECT language FROM lines WHERE tagline=?", (self.id,))
+            present_languages = set(item[0] for item in c)
+
+            c = self.db.execute("SELECT tag FROM tag WHERE tagline=?", (self.id,))
+            present_tags = set(item[0] for item in c)
+
+        for lang in self.texts:
+            if lang in present_languages:
+                if self.texts[lang][1]:
+                    self.db.execute(
+                        "UPDATE lines set date=?, text=? WHERE tagline=? AND language=?",
+                        (date.today().isoformat(), self.texts[lang][0], self.id, lang))
+                present_languages.remove(lang)
+            else:
+                self.db.execute(
+                    "INSERT INTO lines (tagline, date, language, text) VALUES (?,?,?,?)",
+                    (self.id, date.today().isoformat(), lang, self.texts[lang][0]))
+            self.texts[lang][1] = False
+        for lang in present_languages:
+            self.db.execute("DELETE FROM lines WHERE tagline=? AND language=?", (self.id, lang))
+
+        for t in self.tags:
+            if t in present_tags:
+                present_tags.remove(t)
+            else:
+                self.db.execute("INSERT INTO tag (tag, tagline) VALUES (?,?)", (t, self.id))
+        for t in present_tags:
+            self.db.execute("REMOVE FROM tag WHERE tag=? AND tagline=?", (t, self.id))
+
+        self.db.commit()
+        self.is_changed = False
