@@ -22,7 +22,7 @@ class ShellUI:  # {{{1 interactive mode
         """ Exception that is raised to leave the menu hierarchy. """
 
         def __init__(self):
-            Exception.__init__()
+            super(ShellUI.ExitShellUI, self).__init__()
 
 
     def __init__(self, db):  # {{{1
