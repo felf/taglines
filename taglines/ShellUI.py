@@ -31,7 +31,8 @@ class ShellUI:  # {{{1 interactive mode
         self.db = db
         self.db.open()
 
-    def colorstring(self, color):  # {{{1
+    @staticmethod
+    def colorstring(color):  # {{{1
         """ Return terminal escape sequences for colourful output. """
 
         _colors = {
@@ -48,7 +49,8 @@ class ShellUI:  # {{{1 interactive mode
             "0" if color[0].islower() else "1",
             _colors.get(color.lower(), "0"))
 
-    def print(self, what, newline=True):  # {{{1
+    @staticmethod
+    def print(what, newline=True):  # {{{1
         """ Print a string or a list of coloured strings. """
 
         ending = "\n" if newline else ""
@@ -60,15 +62,16 @@ class ShellUI:  # {{{1 interactive mode
             o = ""
             for part in what:
                 o += "".join([
-                    self.colorstring(part[0]) + part[1] + "\033[0;0m"
+                    ShellUI.colorstring(part[0]) + part[1] + "\033[0;0m"
                     if isinstance(part, tuple) else part
                     ]) + "\033[0;0m"
             print(o, end=ending)
 
-    def printWarning(self, what):  # {{{1
+    @staticmethod
+    def printWarning(what):  # {{{1
         """ Convenience function to print a red warning message. """
 
-        self.print(("Red", what))
+        ShellUI.print(("Red", what))
 
     def menu(self, breadcrumbs, choices=None, prompt="", silent=False, noHeader=False, allowInt=False):  # {{{1
         """ Display a list of possible choices and ask user for a selection. """
@@ -130,7 +133,8 @@ class ShellUI:  # {{{1 interactive mode
                     pass
             self.printWarning("Invalid choice.")
 
-    def getInput(self, text="", allowEmpty=True, allowInt=False):  # {{{1
+    @staticmethod
+    def getInput(text="", allowEmpty=True, allowInt=False):  # {{{1
         """ This is a shared function to get user input and catch Ctrl+C/D.
 
         @param allowEmpty: whether the input may be the empty string
@@ -140,7 +144,7 @@ class ShellUI:  # {{{1 interactive mode
 
         while True:
             try:
-                self.print(("green", text), False)
+                ShellUI.print(("green", text), False)
                 i = input()
                 if not allowEmpty and not i:
                     print("Empty string not allowed here.")
@@ -157,7 +161,7 @@ class ShellUI:  # {{{1 interactive mode
             # Ctrl+C
             except KeyboardInterrupt:
                 print()
-                self.exitTaglines()
+                ShellUI.exitTaglines()
             # Ctrl+D
             except EOFError:
                 print()
@@ -192,7 +196,8 @@ class ShellUI:  # {{{1 interactive mode
             else:
                 return i
 
-    def exitTaglines(self):  # {{{1
+    @ staticmethod
+    def exitTaglines():  # {{{1
         """ Ask for exit confirmation and exit on positive answer. """
 
         try:

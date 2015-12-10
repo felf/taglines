@@ -19,7 +19,7 @@ def init_database(filepath):  # {{{1
     """ create a new sqlite database file """
 
     if os.path.exists(filepath):
-        ok = input("Warning: "+filepath+" already exists. Overwrite? [y/N] ")
+        ok = ShellUI.getInput("Warning: "+filepath+" already exists. Overwrite? [y/N] ")
         if ok and "yes".startswith(ok.lower()):
             try:
                 os.remove(filepath)
