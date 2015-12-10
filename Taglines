@@ -9,8 +9,6 @@ from sys import version_info
 import taglines
 from taglines.ArgParser import parse_arguments
 from taglines.ShellUI import ShellUI
-if version_info.major < 3:
-    from taglines.ShellUI import input
 
 import os
 from datetime import date

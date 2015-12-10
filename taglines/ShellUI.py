@@ -5,10 +5,6 @@
 from __future__ import print_function, unicode_literals
 import sqlite3
 import sys
-from datetime import date
-
-if sys.version_info.major == 2:
-    input = raw_input
 
 
 class ShellUI:  # {{{1 interactive mode
@@ -145,7 +141,11 @@ class ShellUI:  # {{{1 interactive mode
         while True:
             try:
                 ShellUI.print(("green", text), False)
-                i = input()
+                if sys.version_info.major == 2:
+                    i = raw_input()
+                else:
+                    i = input()
+
                 if not allowEmpty and not i:
                     print("Empty string not allowed here.")
                 else:
@@ -202,12 +202,16 @@ class ShellUI:  # {{{1 interactive mode
 
         try:
             # not using askYesNo b/c of own handling of Ctrl+C/D
-            ok = input("\nReally quit Taglines?  [y/N] ")
+            ShellUI.print(("green", "\nReally quit Taglines?  [y/N] "), False)
+            if sys.version_info.major == 2:
+                i = raw_input()
+            else:
+                i = input()
         except (EOFError, KeyboardInterrupt):
             print()
             return
-        if ok and "yes".startswith(ok.lower()):
-            raise self.ExitShellUI()
+        if i and "yes".startswith(i.lower()):
+            raise ShellUI.ExitShellUI()
 
     def authorMenu(self, breadcrumbs):  # {{{1
         """The menu with which to alter author information."""
