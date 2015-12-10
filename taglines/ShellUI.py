@@ -122,8 +122,12 @@ class ShellUI:  # {{{1 interactive mode
                 continue
             elif i in keys:
                 return i
-            elif allowInt and isinstance(i, int):
-                return i
+            elif allowInt:
+                try:
+                    i = int(i)
+                    return i
+                except ValueError:
+                    pass
             self.printWarning("Invalid choice.")
 
     def getInput(self, text="", allowEmpty=True, allowInt=False):  # {{{1
