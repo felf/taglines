@@ -211,12 +211,13 @@ class Database:  # {{{1
         stats["tagline count"] = int(self.getOne("SELECT count(*) FROM taglines")[0])
         stats["line count"] = int(self.getOne("SELECT count(*) FROM lines")[0])
         stats["author count"] = int(self.getOne("SELECT count(*) FROM authors")[0])
-        stats["language count"] = int(self.getOne("SELECT COUNT(*) FROM (SELECT DISTINCT language FROM lines)")[0])
+        stats["language count"] = int(self.getOne(
+            "SELECT COUNT(*) FROM (SELECT DISTINCT language FROM lines)")[0])
 
         c = self.execute("SELECT text FROM lines")
         linelengthsum = sum(len(r[0]) for r in c)
-        stats["avg tagline length"] = linelengthsum/stats["line count"] if \
-                stats["line count"] != 0 else 0
+        stats["avg tagline length"] = (
+            linelengthsum/stats["line count"] if stats["line count"] != 0 else 0)
 
         return stats
 
@@ -241,7 +242,7 @@ class DatabaseTagline:  # {{{1
             self.source = None
             self.remark = None
             self.when = None
-            # pylint: tags=set() in function interface is dangerous
+            # pylint says tags=set() in function interface is dangerous
             self.tags = set() if tags is None else tags
             self.texts = {}
         else:
@@ -325,9 +326,9 @@ class DatabaseTagline:  # {{{1
             remark = None
         if when == "":
             when = None
-        self.is_changed = self.source != source or \
-                          self.remark != remark or \
-                          self.when != when
+        self.is_changed = (self.source != source or
+                           self.remark != remark or
+                           self.when != when)
         self.source = source
         self.remark = remark
         self.when = when
@@ -337,11 +338,12 @@ class DatabaseTagline:  # {{{1
         """ Write changed data to database. """
 
         if self.id is None:
-            c = self.db.execute("INSERT INTO taglines (author,source,remark,date) VALUES (?,?,?,?)", (
-                self.author,
-                self.source if self.source != "" else None,
-                self.remark if self.remark != "" else None,
-                self.when if self.when != "" else None))
+            c = self.db.execute(
+                "INSERT INTO taglines (author,source,remark,date) VALUES (?,?,?,?)", (
+                    self.author,
+                    self.source if self.source != "" else None,
+                    self.remark if self.remark != "" else None,
+                    self.when if self.when != "" else None))
             self.id = c.lastrowid
 
             present_languages = set()
