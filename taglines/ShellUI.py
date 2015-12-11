@@ -143,6 +143,8 @@ class ShellUI:  # {{{1 interactive mode
             try:
                 ShellUI.print(("green", text), False)
                 if sys.version_info.major == 2:
+                    # we use pylint3 to check the code
+                    # pylint: disable=undefined-variable
                     i = raw_input()
                 else:
                     i = input()
@@ -205,6 +207,7 @@ class ShellUI:  # {{{1 interactive mode
             # not using askYesNo b/c of own handling of Ctrl+C/D
             ShellUI.print(("green", "\nReally quit Taglines?  [y/N] "), False)
             if sys.version_info.major == 2:
+                # pylint: disable=undefined-variable
                 i = raw_input()
             else:
                 i = input()
