@@ -108,10 +108,7 @@ class ShellUI:  # {{{1 interactive mode
         while True:
             if not prompt:
                 prompt = breadcrumbs[-1] + " menu choice: "
-            try:
-                i = self.getInput("\n"+prompt, allowInt)
-            except KeyboardInterrupt:
-                i = "Q"
+            i = self.getInput("\n"+prompt, allowInt)
 
             if i is False:
                 return "q"
