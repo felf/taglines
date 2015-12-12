@@ -3,13 +3,19 @@
 from __future__ import print_function
 import os
 import sqlite3
-# TODO: remove all output stuff from here
 import sys
 from datetime import date
 
 
 class Database:  # {{{1
     """ General management of the database. """
+
+    class DatabaseError(Exception):  # {{{2
+        """ Exception that is thrown if an error with sqlite occurs. """
+
+        def __init__(self, message):
+            super(Database.DatabaseError, self).__init__()
+            self.args = (message,)
 
     def __init__(self, dbfilename=None):  # {{{2
         self.isOpen = False
@@ -72,11 +78,9 @@ class Database:  # {{{1
             self.db.commit()
             self.isOpen = True
         except IOError as e:
-            print("\nError while creating the database file: {}. Exiting.".
-                  format(e.args[0]), file=sys.stderr)
-            exit(1)
+            raise Database.DatabaseError("Error creating the database file: {}".format(e.args[0]))
         except sqlite3.Error as e:
-            print("An sqlite3 error occurred:", e.args[0])
+            raise Database.DatabaseError("An sqlite3 error occurred: {}".format(e.args[0]))
 
     def commit(self):  # {{{2
         """ Save any changes to the database that have not yet been committed. """
