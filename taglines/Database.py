@@ -3,7 +3,6 @@
 from __future__ import print_function
 import os
 import sqlite3
-import sys
 from datetime import date
 
 
@@ -18,20 +17,20 @@ class Database:  # {{{1
             self.args = (message,)
 
     def __init__(self, dbfilename=None):  # {{{2
-        self.isOpen = False
+        self.is_open = False
         self.db = None
         self.filename = None
         self.filters = {}
-        self.exactAuthorMode = False
-        self.tagsOrMode = False
+        self.exact_author = False
+        self.tags_or = False
 
-        if dbfilename and not self.setPath(dbfilename):
+        if dbfilename and not self.set_path(dbfilename):
             raise Exception("The given filename could not be opened.")
 
     def __del__(self):  # {{{2
         self.close()
 
-    def setPath(self, path):  # {{{2
+    def set_path(self, path):  # {{{2
         """ Sets the instance's database filename.
 
         If the path is valid, it is stored and True is returned. """
@@ -50,17 +49,17 @@ class Database:  # {{{1
 
         Returns False if unsuccessful. """
 
-        if self.isOpen:
+        if self.is_open:
             return
         self.db = sqlite3.connect(self.filename, detect_types=True)
-        self.isOpen = isinstance(self.db, sqlite3.Connection)
+        self.is_open = isinstance(self.db, sqlite3.Connection)
         # TODO: handle invalid DB
-        return self.isOpen
+        return self.is_open
 
-    def initialiseFile(self, filename):  # {{{2
+    def initialise_file(self, filename):  # {{{2
         """Initialises a new, empty database"""
 
-        if self.isOpen:
+        if self.is_open:
             self.close()
 
         try:
@@ -68,70 +67,70 @@ class Database:  # {{{1
             dbfile.close()
             self.filename = filename
             self.db = sqlite3.connect(self.filename)
-            c = self.db.cursor()
+            cursor = self.db.cursor()
             #db.text_factory=str
-            c.execute('CREATE TABLE authors (id INTEGER PRIMARY KEY, name TEXT, born INT DEFAULT NULL, died INT DEFAULT NULL);')
-            c.execute('CREATE TABLE lines (id INTEGER PRIMARY KEY, tagline INT, date DATE, language VARCHAR(5), text TEXT);')
-            c.execute('CREATE TABLE tag (id INTEGER PRIMARY KEY, tag INT, tagline INT);')
-            c.execute('CREATE TABLE taglines (id INTEGER PRIMARY KEY, author INT, source TEXT DEFAULT NULL, remark TEXT DEFAULT NULL, date DATE DEFAULT NULL);')
-            c.execute('CREATE TABLE tags (id INTEGER PRIMARY KEY, text TEXT UNIQUE);')
+            cursor.execute('CREATE TABLE authors (id INTEGER PRIMARY KEY, name TEXT, born INT DEFAULT NULL, died INT DEFAULT NULL);')
+            cursor.execute('CREATE TABLE lines (id INTEGER PRIMARY KEY, tagline INT, date DATE, language VARCHAR(5), text TEXT);')
+            cursor.execute('CREATE TABLE tag (id INTEGER PRIMARY KEY, tag INT, tagline INT);')
+            cursor.execute('CREATE TABLE taglines (id INTEGER PRIMARY KEY, author INT, source TEXT DEFAULT NULL, remark TEXT DEFAULT NULL, date DATE DEFAULT NULL);')
+            cursor.execute('CREATE TABLE tags (id INTEGER PRIMARY KEY, text TEXT UNIQUE);')
             self.db.commit()
-            self.isOpen = True
-        except IOError as e:
-            raise Database.DatabaseError("Error creating the database file: {}".format(e.args[0]))
-        except sqlite3.Error as e:
-            raise Database.DatabaseError("An sqlite3 error occurred: {}".format(e.args[0]))
+            self.is_open = True
+        except IOError as error:
+            raise Database.DatabaseError("Error creating database file: {}".format(error.args[0]))
+        except sqlite3.Error as error:
+            raise Database.DatabaseError("An sqlite3 error occurred: {}".format(error.args[0]))
 
     def commit(self):  # {{{2
         """ Save any changes to the database that have not yet been committed. """
 
-        if self.isOpen:
+        if self.is_open:
             self.db.commit()
 
     def close(self):  # {{{2
         """ Closes the instance's database connection. """
 
-        if self.db and self.isOpen:
+        if self.db and self.is_open:
             self.db.commit()
             self.db.close()
             self.db = None
-            self.isOpen = False
+            self.is_open = False
 
     def execute(self, query, args=None, commit=False, debug=False):  # {{{2
         """ Execute a query on the database and evaluate the result. """
 
-        if not self.isOpen and not self.open():
+        if not self.is_open and not self.open():
             return False
-        c = self.db.cursor()
+        cursor = self.db.cursor()
         if debug:
             print(query)
         if args:
             if debug:
                 print(args)
             try:
-                r = c.execute(query, args)
+                row = cursor.execute(query, args)
             except (sqlite3.OperationalError, sqlite3.InterfaceError):
                 print("Query:", query)
                 print("args:", args)
                 raise
         else:
-            r = c.execute(query)
+            row = cursor.execute(query)
         if commit and query.lower()[0:6] in ("insert", "update", "delete"):
             self.db.commit()
-        return r
+        return row
 
-    def getOne(self, query, args=None):  # {{{2
+    def get_one(self, query, args=None):  # {{{2
         """ Shortcut function for a simply one-line retrieve. """
 
-        c = self.execute(query, args)
-        return c.fetchone() if c else None
+        cursor = self.execute(query, args)
+        return cursor.fetchone() if cursor else None
 
-    def parseArguments(self, args):  # {{{2
+    def parse_arguments(self, args):  # {{{2
         """ Evaluate given arguments and set appropriate option variables. """
 
         self.filters = {}
-        self.exactAuthorMode = args.exactauthor
-        self.tagsOrMode = args.ortag
+        self.exact_author = args.exactauthor
+        self.tags_or = args.ortag
         if args.author:
             self.filters["author"] = args.author
         if args.tag:
@@ -139,12 +138,12 @@ class Database:  # {{{1
         if args.lang:
             self.filters["language"] = args.lang
 
-    def randomTagline(self):  # {{{2
+    def random_tagline(self):  # {{{2
         """ Retrieve and return a random tagline text from the database. """
 
-        c = self.taglines(True)
-        if c:
-            return c.fetchone()[0]
+        cursor = self.taglines(True)
+        if cursor:
+            return cursor.fetchone()[0]
 
     def taglines(self, random=False):  # {{{2
         """ Retrieve and return taglines according to set filters. """
@@ -156,7 +155,7 @@ class Database:  # {{{1
         author = self.filters.get("author")
         if author:
             query += " JOIN taglines AS tl ON l.tagline=tl.id"
-            if self.exactAuthorMode:
+            if self.exact_author:
                 query += " JOIN authors a ON a.name=? AND tl.author=a.id"
                 qargs.append(author)
             else:
@@ -169,10 +168,10 @@ class Database:  # {{{1
                 SELECT tagline FROM tag JOIN tags ON tag.tag=tags.id WHERE text IN ({tag_texts}) GROUP BY tagline{having}
             )""".format(
                 tag_texts=",".join(["?"] * len(tags)),
-                having="" if self.tagsOrMode else " HAVING count(*)=?",
+                having="" if self.tags_or else " HAVING count(*)=?",
                 )
             qargs += tags
-            if not self.tagsOrMode:
+            if not self.tags_or:
                 qargs.append(len(tags))
             where = True
 
@@ -187,19 +186,19 @@ class Database:  # {{{1
 
         return self.execute(query, (qargs))
 
-    def tags(self, orderByName=True):  # {{{2
+    def tags(self, by_name=True):  # {{{2
         """ Retrieve and return all tags and their names from the database. """
 
         query = "SELECT text FROM tags"
-        if orderByName:
+        if by_name:
             query += " ORDER by text"
-        return (r[0] for r in self.execute(query))
+        return (row[0] for row in self.execute(query))
 
-    def authors(self, orderByName=True):  # {{{2
+    def authors(self, by_name=True):  # {{{2
         """ Retrieve and return all authors and their data from the database. """
 
         query = "SELECT name, born, died FROM authors"
-        if orderByName:
+        if by_name:
             query += " ORDER BY name"
         return (name+(" ({}-{})".format(
             born if born else "",
@@ -210,18 +209,18 @@ class Database:  # {{{1
         """ Calculate and return some statistical data on the database. """
 
         stats = {}
-        stats["tag assignments"] = int(self.getOne("SELECT count(*) FROM tag")[0])
-        stats["tag count"] = int(self.getOne("SELECT count(*) FROM tags")[0])
-        stats["tagline count"] = int(self.getOne("SELECT count(*) FROM taglines")[0])
-        stats["line count"] = int(self.getOne("SELECT count(*) FROM lines")[0])
-        stats["author count"] = int(self.getOne("SELECT count(*) FROM authors")[0])
-        stats["language count"] = int(self.getOne(
+        stats["tag assignments"] = int(self.get_one("SELECT count(*) FROM tag")[0])
+        stats["tag count"] = int(self.get_one("SELECT count(*) FROM tags")[0])
+        stats["tagline count"] = int(self.get_one("SELECT count(*) FROM taglines")[0])
+        stats["line count"] = int(self.get_one("SELECT count(*) FROM lines")[0])
+        stats["author count"] = int(self.get_one("SELECT count(*) FROM authors")[0])
+        stats["language count"] = int(self.get_one(
             "SELECT COUNT(*) FROM (SELECT DISTINCT language FROM lines)")[0])
 
-        c = self.execute("SELECT text FROM lines")
-        linelengthsum = sum(len(r[0]) for r in c)
-        stats["avg tagline length"] = (
-            linelengthsum/stats["line count"] if stats["line count"] != 0 else 0)
+        cursor = self.execute("SELECT text FROM lines")
+        linelengthsum = sum(len(row[0]) for row in cursor)
+        stats["avg tagline length"] = linelengthsum/stats["line count"] if \
+                stats["line count"] != 0 else 0
 
         return stats
 
@@ -250,12 +249,12 @@ class DatabaseTagline:  # {{{1
             self.tags = set() if tags is None else tags
             self.texts = {}
         else:
-            c = self.db.execute(
+            cursor = self.db.execute(
                 """SELECT author, name, source, remark, date
                     FROM taglines AS t LEFT JOIN authors AS a ON a.id=t.author
                     WHERE t.id=?""",
                 (self.id,))
-            row = c.fetchone()
+            row = cursor.fetchone()
             if row:
                 self.author = row[0]
                 self.author_name = row[1]
@@ -264,13 +263,13 @@ class DatabaseTagline:  # {{{1
                 self.when = row[4]
             self.texts = {}
 
-            c = self.db.execute(
+            cursor = self.db.execute(
                 "SELECT tag FROM tag WHERE tagline=?", (self.id,))
-            self.tags = set(tag[0] for tag in c)
+            self.tags = set(tag[0] for tag in cursor)
 
-            c = self.db.execute(
+            cursor = self.db.execute(
                 "SELECT language, text FROM lines WHERE tagline=?", (self.id,))
-            for row in c:
+            for row in cursor:
                 self.texts[row[0]] = [row[1], False]
 
         # todo
@@ -342,25 +341,25 @@ class DatabaseTagline:  # {{{1
         """ Write changed data to database. """
 
         if self.id is None:
-            c = self.db.execute(
+            cursor = self.db.execute(
                 "INSERT INTO taglines (author,source,remark,date) VALUES (?,?,?,?)", (
                     self.author,
                     self.source if self.source != "" else None,
                     self.remark if self.remark != "" else None,
                     self.when if self.when != "" else None))
-            self.id = c.lastrowid
+            self.id = cursor.lastrowid
 
             present_languages = set()
             present_tags = set()
         else:
-            c = self.db.execute("UPDATE taglines set author=?, source=?, remark=?, date=?", (
+            cursor = self.db.execute("UPDATE taglines set author=?, source=?, remark=?, date=?", (
                 self.author, self.source, self.remark, self.when))
 
-            c = self.db.execute("SELECT language FROM lines WHERE tagline=?", (self.id,))
-            present_languages = set(item[0] for item in c)
+            cursor = self.db.execute("SELECT language FROM lines WHERE tagline=?", (self.id,))
+            present_languages = set(item[0] for item in cursor)
 
-            c = self.db.execute("SELECT tag FROM tag WHERE tagline=?", (self.id,))
-            present_tags = set(item[0] for item in c)
+            cursor = self.db.execute("SELECT tag FROM tag WHERE tagline=?", (self.id,))
+            present_tags = set(item[0] for item in cursor)
 
         for lang in self.texts:
             if lang in present_languages:
@@ -377,13 +376,13 @@ class DatabaseTagline:  # {{{1
         for lang in present_languages:
             self.db.execute("DELETE FROM lines WHERE tagline=? AND language=?", (self.id, lang))
 
-        for t in self.tags:
-            if t in present_tags:
-                present_tags.remove(t)
+        for tag in self.tags:
+            if tag in present_tags:
+                present_tags.remove(tag)
             else:
-                self.db.execute("INSERT INTO tag (tag, tagline) VALUES (?,?)", (t, self.id))
-        for t in present_tags:
-            self.db.execute("REMOVE FROM tag WHERE tag=? AND tagline=?", (t, self.id))
+                self.db.execute("INSERT INTO tag (tag, tagline) VALUES (?,?)", (tag, self.id))
+        for tag in present_tags:
+            self.db.execute("REMOVE FROM tag WHERE tag=? AND tagline=?", (tag, self.id))
 
         self.db.commit()
         self.is_changed = False

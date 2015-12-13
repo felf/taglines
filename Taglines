@@ -10,59 +10,59 @@ from taglines.Database import Database
 from taglines.ShellUI import ShellUI
 
 import os
-from datetime import date
 
 def init_database(filepath):  # {{{1
     """ create a new sqlite database file """
 
     if os.path.exists(filepath):
-        ok = ShellUI.getInput("Warning: "+filepath+" already exists. Overwrite? [y/N] ")
+        ok = ShellUI.get_input(
+            "Warning: "+filepath+" already exists. Overwrite? [y/N] ")
         if ok and "yes".startswith(ok.lower()):
             try:
                 os.remove(filepath)
-            except OSError as e:
+            except OSError as error:
                 exit("Error: could not delete old file: {}. Exiting.".format(
-                     e.args[1]))
+                    error.args[1]))
         else:
             print("good bye")
             exit(1)
     try:
         db = Database()
         if db:
-            db.initialiseFile(filepath)
+            db.initialise_file(filepath)
             return True
-    except Database.DatabaseError as e:
+    except Database.DatabaseError as error:
         print("Error initialising database: {}.".format(
-            e.args[0]))
+            error.args[0]))
 
     return False
 
-def get_random_item(args):  # {{{1
+def get_random_item(_args):  # {{{1
     """ retrieve one random tagline """
 
-    db = Database(args.file)
+    db = Database(_args.file)
     if db:
-        db.parseArguments(args)
-        tl = db.randomTagline()
-        if tl:
-            print(tl)
+        db.parse_arguments(_args)
+        tagline = db.random_tagline()
+        if tagline:
+            print(tagline)
         return True
     return False
 
-def list_items(args):  # {{{1
+def list_items(_args):  # {{{1
     """ show list of taglines """
 
-    db = Database(args.file)
+    db = Database(_args.file)
     if db:
-        db.parseArguments(args)
+        db.parse_arguments(_args)
 
         first = True
-        for r in db.taglines():
+        for row in db.taglines():
             if first:
                 first = False
             else:
                 print("%")
-            print(r[0])
+            print(row[0])
         return True
     return False
 
@@ -71,7 +71,7 @@ def show_tags(filepath):  # {{{1
 
     db = Database(filepath)
     if db:
-        for tag in db.tags(orderByName=True):
+        for tag in db.tags(by_name=True):
             print(tag)
         return True
     return False
@@ -115,9 +115,9 @@ def interactive_menu(filepath):  # {{{1
         db = Database(filepath)
         if db:
             shell = ShellUI(db)
-        result = shell.mainMenu()
+        result = shell.main_menu()
 
-    except Exception as e:
+    except Exception:
         raise
         import sys
         print(sys.exc_info()[1])
@@ -125,7 +125,7 @@ def interactive_menu(filepath):  # {{{1
     return result
 
 
-if __name__ == "__main__":  # {{{1
+def main():  # {{{1
     args = parse_arguments()
 
     result = None
@@ -163,3 +163,6 @@ if __name__ == "__main__":  # {{{1
         exit(0)
     else:
         exit(1)
+
+if __name__ == "__main__":  # {{{1
+    main()

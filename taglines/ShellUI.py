@@ -23,8 +23,8 @@ class ShellUI:  # {{{1 interactive mode
 
 
     def __init__(self, db):  # {{{1
-        self.currentAuthor = None
-        self.currentTags = []
+        self.current_author = None
+        self.current_tags = []
         self.db = db
         self.db.open()
 
@@ -56,25 +56,25 @@ class ShellUI:  # {{{1 interactive mode
         else:
             if isinstance(what, tuple):
                 what = [what]
-            o = ""
+            output = ""
             for part in what:
-                o += "".join([
+                output += "".join([
                     ShellUI.colorstring(part[0]) + part[1] + "\033[0;0m"
                     if isinstance(part, tuple) else part
                     ]) + "\033[0;0m"
-            print(o, end=ending)
+            print(output, end=ending)
 
     @staticmethod
-    def printWarning(what):  # {{{1
+    def print_warning(what):  # {{{1
         """ Convenience function to print a red warning message. """
 
         ShellUI.print(("Red", what))
 
-    def menu(self, breadcrumbs, choices=None, prompt="",  # {{{1
-             silent=False, noHeader=False, allowInt=False):
-        """ Display a list of possible choices and ask user for selection. """
+    def menu(self, breadcrumbs, choices=None, prompt="", silent=False,  # {{{1
+             no_header=False, allow_int=False):
+        """ Display a list of possible choices and ask user for a selection. """
 
-        if not (silent or noHeader):
+        if not (silent or no_header):
             length = 10
             self.print(("White", "\n Taglines: "), False)
             for level, crumb in enumerate(breadcrumbs):
@@ -98,8 +98,10 @@ class ShellUI:  # {{{1 interactive mode
 
         if len(breadcrumbs) == 1:  # only show in main menu
             print("\nAlso available in all menus:")
-            for choice in ["   q/^d - quit to parent menu   ",
-                           "Q/^c - quit program   ", "h/? - show menu help"]:
+            for choice in [
+                    "   q/^d - quit to parent menu   ", "Q/^c - quit program   ",
+                    "h/? - show menu help"
+                ]:
                 key, text = choice.split(" - ")
                 self.print([("Yellow", key), " - "+text], False)
             print("")
@@ -108,33 +110,36 @@ class ShellUI:  # {{{1 interactive mode
         while True:
             if not prompt:
                 prompt = breadcrumbs[-1] + " menu choice: "
-            i = self.getInput("\n"+prompt, allowInt)
+            try:
+                choice = self.get_input("\n"+prompt, allow_int)
+            except KeyboardInterrupt:
+                choice = "Q"
 
-            if i is False:
+            if choice is False:
                 return "q"
-            elif i == "?":
+            elif choice == "?":
                 return "h"
-            elif i == "Q":
-                self.exitTaglines()
+            elif choice == "Q":
+                self.exit_taglines()
                 continue
-            elif i == "":
+            elif choice == "":
                 continue
-            elif i in keys:
-                return i
-            elif allowInt:
+            elif choice in keys:
+                return choice
+            elif allow_int:
                 try:
-                    i = int(i)
-                    return i
+                    choice = int(choice)
+                    return choice
                 except ValueError:
                     pass
-            self.printWarning("Invalid choice.")
+            self.print_warning("Invalid choice.")
 
     @staticmethod
-    def getInput(text="", allowEmpty=True, allowInt=False):  # {{{1
+    def get_input(text="", allow_empty=True, allow_int=False):  # {{{1
         """ This is a shared function to get user input and catch Ctrl+C/D.
 
-        @param allowEmpty: whether the input may be the empty string
-        @param allowInt: whether to accept numeric input and convert it to int
+        @param allow_empty: whether the input may be the empty string
+        @param allow_int: whether to accept numeric input and convert it to int
                          automatically
         """
 
@@ -142,68 +147,66 @@ class ShellUI:  # {{{1 interactive mode
             try:
                 ShellUI.print(("green", text), False)
                 if sys.version_info.major == 2:
-                    # we use pylint3 to check the code
-                    # pylint: disable=undefined-variable
-                    i = raw_input()
+                    choice = raw_input()
                 else:
-                    i = input()
+                    choice = input()
 
-                if not allowEmpty and not i:
+                if not allow_empty and not choice:
                     print("Empty string not allowed here.")
                 else:
                     if sys.version_info.major == 2:
-                        i = i.decode("utf-8")
-                    if allowInt:
+                        choice = choice.decode("utf-8")
+                    if allow_int:
                         try:
-                            i = int(i)
-                            return i
+                            choice = int(choice)
+                            return choice
                         except ValueError:
                             pass
-                    return i
+                    return choice
             # Ctrl+C
             except KeyboardInterrupt:
                 print()
-                ShellUI.exitTaglines()
+                ShellUI.exit_taglines()
             # Ctrl+D
             except EOFError:
                 print()
                 return False
 
-    def askYesNo(self, text, default="n", allowCancel=False):  # {{{1
+    def ask_yesno(self, text, default="n", allow_cancel=False):  # {{{1
         """ Ask a yes/no question, digest the answer and return the answer.
 
         default should be either "y" or "n" to set the relevant answer. """
 
         suffix = ["Y" if default == "y" else "y",
                   "N" if default == "n" else "n"]
-        if allowCancel:
+        if allow_cancel:
             suffix.append("^d")
         text += "  [" + "/".join(suffix) + "] "
 
         while True:
-            i = self.getInput(text)
-            if not i:
-                if i is False and allowCancel:
+            choice = self.get_input(text)
+            if not choice:
+                if choice is False and allow_cancel:
                     return False
-                i = default
-            if i:
-                if "yes".startswith(i.lower()):
-                    i = "y"
-                elif "no".startswith(i.lower()):
-                    i = "n"
+                choice = default
+            if choice:
+                if "yes".startswith(choice.lower()):
+                    choice = "y"
+                elif "no".startswith(choice.lower()):
+                    choice = "n"
                 else:
-                    i = ""
-            if i == "":
+                    choice = ""
+            if choice == "":
                 print("Please answer yes or no.")
             else:
-                return i
+                return choice
 
     @ staticmethod
-    def exitTaglines():  # {{{1
+    def exit_taglines():  # {{{1
         """ Ask for exit confirmation and exit on positive answer. """
 
         try:
-            # not using askYesNo b/c of own handling of Ctrl+C/D
+            # not using ask_yesno b/c of own handling of Ctrl+C/D
             ShellUI.print(("green", "\nReally quit Taglines?  [y/N] "), False)
             if sys.version_info.major == 2:
                 # pylint: disable=undefined-variable
@@ -216,7 +219,7 @@ class ShellUI:  # {{{1 interactive mode
         if i and "yes".startswith(i.lower()):
             raise ShellUI.ExitShellUI()
 
-    def authorMenu(self, breadcrumbs):  # {{{1
+    def author_menu(self, breadcrumbs):  # {{{1
         """The menu with which to alter author information."""
 
         breadcrumbs = breadcrumbs[:]+["Author"]
@@ -226,7 +229,7 @@ class ShellUI:  # {{{1 interactive mode
                 breadcrumbs,
                 ["a - add author      ", "l - list all authors\n",
                  "d - delete author   ", "c - set current author for new taglines\n"],
-                silent=choice != "h", allowInt=True)
+                silent=choice != "h", allow_int=True)
 
             if isinstance(choice, int):
                 author_id = choice
@@ -235,10 +238,10 @@ class ShellUI:  # {{{1 interactive mode
                 author_id = None
 
             if choice == "a":
-                name = self.getInput("\nName (empty to abort): ")
+                name = self.get_input("\nName (empty to abort): ")
                 if name != False and name != "":
                     try:
-                        born = self.getInput("Year of birth: ")
+                        born = self.get_input("Year of birth: ")
                         if born == False:
                             continue
                         else:
@@ -246,7 +249,7 @@ class ShellUI:  # {{{1 interactive mode
                     except ValueError:
                         born = None
                     try:
-                        died = self.getInput("Year of death: ")
+                        died = self.get_input("Year of death: ")
                         if died == False:
                             continue
                         else:
@@ -254,58 +257,59 @@ class ShellUI:  # {{{1 interactive mode
                     except ValueError:
                         died = None
                     try:
-                        c = self.db.execute(
+                        cursor = self.db.execute(
                             "INSERT INTO authors (name, born, died) VALUES (?,?,?)", (
                                 name, born, died), True)
-                        print("Author added, new ID is {}".format(c.lastrowid))
-                    except sqlite3.Error as e:
-                        print("An sqlite3 error occurred:", e.args[0])
+                        print("Author added, new ID is {}".format(cursor.lastrowid))
+                    except sqlite3.Error as error:
+                        print("An sqlite3 error occurred:", error.args[0])
 
             elif choice == "c":
                 if author_id is None:
-                    author_id = self.getInput(
+                    author_id = self.get_input(
                         "\nID of new current author (empty to abort, 'u' to unset): ",
-                        allowInt=True)
+                        allow_int=True)
                     if author_id == "":
                         continue
                     elif author_id == "u":
-                        self.currentAuthor = None
+                        self.current_author = None
                         print("Current author reset.")
                         continue
                     elif not isinstance(author_id, int):
                         print("Error: not a valid integer ID.")
                         continue
-                row = self.db.getOne("SELECT id, name FROM authors WHERE id=?", (author_id,))
+                row = self.db.get_one("SELECT id, name FROM authors WHERE id=?", (author_id,))
                 if row is None:
                     print("Author with ID {} does not exist.".format(author_id))
                 else:
-                    self.currentAuthor = author_id
+                    self.current_author = author_id
                     print("New current author:", row[1])
 
             elif choice == "d":
-                author_id = self.getInput("\nID to delete (empty to abort): ", allowInt=True)
+                author_id = self.get_input("\nID to delete (empty to abort): ", allow_int=True)
                 if isinstance(author_id, int):
-                    row = self.db.getOne("SELECT id FROM authors WHERE id=?", (author_id,))
+                    row = self.db.get_one("SELECT id FROM authors WHERE id=?", (author_id,))
                     if row is None:
                         print("Author with given ID does not exist.")
                         continue
                     try:
                         self.db.execute('DELETE FROM authors WHERE id=?', (author_id,), True)
                         print("Author deleted.")
-                        if author_id == self.currentAuthor:
-                            self.currentAuthor = None
+                        if author_id == self.current_author:
+                            self.current_author = None
                             print("Current author reset.")
                     except ValueError:
                         print("Error: no integer ID.")
 
             elif choice == "l":
                 print("\nALL AUTHORS (sorted by name):")
-                c = self.db.execute("SELECT id, name, born, died FROM authors ORDER BY name")
-                for row in c:
+                cursor = self.db.execute("SELECT id, name, born, died FROM authors ORDER BY name")
+                for row in cursor:
                     out = "{:>4}{}: {}".format(
                         row[0],
-                        self.colorstring("Yellow") + "*\033[0;0m"
-                        if self.currentAuthor == row[0] else ' ', row[1])
+                        self.colorstring("Yellow")+"*\033[0;0m"
+                        if self.current_author == row[0] else ' ',
+                        row[1])
                     if row[2] is not None or row[3] is not None:
                         out += " (" + str(row[2]) + "-" + str(row[3]) + ")"
                     print(out)
@@ -313,7 +317,7 @@ class ShellUI:  # {{{1 interactive mode
             elif choice == "q":
                 return
 
-    def tagMenu(self, breadcrumbs):  # {{{1
+    def tag_menu(self, breadcrumbs):  # {{{1
         """The menu with which to alter tag information."""
 
         breadcrumbs = breadcrumbs[:]+["Tag"]
@@ -324,7 +328,7 @@ class ShellUI:  # {{{1 interactive mode
                 ["a - add tag          ", "l - list all tags\n",
                  "d - delete tag       ", "t - toggle tag (or simply enter the ID)\n",
                  "r - reset all tags\n"],
-                silent=choice != "h", allowInt=True)
+                silent=choice != "h", allow_int=True)
 
             # instead of entering "t" and then the ID, simply enter the ID
             if isinstance(choice, int):
@@ -334,76 +338,78 @@ class ShellUI:  # {{{1 interactive mode
                 tag = None
 
             if choice == "a":
-                text = self.getInput("\nTag text (empty to abort): ")
+                text = self.get_input("\nTag text (empty to abort): ")
                 if text:
                     try:
-                        c = self.db.execute("INSERT INTO tags (text) VALUES (?)", (text,), True)
-                        print("Tag added, new ID is", c.lastrowid)
-                    except sqlite3.Error as e:
-                        print("An sqlite3 error occurred:", e.args[0])
+                        cursor = self.db.execute(
+                            "INSERT INTO tags (text) VALUES (?)", (text,), True)
+                        print("Tag added, new ID is", cursor.lastrowid)
+                    except sqlite3.Error as error:
+                        print("An sqlite3 error occurred:", error.args[0])
 
             elif choice == "d":
-                tag = self.getInput("\nID to delete (empty to abort): ", allowInt=True)
+                tag = self.get_input("\nID to delete (empty to abort): ", allow_int=True)
                 if not isinstance(tag, int):
                     print("Error: no integer ID.")
                 else:
                     try:
                         output = ""
 
-                        c = self.db.getOne("SELECT COUNT(*) FROM tag WHERE tag=?", (tag,))
-                        if c[0] > 0:
-                            dellines = self.askYesNo(
-                                "Also delete the {} taglines associated with "
-                                "that tag?".format(c[0],), allowCancel=True)
+                        cursor = self.db.get_one("SELECT COUNT(*) FROM tag WHERE tag=?", (tag,))
+                        if cursor[0] > 0:
+                            dellines = self.ask_yesno(
+                                "Also delete the {} taglines associated with that tag?".format(
+                                    cursor[0],),
+                                allow_cancel=True)
                             if dellines is False:
                                 print("Deletion aborted.")
                                 continue
                             if dellines == "y":
                                 # delete lines of associated taglines
-                                self.db.execute("""DELETE FROM lines
-                                    WHERE id IN (SELECT l.id FROM lines l
-                                    JOIN tag t ON t.tagline=l.tagline WHERE t.tag=?)""", (tag,))
-                                # delete associated taglines
-                                c = self.db.execute("""DELETE FROM taglines WHERE id IN (
-                                    SELECT tl.id FROM taglines tl JOIN tag t ON t.tagline=tl.id
+                                self.db.execute("""DELETE FROM lines WHERE id IN (SELECT
+                                    l.id FROM lines l JOIN tag t ON t.tagline=l.tagline
                                     WHERE t.tag=?)""", (tag,))
-                                deleted = c.rowcount
+                                # delete associated taglines
+                                cursor = self.db.execute("""DELETE FROM taglines WHERE id IN (SELECT
+                                    tl.id FROM taglines tl JOIN tag t ON t.tagline=tl.id
+                                    WHERE t.tag=?)""", (tag,))
+                                deleted = cursor.rowcount
                                 output = (" and one tagline" if deleted == 1
                                           else " and {} taglines".format(deleted))
                         self.db.execute("DELETE FROM tag WHERE tag=?", (tag,))
                         self.db.execute("DELETE FROM tags WHERE id=?", (tag,), True)
                         print("Tag{} deleted.".format(output))
-                    except sqlite3.Error as e:
-                        print("An sqlite3 error occurred:", e.args[0])
+                    except sqlite3.Error as error:
+                        print("An sqlite3 error occurred:", error.args[0])
 
             elif choice == "l":
                 print("\nALL TAGS (sorted by text):")
-                c = self.db.execute("SELECT id, text FROM tags ORDER BY text")
-                for row in c:
+                cursor = self.db.execute("SELECT id, text FROM tags ORDER BY text")
+                for row in cursor:
                     out = "{:>4}{}: {}".format(
                         row[0],
-                        self.colorstring("Yellow") + "*\033[0;0m"
-                        if row[0] in self.currentTags else ' ', row[1])
+                        self.colorstring("Yellow")+"*\033[0;0m"
+                        if row[0] in self.current_tags else ' ', row[1])
                     print(out)
 
             elif choice == "r":
-                self.currentTags = []
+                self.current_tags = []
                 print("All tags deselected.")
 
             elif choice == "t":
                 if not isinstance(tag, int):
-                    tag = self.getInput("\nID to toggle (empty to abort): ", allowInt=True)
+                    tag = self.get_input("\nID to toggle (empty to abort): ", allow_int=True)
                 if isinstance(tag, int):
-                    row = self.db.getOne("SELECT id, text FROM tags WHERE id=?", (tag,))
+                    row = self.db.get_one("SELECT id, text FROM tags WHERE id=?", (tag,))
                     if not row:
                         print("Error: no valid ID.")
                     else:
-                        if tag in self.currentTags:
-                            i = self.currentTags.index(tag)
-                            self.currentTags = self.currentTags[0:i]+self.currentTags[i+1:]
+                        if tag in self.current_tags:
+                            i = self.current_tags.index(tag)
+                            self.current_tags = self.current_tags[0:i]+self.current_tags[i+1:]
                             print("Tag '{}' disabled.".format(row[1]))
                         else:
-                            self.currentTags.append(tag)
+                            self.current_tags.append(tag)
                             print("Tag '{}' enabled.".format(row[1]))
                 else:
                     print("Error: no integer ID.")
@@ -411,7 +417,7 @@ class ShellUI:  # {{{1 interactive mode
             elif choice == "q":
                 return
 
-    def taglinesMenu(self, breadcrumbs):  # {{{1
+    def taglines_menu(self, breadcrumbs):  # {{{1
         """The menu with which to alter the actual taglines."""
 
         breadcrumbs = breadcrumbs[:]+["Tagline"]
@@ -422,52 +428,53 @@ class ShellUI:  # {{{1 interactive mode
                 "a - add new tagline        ", "any number - show tagline of that ID\n",
                 "e - edit tagline           ", "A - go to author menu\n",
                 "d - delete tagline         ", "T - go to tag menu\n"
-                ], silent=choice != "h", allowInt=True)
+                ], silent=choice != "h", allow_int=True)
 
             if choice == "A":
-                self.authorMenu(breadcrumbs)
+                self.author_menu(breadcrumbs)
 
             elif choice == "T":
-                self.tagMenu(breadcrumbs)
+                self.tag_menu(breadcrumbs)
 
             elif choice == "a":
-                self.taglineEditMenu(breadcrumbs)
+                self.tagline_edit_menu(breadcrumbs)
 
             elif choice == "d":
-                tagline = self.getInput(
-                    "\nID to delete (d=last tagline in list, empty to abort): ", allowInt=True)
+                tagline = self.get_input(
+                    "\nID to delete (d=last tagline in list, empty to abort): ", allow_int=True)
                 if tagline == "":
                     continue
                 if tagline == "d":
-                    tagline = self.db.getOne("SELECT MAX(id) FROM taglines")[0]
+                    tagline = self.db.get_one("SELECT MAX(id) FROM taglines")[0]
                     if tagline is None:
                         print("Nothing to delete.")
                 if isinstance(tagline, int):
                     try:
-                        if self.db.getOne("SELECT id FROM taglines WHERE id=?", (tagline,)):
+                        if self.db.get_one("SELECT id FROM taglines WHERE id=?", (tagline,)):
                             self.db.execute("DELETE FROM tag WHERE tagline=?", (tagline,))
                             self.db.execute("DELETE FROM lines WHERE tagline=?", (tagline,), commit=True)
                             self.db.execute('DELETE FROM taglines WHERE id=?', (tagline,))
                         print("Tagline {} and all its tag assignments deleted.".format(tagline))
-                    except sqlite3.Error as e:
-                        print("Error while deleting tagline: {}.".format(e.args[0]))
+                    except sqlite3.Error as error:
+                        print("Error while deleting tagline: {}.".format(error.args[0]))
                 else:
-                    self.printWarning("Invalid choice.")
+                    self.print_warning("Invalid choice.")
 
             elif choice == "e":
-                tagline = self.getInput(
-                    "  ID of tagline to edit "
-                    "(empty to abort, -1 for the most recent tagline change): ", allowInt=True)
+                tagline = self.get_input(
+                    "  ID of tagline to edit (empty to abort, "
+                    "-1 for the most recent tagline change): ", allow_int=True)
                 if not tagline:
                     continue
                 if isinstance(tagline, int):
                     if tagline == -1:
-                        row = self.db.getOne("SELECT tagline FROM lines ORDER BY date DESC LIMIT 1")
+                        row = self.db.get_one(
+                            "SELECT tagline FROM lines ORDER BY date DESC LIMIT 1")
                     else:
-                        row = self.db.getOne("SELECT id FROM taglines WHERE id=?", (tagline,))
+                        row = self.db.get_one("SELECT id FROM taglines WHERE id=?", (tagline,))
                     if row:
                         tagline = row[0]
-                        self.taglineEditMenu(breadcrumbs, tagline)
+                        self.tagline_edit_menu(breadcrumbs, tagline)
                     else:
                         print("Invalid ID.")
                 else:
@@ -475,11 +482,11 @@ class ShellUI:  # {{{1 interactive mode
 
             elif choice in ("l", "L") or isinstance(choice, int):
                 print()
-                q = ("SELECT t.id, a.name, source, remark, date FROM taglines AS t "
-                     "LEFT JOIN authors AS a ON t.author=a.id")
+                query = """SELECT t.id, a.name, source, remark, date FROM taglines AS t
+                LEFT JOIN authors AS a ON t.author=a.id"""
                 if choice == "l":
-                    limit = self.getInput(
-                        "  Number of taglines to list (default: 5): ", allowInt=True)
+                    limit = self.get_input(
+                        "  Number of taglines to list (default: 5): ", allow_int=True)
                     if limit is False:
                         continue
                     if isinstance(limit, int):
@@ -487,66 +494,66 @@ class ShellUI:  # {{{1 interactive mode
                             limit = 5
                     else:
                         limit = 5
-                    row = self.db.getOne("SELECT COUNT(id) FROM taglines")
-                    q += " ORDER BY t.id LIMIT {},{}".format(max(0, row[0] - limit), limit)
+                    row = self.db.get_one("SELECT COUNT(id) FROM taglines")
+                    query += " ORDER BY t.id LIMIT {},{}".format(max(0, row[0] - limit), limit)
                     print("LAST {} TAGLINES".format(limit))
                 elif choice == "L":
-                    q += " ORDER BY t.id"
+                    query += " ORDER BY t.id"
                     print("ALL TAGLINES")
                 else:
                     tagline = choice
-                    q += " WHERE t.id='{}'".format(tagline)
+                    query += " WHERE t.id='{}'".format(tagline)
 
-                c = self.db.execute(q)
+                cursor = self.db.execute(query)
                 anzahl = -1
-                for index, r in enumerate(c):
+                for index, row in enumerate(cursor):
                     anzahl = index
                     output = []
-                    if r[1] is not None: output.append("by "+r[1])
-                    if r[4] is not None: output.append("from "+r[4].isoformat())
-                    if r[2] is not None: output.append("source: "+r[2])
-                    if r[3] is not None: output.append("remark: "+r[3])
+                    if row[1] is not None: output.append("by "+row[1])
+                    if row[4] is not None: output.append("from "+row[4].isoformat())
+                    if row[2] is not None: output.append("source: "+row[2])
+                    if row[3] is not None: output.append("remark: "+row[3])
                     sub = self.db.execute(
                         "SELECT text FROM tags JOIN tag t ON t.tagline=? AND t.tag=tags.id "
-                        "ORDER BY text", (r[0],))
+                        "ORDER BY text", (row[0],))
                     tags = sub.fetchall()
-                    tags = [t[0] for t in tags]
+                    tags = [tag[0] for tag in tags]
                     if tags:
                         output.append(str("tags: " + ", ".join(tags)))
                     print("#{:>5}{}".format(
-                        r[0], ": " + ", ".join(output) if output else ""))
-                    sub = self.db.execute("SELECT l.id, l.date, language, text FROM lines l "
-                                          "LEFT JOIN taglines t ON l.tagline = t.id WHERE t.id=?",
-                                          (r[0],))
-                    for t in sub:
+                        row[0], ": "+", ".join(output) if output else ""))
+                    sub = self.db.execute(
+                        "SELECT l.id, l.date, language, text FROM lines l "
+                        "LEFT JOIN taglines t ON l.tagline = t.id WHERE t.id=?", (row[0],))
+                    for tag in sub:
                         print("     Line  # {:>5}:{}{}: {}".format(
-                            t[0],
-                            " (" + t[1].isoformat() + ")" if t[1] is not None else "",
-                            " lang=" + t[2] if t[2] is not None else "",
-                            t[3] if t[3] else ""))
+                            tag[0],
+                            " ("+tag[1].isoformat()+")" if tag[1] is not None else "",
+                            " lang="+tag[2] if tag[2] is not None else "",
+                            tag[3] if tag[3] else ""))
                 if anzahl == -1:
                     print("No match found.")
 
             elif choice == "q":
                 return
 
-    def taglineEditMenu(self, breadcrumbs, tagline_id=None):  # {{{1
+    def tagline_edit_menu(self, breadcrumbs, tagline_id=None):  # {{{1
         """ Edit the content of a tagline or add a new one. """
 
         def ask_optional_info(source, remark, when):
             """ Ask user for content of those three field. """
 
-            result = self.getInput("  Tagline source{}: ".format(
+            result = self.get_input("  Tagline source{}: ".format(
                 "" if source is None else " [" + source + "]"))
             if result is False: return None
             source = result
 
-            result = self.getInput("  Tagline remark{}: ".format(
+            result = self.get_input("  Tagline remark{}: ".format(
                 "" if remark is None else " [" + remark + "]"))
             if result is False: return None
             remark = result
 
-            result = self.getInput("  Tagline date (yyyy-mm-dd){}: ".format(
+            result = self.get_input("  Tagline date (yyyy-mm-dd){}: ".format(
                 "" if when is None else " [" + when + "]"))
             if result is False: return None
             when = result
@@ -557,15 +564,15 @@ class ShellUI:  # {{{1 interactive mode
         self.menu(breadcrumbs)
 
         tagline = DatabaseTagline(
-            self.db, tagline_id, self.currentAuthor, self.currentTags[:])
+            self.db, tagline_id, self.current_author, self.current_tags[:])
 
         if len(tagline.tags) == 0:
             tag_texts = "None"
         else:
-            tag_texts = ",".join([str(t) for t in tagline.tags])
-            c = self.db.execute(
+            tag_texts = ",".join([str(tag) for tag in tagline.tags])
+            cursor = self.db.execute(
                 "SELECT text FROM tags WHERE id IN (" + tag_texts + ") ORDER BY text")
-            tag_texts = ", ".join([t[0] for t in c.fetchall()])
+            tag_texts = ", ".join([text[0] for text in cursor.fetchall()])
 
         prefix = "Current" if tagline_id is None else "Tagline"
         print("{} author: {}".format(
@@ -584,7 +591,7 @@ class ShellUI:  # {{{1 interactive mode
             self.print("  Tagline date:", tagline.when)
         print()
 
-        noHeader = True
+        no_header = True
         choice = "h"
         while choice != "q":
 
@@ -592,24 +599,25 @@ class ShellUI:  # {{{1 interactive mode
                 """ Tagline entry mask to enter several lines of text. """
 
                 print("    " + heading)
-                new_language = self.getInput("    Language (ISO code){}: ".format(
-                    " [" + language + "]" if language else ""), allowEmpty=False)
+                new_language = self.get_input("    Language (ISO code){}: ".format(
+                    " [" + language + "]" if language else ""), allow_empty=False)
                 if new_language == "":
                     new_language = language
                 if not new_language:
                     return
                 if existing_langs and new_language in existing_langs and new_language != language:
-                    if self.askYesNo("    There is already an item with this language. "
-                                     "Overwrite it?") == "n":
+                    if self.ask_yesno(
+                            "    There is already an item with this language. "
+                            "Overwrite it?") == "n":
                         return
 
-                print("    Text ('r'=restart, 'c'=correct last line, 'a'=abort, "
-                      "'f' or two empty lines=finish:")
+                print("    Text ('r'=restart, 'c'=correct last line, "
+                      "'a'=abort, 'f' or two empty lines=finish:")
                 print("".join(["         {}".format(x) for x in range(1, 9)]))
                 print("1234567890"*8)
                 lines = []
                 while True:
-                    line = self.getInput()
+                    line = self.get_input()
                     if line == "a":
                         break
 
@@ -632,8 +640,8 @@ class ShellUI:  # {{{1 interactive mode
                 "a - add a tagline text      ", "t - edit tags\n",
                 "m - manage tagline texts    ", "w - save changes to database and quit menu\n",
                 "o - edit optional inform.   ", "q - quit to previous menu, discarding changes\n"
-                ], silent=choice != "h", noHeader=noHeader)
-            noHeader = False
+                ], silent=choice != "h", no_header=no_header)
+            no_header = False
 
             if choice == "a":
                 result = enter_text("ENTER A NEW ITEM", existing_langs=tagline.texts)
@@ -650,17 +658,16 @@ class ShellUI:  # {{{1 interactive mode
 
                 choice = "h"
                 while True:
-                    choice = self.menu(
-                        breadcrumbs + ["Modify tagline texts"],
-                        ["d - delete a text   ", "l - list texts\n",
-                         "m - modify a text   ", "q - quit menu\n",],
-                        silent=choice != "h", noHeader=noHeader)
+                    choice = self.menu(breadcrumbs + ["Modify tagline texts"], [
+                        "d - delete a text   ", "l - list texts\n",
+                        "m - modify a text   ", "q - quit menu\n",
+                        ], silent=choice != "h", no_header=no_header)
 
                     if choice == "":
                         continue
 
                     elif choice == "d":
-                        lang = self.getInput("   Language to delete ({}): ".format(
+                        lang = self.get_input("   Language to delete ({}): ".format(
                             ", ".join(tagline.texts.keys())))
                         if tagline.pop_text(lang) is None:
                             print("Invalid language.")
@@ -677,7 +684,7 @@ class ShellUI:  # {{{1 interactive mode
                                 lang, " (unsaved)" if text[1] else "", text[0]))
 
                     elif choice == "m":
-                        lang = self.getInput("   Language to modify ({}): ".format(
+                        lang = self.get_input("   Language to modify ({}): ".format(
                             ", ".join(tagline.texts)))
                         if lang in tagline.texts:
                             result = enter_text("EDIT TEXT", lang, tagline.texts)
@@ -699,7 +706,7 @@ class ShellUI:  # {{{1 interactive mode
 
             elif choice == "q":
                 if tagline.is_changed:
-                    if self.askYesNo("    Tagline has unsaved changes. Continue?", "n") != "y":
+                    if self.ask_yesno("    Tagline has unsaved changes. Continue?", "n") != "y":
                         choice = ""
 
             elif choice == "w":
@@ -710,23 +717,23 @@ class ShellUI:  # {{{1 interactive mode
                     print("Changes saved.")
                 break
 
-    def mainMenu(self):  # {{{1
+    def main_menu(self):  # {{{1
         """ The main menu loop for the terminal interface. """
 
         try:
             while True:
-                bc = ["Main"]
-                choice = self.menu(bc, [
+                breadcrumbs = ["Main"]
+                choice = self.menu(breadcrumbs, [
                     "   a - Author menu    ", "t - Tag menu    ", "l - taglines menu",
                     ], "By your command: ")
                 if choice == "a":
-                    self.authorMenu(bc)
+                    self.author_menu(breadcrumbs)
                 elif choice == "l":
-                    self.taglinesMenu(bc)
+                    self.taglines_menu(breadcrumbs)
                 elif choice == "q":
-                    self.exitTaglines()
+                    self.exit_taglines()
                 elif choice == "t":
-                    self.tagMenu(bc)
+                    self.tag_menu(breadcrumbs)
         except self.ExitShellUI:
             return True
         # }}}2
