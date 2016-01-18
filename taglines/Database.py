@@ -352,8 +352,9 @@ class DatabaseTagline:  # {{{1
             present_languages = set()
             present_tags = set()
         else:
-            cursor = self.db.execute("UPDATE taglines set author=?, source=?, remark=?, date=?", (
-                self.author, self.source, self.remark, self.when))
+            cursor = self.db.execute(
+                "UPDATE taglines set author=?, source=?, remark=?, date=? WHERE id=?", (
+                    self.author, self.source, self.remark, self.when, self.id))
 
             cursor = self.db.execute("SELECT language FROM lines WHERE tagline=?", (self.id,))
             present_languages = set(item[0] for item in cursor)
