@@ -554,7 +554,7 @@ class ShellUI:  # {{{1 interactive mode
             remark = result
 
             result = self.get_input("  Tagline date (yyyy-mm-dd){}: ".format(
-                "" if when is None else " [" + when + "]"))
+                "" if when is None else " [" + when.strftime('%F') + "]"))
             if result is False: return None
             when = result
 
