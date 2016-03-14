@@ -150,7 +150,7 @@ class Database:  # {{{1
 
         query = "SELECT text FROM lines AS l"
         qargs = []
-        where = False
+        where = []
 
         author = self.filters.get("author")
         if author:
@@ -164,21 +164,23 @@ class Database:  # {{{1
 
         tags = self.filters.get("tags")
         if tags:
-            query += """ WHERE l.tagline IN (
+            where.append(
+                """l.tagline IN (
                 SELECT tagline FROM tag JOIN tags ON tag.tag=tags.id WHERE text IN ({tag_texts}) GROUP BY tagline{having}
-            )""".format(
-                tag_texts=",".join(["?"] * len(tags)),
-                having="" if self.tags_or else " HAVING count(*)=?",
-                )
+                )""".format(
+                    tag_texts=",".join(["?"] * len(tags)),
+                    having="" if self.tags_or else " HAVING count(*)=?",
+                ))
             qargs += tags
             if not self.tags_or:
                 qargs.append(len(tags))
-            where = True
+
+        if where:
+            query += " WHERE " + " AND ".join(where)
 
         lang = self.filters.get("language")
         if lang:
-            query += "{} l.language=?".format(" AND" if where else " WHERE")
-            where = True
+            where.append("l.language=?")
             qargs.append(lang)
 
         if random:
