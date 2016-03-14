@@ -39,6 +39,11 @@ def parse_arguments():
         '-t', '--tag', action='append',
         help='Only show items with the given tag(s)')
     parser.add_argument(
+        '-T', '--text', action='append',
+        help='Search for given text (combined with AND. Only a word: search as '
+             'substring, %% at start or end: search at end or start of text, '
+             'respectively, i.e. SQL-syntax)')
+    parser.add_argument(
         '-a', '--author',
         help='Only show items by the given author')
     parser.add_argument(

@@ -137,6 +137,8 @@ class Database:  # {{{1
             self.filters["tags"] = args.tag
         if args.lang:
             self.filters["language"] = args.lang
+        if args.text:
+            self.filters["text"] = args.text
 
     def random_tagline(self):  # {{{2
         """ Retrieve and return a random tagline text from the database. """
@@ -174,6 +176,14 @@ class Database:  # {{{1
             qargs += tags
             if not self.tags_or:
                 qargs.append(len(tags))
+
+        text = self.filters.get("text")
+        if text:
+            where.extend(["text like ?"] * len(text))
+            for keyword in text:
+                if not keyword.startswith('%') and not keyword.endswith('%'):
+                    keyword = '%' + keyword + '%'
+                qargs.append(keyword)
 
         if where:
             query += " WHERE " + " AND ".join(where)
