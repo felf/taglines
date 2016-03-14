@@ -5,6 +5,7 @@
 from __future__ import print_function, unicode_literals
 import sqlite3
 import sys
+from datetime import datetime
 
 from taglines.Database import DatabaseTagline
 
@@ -553,10 +554,19 @@ class ShellUI:  # {{{1 interactive mode
             if result is False: return None
             remark = result
 
-            result = self.get_input("  Tagline date (yyyy-mm-dd){}: ".format(
-                "" if when is None else " [" + when.strftime('%F') + "]"))
-            if result is False: return None
-            when = result
+            while True:
+                result = self.get_input("  Tagline date (yyyy-mm-dd){}: ".format(
+                    "" if when is None else " [" + when.strftime('%F') + "]"))
+                if result is False: return None
+                if result:
+                    try:
+                        when = datetime.strptime(result, '%Y-%m-%d').date()
+                        break
+                    except ValueError:
+                        self.print_warning('Not a valid date.')
+                else:
+                    when = None
+                    break
 
             return source, remark, when
 
