@@ -185,13 +185,13 @@ class Database:  # {{{1
                     keyword = '%' + keyword + '%'
                 qargs.append(keyword)
 
-        if where:
-            query += " WHERE " + " AND ".join(where)
-
         lang = self.filters.get("language")
         if lang:
             where.append("l.language=?")
             qargs.append(lang)
+
+        if where:
+            query += " WHERE " + " AND ".join(where)
 
         if random:
             query += " ORDER BY RANDOM() LIMIT 1"
