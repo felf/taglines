@@ -72,7 +72,7 @@ class ShellUI:  # {{{1 interactive mode
         ShellUI.print(("Red", what))
 
     def menu(self, breadcrumbs, choices=None, prompt="", silent=False,  # {{{1
-             no_header=False, allow_any_int=False):
+             no_header=False, allow_any_int=False, allow_anything=False):
         """ Display a list of possible choices and ask user for a selection. """
 
         if not (silent or no_header):
@@ -129,11 +129,15 @@ class ShellUI:  # {{{1 interactive mode
                 return choice
             elif allow_any_int:
                 try:
-                    choice = int(choice)
-                    return choice
+                    return int(choice)
                 except ValueError:
+                    if allow_anything:
+                        return choice
                     pass
-            self.print_warning("Invalid choice.")
+            elif allow_anything:
+                return choice
+            else:
+                self.print_warning("Invalid choice.")
 
     @staticmethod
     def get_input(text="", allow_empty=True, allow_any_int=False):  # {{{1
@@ -327,9 +331,9 @@ class ShellUI:  # {{{1 interactive mode
             choice = self.menu(
                 breadcrumbs,
                 ["a - add tag          ", "l - list all tags\n",
-                 "d - delete tag       ", "t - toggle tag (or simply enter the ID)\n",
+                 "d - delete tag       ", "t - toggle tag (or simply enter the ID or name)\n",
                  "r - reset all tags\n"],
-                silent=choice != "h", allow_any_int=True)
+                silent=choice != "h", allow_anything=True, allow_any_int=True)
 
             # instead of entering "t" and then the ID, simply enter the ID
             if isinstance(choice, int):
@@ -349,7 +353,7 @@ class ShellUI:  # {{{1 interactive mode
                         print("An sqlite3 error occurred:", error.args[0])
 
             elif choice == "d":
-                tag = self.get_input("\nID to delete (empty to abort): ", allow_any_int=True)
+                tag = self.get_input("\nID to delete (empty to abort): ", allow_anything=True, allow_any_int=True)
                 if not isinstance(tag, int):
                     print("Error: no integer ID.")
                 else:
@@ -397,7 +401,22 @@ class ShellUI:  # {{{1 interactive mode
                 self.current_tags = []
                 print("All tags deselected.")
 
-            elif choice == "t":
+            elif choice == "q":
+                return
+
+            else:
+                if not choice == "t":
+                    # a tag name was given
+                    print(1)
+                    row = self.db.get_one("SELECT id FROM tags WHERE text=?", (choice,))
+                    print(row)
+                    if not row:
+                        print("Error: no valid tag name.")
+                        continue
+                    print(2)
+                    tag = row[0]
+                    print(3)
+
                 if not isinstance(tag, int):
                     tag = self.get_input("\nID to toggle (empty to abort): ", allow_any_int=True)
                 if isinstance(tag, int):
@@ -414,9 +433,6 @@ class ShellUI:  # {{{1 interactive mode
                             print("Tag '{}' enabled.".format(row[1]))
                 else:
                     print("Error: no integer ID.")
-
-            elif choice == "q":
-                return
 
     def taglines_menu(self, breadcrumbs):  # {{{1
         """The menu with which to alter the actual taglines."""
