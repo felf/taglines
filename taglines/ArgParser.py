@@ -66,4 +66,12 @@ def parse_arguments():
     #group=parser.add_argument_group('Actions')
     #group=parser.add_mutually_exclusive_group()
 
-    return parser.parse_args()
+    args = parser.parse_args()
+    if not any(
+        (
+            args.list, args.random, args.show_tags, args.show_authors,
+            args.stats, args.init, args.interactive)
+        ):
+        args.random = True
+
+    return args
