@@ -8,8 +8,9 @@ mos:
 setup:
 	python3 setup.py install
 
-install: mos setup
-	install -T mo/de.mo /usr/share/locale/de/LC_MESSAGES/Taglines.mo
+#install: mos setup
+install: setup
+#	install -T mo/de.mo /usr/share/locale/de/LC_MESSAGES/Taglines.mo
 
 uninstall:
 	rm /usr/bin/Taglines
