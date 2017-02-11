@@ -1,7 +1,7 @@
 """ This class prints and parses command line arguments. """
 
 import argparse
-
+from os import getenv
 
 def parse_arguments():
     """ Parse arguments passed to Taglines. """
@@ -32,6 +32,11 @@ def parse_arguments():
     group.add_argument(
         '-i', '--interactive', action='store_true',
         help='Go into interactive mode (simple shell)')
+    parser.add_argument(
+        '-E', '--editor', default=getenv('EDITOR'),
+        help='External editor to use. Default taken from environment, set to '
+             '"-" to disable external editor. May contain arguments to editor, '
+             'e.g. "vim -X."')
     parser.add_argument(
         '-o', '--ortag', action='store_true',
         help='Combine several tags with OR instead of AND')

@@ -108,13 +108,13 @@ def show_stats(filepath):  # {{{1
         return True
     return False
 
-def interactive_menu(filepath):  # {{{1
+def interactive_menu(filepath, editor):  # {{{1
     """ start interactive console menu mode and exit at the end """
 
     try:
         db = Database(filepath)
         if db:
-            shell = ShellUI(db)
+            shell = ShellUI(db, editor)
         result = shell.main_menu()
 
     except Exception:
@@ -149,7 +149,7 @@ def main():  # {{{1
             result = show_stats(args.file)
 
         if args.interactive:
-            result = interactive_menu(args.file)
+            result = interactive_menu(args.file, args.editor)
 
     except Exception as error:
         raise

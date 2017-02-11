@@ -4,7 +4,9 @@
 
 from __future__ import print_function, unicode_literals
 import sqlite3
+import subprocess
 import sys
+import tempfile
 from datetime import datetime
 
 from taglines.Database import DatabaseTagline
@@ -23,11 +25,12 @@ class ShellUI:  # {{{1 interactive mode
             super(ShellUI.ExitShellUI, self).__init__()
 
 
-    def __init__(self, db):  # {{{1
+    def __init__(self, db, editor):  # {{{1
         self.current_author = None
         self.current_tags = []
         self.db = db
         self.db.open()
+        self.editor = editor
 
     @staticmethod
     def colorstring(color):  # {{{1
@@ -637,11 +640,38 @@ class ShellUI:  # {{{1 interactive mode
                             "Overwrite it?") == "n":
                         return
 
+                lines = []
+                if self.editor == '-':
+                    pass
+                elif self.editor:
+                    with tempfile.NamedTemporaryFile(mode='w+t', prefix='taglines.') as handle:
+                        try:
+                            # allow for arguments to editor itself
+                            subprocess.check_call(
+                                self.editor.split() + [handle.name])
+                        except (subprocess.CalledProcessError, FileNotFoundError):
+                            self.print_warning(
+                                "Could not open editor. Continuing with internal menu."
+                                )
+                        else:
+                            handle.file.seek(0)
+                            lines = handle.file.read().strip()
+                            if lines:
+                                return (new_language, lines)
+                            else:
+                                self.print_warning(
+                                    'Did no receive anything from editor, '
+                                    'using internal menu.')
+                                # nothing was entered
+                                lines = []
+                else:
+                    print("EDITOR is not set, using internal menu.")
+                    print()
+
                 print("    Text ('r'=restart, 'c'=correct last line, "
                       "'a'=abort, 'f' or two empty lines=finish:")
                 print("".join(["         {}".format(x) for x in range(1, 9)]))
                 print("1234567890"*8)
-                lines = []
                 while True:
                     line = self.get_input()
                     if line == "a":
