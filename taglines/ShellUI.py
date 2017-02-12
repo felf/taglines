@@ -295,6 +295,8 @@ class ShellUI:  # {{{1 interactive mode
 
             elif choice == "d":
                 author_id = self.get_input("\nID to delete (empty to abort): ", allow_int=True)
+                if author_id = "":
+                    continue
                 if isinstance(author_id, int):
                     row = self.db.get_one("SELECT id FROM authors WHERE id=?", (author_id,))
                     if row is None:
@@ -357,6 +359,8 @@ class ShellUI:  # {{{1 interactive mode
 
             elif choice == "d":
                 tag = self.get_input("\nID to delete (empty to abort): ", allow_empty=True, allow_int=True)
+                if keyword == "":
+                    continue
                 if not isinstance(tag, int):
                     print("Error: no integer ID.")
                 else:
