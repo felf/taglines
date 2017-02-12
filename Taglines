@@ -94,17 +94,34 @@ def show_stats(filepath):  # {{{1
     if db:
         stats = db.stats()
 
-        print("Number of taglines:        {:6d}".format(stats["tagline count"],))
-        print("Number of texts:           {:6d}   (ø {:5.2f} per tagline)".format(
-            stats["line count"], stats["line count"]/stats["tagline count"] if \
-                stats["line count"] != 0 else 0))
-        print("Average text length:       {:8.1f}".format(stats["avg tagline length"],))
-        print("Number of tags:            {:6d}".format(stats["tag count"],))
-        print("Number of tag assignments: {:6d}   (ø {:5.2f} per tagline)".format(
-            stats["tag assignments"], stats["tag assignments"]/stats["tagline count"] if \
-                stats["tagline count"] != 0 else 0))
-        print("Number of authors:         {:6d}".format(stats["author count"],))
-        print("Used languages:            {:6d}".format(stats["language count"],))
+        labels = [
+                "Number of taglines:",
+                "Number of texts:",
+                "Average text length:",
+                "Number of tags:",
+                "Number of tag assignments:",
+                "Number of authors:",
+                "Used languages:",
+                ]
+
+        values = [
+                "{:6d}".format(stats["tagline count"],),
+                "{:6d}   (ø {:5.2f} per tagline)".format(
+                    stats["line count"], stats["line count"]/stats["tagline count"] if \
+                            stats["line count"] != 0 else 0),
+                "{:8.1f}".format(stats["avg tagline length"],),
+                "{:6d}".format(stats["tag count"],),
+                "{:6d}   (ø {:5.2f} per tagline)".format(
+                    stats["tag assignments"], stats["tag assignments"]/stats["tagline count"] if \
+                            stats["tagline count"] != 0 else 0),
+                "{:6d}".format(stats["author count"],),
+                "{:6d}".format(stats["language count"],),
+                ]
+
+        maxlabelwidth = max(len(label) for label in labels)
+        for keyval in zip(labels, values):
+            print("{label:{width}} {value}".format(
+                label=keyval[0], width=maxlabelwidth, value=keyval[1]))
         return True
     return False
 
