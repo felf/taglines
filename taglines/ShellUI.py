@@ -410,15 +410,11 @@ class ShellUI:  # {{{1 interactive mode
             else:
                 if not choice == "t":
                     # a tag name was given
-                    print(1)
                     row = self.db.get_one("SELECT id FROM tags WHERE text=?", (choice,))
-                    print(row)
                     if not row:
                         print("Error: no valid tag name.")
                         continue
-                    print(2)
                     tag = row[0]
-                    print(3)
 
                 if not isinstance(tag, int):
                     tag = self.get_input("\nID to toggle (empty to abort): ", allow_any_int=True)
