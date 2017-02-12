@@ -91,22 +91,28 @@ class Database:  # {{{1
         except sqlite3.Error as error:
             raise Database.DatabaseError("An sqlite3 error occurred: {}".format(error.args[0]))
 
-    def version_is_current(self):
-        """ Determine whether the database schema needs to be upgraded. """
+    def get_version(self):
+        """ Extract schema version from database. """
 
         try:
             row = self.get_one("SELECT value FROM status WHERE id=0")
         # no status table (indicative of a first-version database)
         except sqlite3.OperationalError:
-            return False
+            return None
 
         if row is None:
-            return False
+            return None
 
         try:
-            return int(row[0]) == __db_version__
+            return int(row[0])
         except TypeError:
-            return False
+            return None
+
+    def version_is_current(self):
+        """ Determine whether the database schema needs to be upgraded. """
+
+        version = self.get_version()
+        return version is not None and version == __db_version__
 
     def upgrade_version(self):
         """ Do an automatic schema upgrade of the database. """
@@ -290,6 +296,7 @@ class Database:  # {{{1
         """ Calculate and return some statistical data on the database. """
 
         stats = {}
+        stats["schema version"] = self.get_version()
         stats["keyword assignments"] = int(self.get_one("SELECT count(*) FROM kw_tl")[0])
         stats["keyword count"] = int(self.get_one("SELECT count(*) FROM keywords")[0])
         stats["tagline count"] = int(self.get_one("SELECT count(*) FROM taglines")[0])
