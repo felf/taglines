@@ -18,8 +18,8 @@ def parse_arguments():
         '-r', '--random', action='store_true',
         help='From the found items, show one at random (default)')
     group.add_argument(
-        '--show-tags', action='store_true',
-        help='List all available tags in the database and exit')
+        '--show-keywords', action='store_true',
+        help='List all available keywords in the database and exit')
     group.add_argument(
         '--show-authors', action='store_true',
         help='List all available authors in the database and exit')
@@ -38,13 +38,13 @@ def parse_arguments():
              '"-" to disable external editor. May contain arguments to editor, '
              'e.g. "vim -X."')
     parser.add_argument(
-        '-o', '--ortag', action='store_true',
-        help='Combine several tags with OR instead of AND')
+        '-o', '--orkeyword', action='store_true',
+        help='Combine several keywords with OR instead of AND')
     parser.add_argument(
-        '-t', '--tag', action='append',
-        help='Only show items with the given tag(s)')
+        '-k', '--keyword', action='append',
+        help='Only show items with the given keyword(s)')
     parser.add_argument(
-        '-T', '--text', action='append',
+        '-t', '--text', action='append',
         help='Search for given text (combined with AND. Only a word: search as '
              'substring, %% at start or end: search at end or start of text, '
              'respectively, i.e. SQL-syntax)')
@@ -69,7 +69,7 @@ def parse_arguments():
     args = parser.parse_args()
     if not any(
         (
-            args.list, args.random, args.show_tags, args.show_authors,
+            args.list, args.random, args.show_keywords, args.show_authors,
             args.stats, args.init, args.interactive)
         ):
         args.random = True

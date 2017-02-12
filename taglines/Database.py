@@ -22,7 +22,7 @@ class Database:  # {{{1
         self.filename = None
         self.filters = {}
         self.exact_author = False
-        self.tags_or = False
+        self.keywords_or = False
 
         if dbfilename and not self.set_path(dbfilename):
             raise Exception("The given filename could not be opened.")
@@ -71,9 +71,10 @@ class Database:  # {{{1
             #db.text_factory=str
             cursor.execute('CREATE TABLE authors (id INTEGER PRIMARY KEY, name TEXT, born INT DEFAULT NULL, died INT DEFAULT NULL);')
             cursor.execute('CREATE TABLE lines (id INTEGER PRIMARY KEY, tagline INT, date DATE, language VARCHAR(5), text TEXT);')
-            cursor.execute('CREATE TABLE tag (id INTEGER PRIMARY KEY, tag INT, tagline INT);')
+            # the keyword-tagline assignment table
+            cursor.execute('CREATE TABLE kw_tl (id INTEGER PRIMARY KEY, keyword INT, tagline INT);')
             cursor.execute('CREATE TABLE taglines (id INTEGER PRIMARY KEY, author INT, source TEXT DEFAULT NULL, remark TEXT DEFAULT NULL, date DATE DEFAULT NULL);')
-            cursor.execute('CREATE TABLE tags (id INTEGER PRIMARY KEY, text TEXT UNIQUE);')
+            cursor.execute('CREATE TABLE keywords (id INTEGER PRIMARY KEY, text TEXT UNIQUE);')
             self.db.commit()
             self.is_open = True
         except IOError as error:
@@ -130,11 +131,11 @@ class Database:  # {{{1
 
         self.filters = {}
         self.exact_author = args.exactauthor
-        self.tags_or = args.ortag
+        self.keywords_or = args.orkeyword
         if args.author:
             self.filters["author"] = args.author
-        if args.tag:
-            self.filters["tags"] = args.tag
+        if args.keyword:
+            self.filters["keywords"] = args.keyword
         if args.lang:
             self.filters["language"] = args.lang
         if args.text:
@@ -164,18 +165,18 @@ class Database:  # {{{1
                 query += " JOIN authors a ON a.name LIKE ? AND tl.author=a.id"
                 qargs.append("%" + author + "%")
 
-        tags = self.filters.get("tags")
-        if tags:
+        keywords = self.filters.get("keywords")
+        if keywords:
             where.append(
                 """l.tagline IN (
-                SELECT tagline FROM tag JOIN tags ON tag.tag=tags.id WHERE text IN ({tag_texts}) GROUP BY tagline{having}
+                SELECT tagline FROM kw_tl JOIN keywords ON kw_tl.keyword=keywords.id WHERE text IN ({keyword_texts}) GROUP BY tagline{having}
                 )""".format(
-                    tag_texts=",".join(["?"] * len(tags)),
-                    having="" if self.tags_or else " HAVING count(*)=?",
+                    keyword_texts=",".join(["?"] * len(keywords)),
+                    having="" if self.keywords_or else " HAVING count(*)=?",
                 ))
-            qargs += tags
-            if not self.tags_or:
-                qargs.append(len(tags))
+            qargs += keywords
+            if not self.keywords_or:
+                qargs.append(len(keywords))
 
         text = self.filters.get("text")
         if text:
@@ -198,10 +199,10 @@ class Database:  # {{{1
 
         return self.execute(query, (qargs))
 
-    def tags(self, by_name=True):  # {{{2
-        """ Retrieve and return all tags and their names from the database. """
+    def keywords(self, by_name=True):  # {{{2
+        """ Retrieve and return all keywords and their names from the db. """
 
-        query = "SELECT text FROM tags"
+        query = "SELECT text FROM keywords"
         if by_name:
             query += " ORDER by text"
         return (row[0] for row in self.execute(query))
@@ -221,8 +222,8 @@ class Database:  # {{{1
         """ Calculate and return some statistical data on the database. """
 
         stats = {}
-        stats["tag assignments"] = int(self.get_one("SELECT count(*) FROM tag")[0])
-        stats["tag count"] = int(self.get_one("SELECT count(*) FROM tags")[0])
+        stats["keyword assignments"] = int(self.get_one("SELECT count(*) FROM kw_tl")[0])
+        stats["keyword count"] = int(self.get_one("SELECT count(*) FROM keywords")[0])
         stats["tagline count"] = int(self.get_one("SELECT count(*) FROM taglines")[0])
         stats["line count"] = int(self.get_one("SELECT count(*) FROM lines")[0])
         stats["author count"] = int(self.get_one("SELECT count(*) FROM authors")[0])
@@ -240,7 +241,7 @@ class Database:  # {{{1
 class DatabaseTagline:  # {{{1
     """ Encapsulate a tagline in the database. """
 
-    def __init__(self, db, tagline_id=None, author=None, tags=None):  # {{{2
+    def __init__(self, db, tagline_id=None, author=None, keywords=None):  # {{{2
         """ Initialise data values depending on given id.
 
         @param _db: Handle to the sqlite database.
@@ -257,8 +258,8 @@ class DatabaseTagline:  # {{{1
             self.source = None
             self.remark = None
             self.when = None
-            # pylint says tags=set() in function interface is dangerous
-            self.tags = set() if tags is None else tags
+            # pylint says keywords=set() in function interface is dangerous
+            self.keywords = set() if keywords is None else keywords
             self.texts = {}
         else:
             cursor = self.db.execute(
@@ -276,8 +277,8 @@ class DatabaseTagline:  # {{{1
             self.texts = {}
 
             cursor = self.db.execute(
-                "SELECT tag FROM tag WHERE tagline=?", (self.id,))
-            self.tags = set(tag[0] for tag in cursor)
+                "SELECT keyword FROM kw_tl WHERE tagline=?", (self.id,))
+            self.keywords = set(keyword[0] for keyword in cursor)
 
             cursor = self.db.execute(
                 "SELECT language, text FROM lines WHERE tagline=?", (self.id,))
@@ -362,7 +363,7 @@ class DatabaseTagline:  # {{{1
             self.id = cursor.lastrowid
 
             present_languages = set()
-            present_tags = set()
+            present_keywords = set()
         else:
             cursor = self.db.execute(
                 "UPDATE taglines set author=?, source=?, remark=?, date=? WHERE id=?", (
@@ -371,8 +372,8 @@ class DatabaseTagline:  # {{{1
             cursor = self.db.execute("SELECT language FROM lines WHERE tagline=?", (self.id,))
             present_languages = set(item[0] for item in cursor)
 
-            cursor = self.db.execute("SELECT tag FROM tag WHERE tagline=?", (self.id,))
-            present_tags = set(item[0] for item in cursor)
+            cursor = self.db.execute("SELECT keyword FROM kw_tl WHERE tagline=?", (self.id,))
+            present_keywords = set(item[0] for item in cursor)
 
         for lang in self.texts:
             if lang in present_languages:
@@ -389,13 +390,13 @@ class DatabaseTagline:  # {{{1
         for lang in present_languages:
             self.db.execute("DELETE FROM lines WHERE tagline=? AND language=?", (self.id, lang))
 
-        for tag in self.tags:
-            if tag in present_tags:
-                present_tags.remove(tag)
+        for keyword in self.keywords:
+            if keyword in present_keywords:
+                present_keywords.remove(keyword)
             else:
-                self.db.execute("INSERT INTO tag (tag, tagline) VALUES (?,?)", (tag, self.id))
-        for tag in present_tags:
-            self.db.execute("REMOVE FROM tag WHERE tag=? AND tagline=?", (tag, self.id))
+                self.db.execute("INSERT INTO kw_tl (keyword, tagline) VALUES (?,?)", (keyword, self.id))
+        for keyword in present_keywords:
+            self.db.execute("REMOVE FROM kw_tl WHERE keyword=? AND tagline=?", (keyword, self.id))
 
         self.db.commit()
         self.is_changed = False

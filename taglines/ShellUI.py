@@ -27,7 +27,7 @@ class ShellUI:  # {{{1 interactive mode
 
     def __init__(self, db, editor):  # {{{1
         self.current_author = None
-        self.current_tags = []
+        self.current_keywords = []
         self.db = db
         self.db.open()
         self.editor = editor
@@ -295,7 +295,7 @@ class ShellUI:  # {{{1 interactive mode
 
             elif choice == "d":
                 author_id = self.get_input("\nID to delete (empty to abort): ", allow_int=True)
-                if author_id = "":
+                if author_id == "":
                     continue
                 if isinstance(author_id, int):
                     row = self.db.get_one("SELECT id FROM authors WHERE id=?", (author_id,))
@@ -327,50 +327,50 @@ class ShellUI:  # {{{1 interactive mode
             elif choice == "q":
                 return
 
-    def tag_menu(self, breadcrumbs):  # {{{1
-        """The menu with which to alter tag information."""
+    def keyword_menu(self, breadcrumbs):  # {{{1
+        """The menu with which to alter keyword information."""
 
-        breadcrumbs = breadcrumbs[:]+["Tag"]
+        breadcrumbs = breadcrumbs[:]+["Keyword"]
         choice = "h"
         while True:
             choice = self.menu(
                 breadcrumbs,
-                ["a - add tag          ", "l - list all tags\n",
-                 "d - delete tag       ", "t - toggle tag (or simply enter the ID or name)\n",
-                 "r - reset all tags\n"],
+                ["a - add keyword      ", "l - list all keywords\n",
+                 "d - delete keyword   ", "t - toggle keyword (or simply enter the ID or name)\n",
+                 "r - reset all keywords\n"],
                 silent=choice != "h", allow_anything=True, allow_int=True)
 
             # instead of entering "t" and then the ID, simply enter the ID
             if isinstance(choice, int):
-                tag = choice
+                keyword = choice
                 choice = "t"
             else:
-                tag = None
+                keyword = None
 
             if choice == "a":
-                text = self.get_input("\nTag text (empty to abort): ")
+                text = self.get_input("\nKeyword text (empty to abort): ")
                 if text:
                     try:
                         cursor = self.db.execute(
-                            "INSERT INTO tags (text) VALUES (?)", (text,), True)
-                        print("Tag added, new ID is", cursor.lastrowid)
+                            "INSERT INTO keywords (text) VALUES (?)", (text,), True)
+                        print("Keyword added, new ID is", cursor.lastrowid)
                     except sqlite3.Error as error:
                         print("An sqlite3 error occurred:", error.args[0])
 
             elif choice == "d":
-                tag = self.get_input("\nID to delete (empty to abort): ", allow_empty=True, allow_int=True)
+                keyword = self.get_input("\nID to delete (empty to abort): ", allow_empty=True, allow_int=True)
                 if keyword == "":
                     continue
-                if not isinstance(tag, int):
+                if not isinstance(keyword, int):
                     print("Error: no integer ID.")
                 else:
                     try:
                         output = ""
 
-                        cursor = self.db.get_one("SELECT COUNT(*) FROM tag WHERE tag=?", (tag,))
+                        cursor = self.db.get_one("SELECT COUNT(*) FROM kw_tl WHERE keyword=?", (keyword,))
                         if cursor[0] > 0:
                             dellines = self.ask_yesno(
-                                "Also delete the {} taglines associated with that tag?".format(
+                                "Also delete the {} taglines associated with that keyword?".format(
                                     cursor[0],),
                                 allow_cancel=True)
                             if dellines is False:
@@ -379,61 +379,61 @@ class ShellUI:  # {{{1 interactive mode
                             if dellines == "y":
                                 # delete lines of associated taglines
                                 self.db.execute("""DELETE FROM lines WHERE id IN (SELECT
-                                    l.id FROM lines l JOIN tag t ON t.tagline=l.tagline
-                                    WHERE t.tag=?)""", (tag,))
+                                    l.id FROM lines l JOIN kw_tl k ON k.tagline=l.tagline
+                                    WHERE k.keyword=?)""", (keyword,))
                                 # delete associated taglines
                                 cursor = self.db.execute("""DELETE FROM taglines WHERE id IN (SELECT
-                                    tl.id FROM taglines tl JOIN tag t ON t.tagline=tl.id
-                                    WHERE t.tag=?)""", (tag,))
+                                    tl.id FROM taglines tl JOIN kw_tl k ON k.tagline=tl.id
+                                    WHERE k.keyword=?)""", (keyword,))
                                 deleted = cursor.rowcount
                                 output = (" and one tagline" if deleted == 1
                                           else " and {} taglines".format(deleted))
-                        self.db.execute("DELETE FROM tag WHERE tag=?", (tag,))
-                        self.db.execute("DELETE FROM tags WHERE id=?", (tag,), True)
-                        print("Tag{} deleted.".format(output))
+                        self.db.execute("DELETE FROM kw_tl WHERE keyword=?", (keyword,))
+                        self.db.execute("DELETE FROM keywords WHERE id=?", (keyword,), True)
+                        print("Keyword{} deleted.".format(output))
                     except sqlite3.Error as error:
                         print("An sqlite3 error occurred:", error.args[0])
 
             elif choice == "l":
-                print("\nALL TAGS (sorted by text):")
-                cursor = self.db.execute("SELECT id, text FROM tags ORDER BY text")
+                print("\nALL KEYWORDS (sorted by text):")
+                cursor = self.db.execute("SELECT id, text FROM keywords ORDER BY text")
                 for row in cursor:
                     out = "{:>4}{}: {}".format(
                         row[0],
                         self.colorstring("Yellow")+"*\033[0;0m"
-                        if row[0] in self.current_tags else ' ', row[1])
+                        if row[0] in self.current_keywords else ' ', row[1])
                     print(out)
 
             elif choice == "r":
-                self.current_tags = []
-                print("All tags deselected.")
+                self.current_keywords = []
+                print("All keywords deselected.")
 
             elif choice == "q":
                 return
 
             else:
                 if not choice == "t":
-                    # a tag name was given
-                    row = self.db.get_one("SELECT id FROM tags WHERE text=?", (choice,))
+                    # a keyword name was given
+                    row = self.db.get_one("SELECT id FROM keywords WHERE text=?", (choice,))
                     if not row:
-                        print("Error: no valid tag name.")
+                        print("Error: no valid keyword name.")
                         continue
-                    tag = row[0]
+                    keyword = row[0]
 
-                if not isinstance(tag, int):
-                    tag = self.get_input("\nID to toggle (empty to abort): ", allow_int=True)
-                if isinstance(tag, int):
-                    row = self.db.get_one("SELECT id, text FROM tags WHERE id=?", (tag,))
+                if not isinstance(keyword, int):
+                    keyword = self.get_input("\nID to toggle (empty to abort): ", allow_int=True)
+                if isinstance(keyword, int):
+                    row = self.db.get_one("SELECT id, text FROM keywords WHERE id=?", (keyword,))
                     if not row:
                         print("Error: no valid ID.")
                     else:
-                        if tag in self.current_tags:
-                            i = self.current_tags.index(tag)
-                            self.current_tags = self.current_tags[0:i]+self.current_tags[i+1:]
-                            print("Tag '{}' disabled.".format(row[1]))
+                        if keyword in self.current_keywords:
+                            i = self.current_keywords.index(keyword)
+                            self.current_keywords = self.current_keywords[0:i] + self.current_keywords[i+1:]
+                            print("Keyword '{}' disabled.".format(row[1]))
                         else:
-                            self.current_tags.append(tag)
-                            print("Tag '{}' enabled.".format(row[1]))
+                            self.current_keywords.append(keyword)
+                            print("Keyword '{}' enabled.".format(row[1]))
                 else:
                     print("Error: no integer ID.")
 
@@ -447,14 +447,14 @@ class ShellUI:  # {{{1 interactive mode
                 "l - list last taglines     ", "L - list all taglines\n",
                 "a - add new tagline        ", "any number - show tagline of that ID\n",
                 "e - edit tagline           ", "A - go to author menu\n",
-                "d - delete tagline         ", "T - go to tag menu\n"
+                "d - delete tagline         ", "K - go to keyword menu\n"
                 ], silent=choice != "h", allow_int=True)
 
             if choice == "A":
                 self.author_menu(breadcrumbs)
 
-            elif choice == "T":
-                self.tag_menu(breadcrumbs)
+            elif choice == "K":
+                self.keyword_menu(breadcrumbs)
 
             elif choice == "a":
                 self.tagline_edit_menu(breadcrumbs)
@@ -471,10 +471,10 @@ class ShellUI:  # {{{1 interactive mode
                 if isinstance(tagline, int):
                     try:
                         if self.db.get_one("SELECT id FROM taglines WHERE id=?", (tagline,)):
-                            self.db.execute("DELETE FROM tag WHERE tagline=?", (tagline,))
+                            self.db.execute("DELETE FROM kw_tl WHERE tagline=?", (tagline,))
                             self.db.execute("DELETE FROM lines WHERE tagline=?", (tagline,), commit=True)
                             self.db.execute('DELETE FROM taglines WHERE id=?', (tagline,))
-                        print("Tagline {} and all its tag assignments deleted.".format(tagline))
+                        print("Tagline {} and all its keyword assignments deleted.".format(tagline))
                     except sqlite3.Error as error:
                         print("Error while deleting tagline: {}.".format(error.args[0]))
                 else:
@@ -534,23 +534,23 @@ class ShellUI:  # {{{1 interactive mode
                     if row[2] is not None: output.append("source: "+row[2])
                     if row[3] is not None: output.append("remark: "+row[3])
                     sub = self.db.execute(
-                        "SELECT text FROM tags JOIN tag t ON t.tagline=? AND t.tag=tags.id "
+                        "SELECT text FROM keywords JOIN kw_tl k ON k.tagline=? AND k.keyword=keywords.id "
                         "ORDER BY text", (row[0],))
-                    tags = sub.fetchall()
-                    tags = [tag[0] for tag in tags]
-                    if tags:
-                        output.append(str("tags: " + ", ".join(tags)))
+                    keywords = sub.fetchall()
+                    keywords = [keyword[0] for keyword in keywords]
+                    if keywords:
+                        output.append(str("keywords: " + ", ".join(keywords)))
                     print("#{:>5}{}".format(
                         row[0], ": "+", ".join(output) if output else ""))
                     sub = self.db.execute(
                         "SELECT l.id, l.date, language, text FROM lines l "
                         "LEFT JOIN taglines t ON l.tagline = t.id WHERE t.id=?", (row[0],))
-                    for tag in sub:
+                    for keyword in sub:
                         print("     Line  # {:>5}:{}{}: {}".format(
-                            tag[0],
-                            " ("+tag[1].isoformat()+")" if tag[1] is not None else "",
-                            " lang="+tag[2] if tag[2] is not None else "",
-                            tag[3] if tag[3] else ""))
+                            keyword[0],
+                            " ("+keyword[1].isoformat()+")" if keyword[1] is not None else "",
+                            " lang="+keyword[2] if keyword[2] is not None else "",
+                            keyword[3] if keyword[3] else ""))
                 if anzahl == -1:
                     print("No match found.")
 
@@ -593,20 +593,20 @@ class ShellUI:  # {{{1 interactive mode
         self.menu(breadcrumbs)
 
         tagline = DatabaseTagline(
-            self.db, tagline_id, self.current_author, self.current_tags[:])
+            self.db, tagline_id, self.current_author, self.current_keywords[:])
 
-        if len(tagline.tags) == 0:
-            tag_texts = "None"
+        if len(tagline.keywords) == 0:
+            keyword_texts = "None"
         else:
-            tag_texts = ",".join([str(tag) for tag in tagline.tags])
+            keyword_texts = ",".join([str(keyword) for keyword in tagline.keywords])
             cursor = self.db.execute(
-                "SELECT text FROM tags WHERE id IN (" + tag_texts + ") ORDER BY text")
-            tag_texts = ", ".join([text[0] for text in cursor.fetchall()])
+                "SELECT text FROM keywords WHERE id IN (" + keyword_texts + ") ORDER BY text")
+            keyword_texts = ", ".join([text[0] for text in cursor.fetchall()])
 
         prefix = "Current" if tagline_id is None else "Tagline"
         print("{} author: {}".format(
             prefix, "None" if tagline.author_name is None else tagline.author_name))
-        print("{} tags: {}".format(prefix, tag_texts))
+        print("{} keywords: {}".format(prefix, keyword_texts))
 
         self.print(("White", "\nOptional information:"))
         if tagline_id is None:
@@ -693,7 +693,7 @@ class ShellUI:  # {{{1 interactive mode
                         lines.append(line)
 
             choice = self.menu(breadcrumbs, [
-                "a - add a tagline text      ", "t - edit tags\n",
+                "a - add a tagline text      ", "k - edit keywords\n",
                 "m - manage tagline texts    ", "w - save changes to database and quit menu\n",
                 "o - edit optional inform.   ", "q - quit to previous menu, discarding changes\n"
                 ], silent=choice != "h", no_header=no_header)
@@ -754,6 +754,9 @@ class ShellUI:  # {{{1 interactive mode
 
                 choice = "h"
 
+            elif choice == "k":
+                print("Sorry, not implemented yet.")
+
             elif choice == "o":
                 result = ask_optional_info(
                     tagline.source, tagline.remark, tagline.when)
@@ -780,7 +783,7 @@ class ShellUI:  # {{{1 interactive mode
             while True:
                 breadcrumbs = ["Main"]
                 choice = self.menu(breadcrumbs, [
-                    "   a - Author menu    ", "t - Tag menu    ", "l - taglines menu",
+                    "   a - Author menu    ", "k - Keyword menu    ", "l - taglines menu",
                     ], "By your command: ")
                 if choice == "a":
                     self.author_menu(breadcrumbs)
@@ -788,8 +791,8 @@ class ShellUI:  # {{{1 interactive mode
                     self.taglines_menu(breadcrumbs)
                 elif choice == "q":
                     self.exit_taglines()
-                elif choice == "t":
-                    self.tag_menu(breadcrumbs)
+                elif choice == "k":
+                    self.keyword_menu(breadcrumbs)
         except self.ExitShellUI:
             return True
         # }}}2

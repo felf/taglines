@@ -66,13 +66,13 @@ def list_items(_args):  # {{{1
         return True
     return False
 
-def show_tags(filepath):  # {{{1
-    """ print all tags, sorted alphabetically """
+def show_keywords(filepath):  # {{{1
+    """ print all keywords, sorted alphabetically """
 
     db = Database(filepath)
     if db:
-        for tag in db.tags(by_name=True):
-            print(tag)
+        for keyword in db.keywords(by_name=True):
+            print(keyword)
         return True
     return False
 
@@ -98,8 +98,8 @@ def show_stats(filepath):  # {{{1
                 "Number of taglines:",
                 "Number of texts:",
                 "Average text length:",
-                "Number of tags:",
-                "Number of tag assignments:",
+                "Number of keywords:",
+                "Number of keyword assignments:",
                 "Number of authors:",
                 "Used languages:",
                 ]
@@ -110,9 +110,9 @@ def show_stats(filepath):  # {{{1
                     stats["line count"], stats["line count"]/stats["tagline count"] if \
                             stats["line count"] != 0 else 0),
                 "{:8.1f}".format(stats["avg tagline length"],),
-                "{:6d}".format(stats["tag count"],),
+                "{:6d}".format(stats["keyword count"],),
                 "{:6d}   (ø {:5.2f} per tagline)".format(
-                    stats["tag assignments"], stats["tag assignments"]/stats["tagline count"] if \
+                    stats["keyword assignments"], stats["keyword assignments"]/stats["tagline count"] if \
                             stats["tagline count"] != 0 else 0),
                 "{:6d}".format(stats["author count"],),
                 "{:6d}".format(stats["language count"],),
@@ -156,8 +156,8 @@ def main():  # {{{1
         if args.list:
             result = list_items(args)
 
-        if args.show_tags:
-            result = show_tags(args.file)
+        if args.show_keywords:
+            result = show_keywords(args.file)
 
         if args.show_authors:
             result = show_authors(args.file)

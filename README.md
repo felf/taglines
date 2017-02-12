@@ -34,7 +34,7 @@ operation mode, which is one of:
 * print a random item (`Taglines -r`)
 
 For the output operations, you can narrow down the list of candidates by
-passing selectors, i.e. tags, language, author or words to match.
+passing selectors, i.e. keywords, language, author or words to match.
 
 There are three menus in which you can enter new data.
 
@@ -43,12 +43,12 @@ Use this menu to enter new authors, or to manage existing ones. Here you also
 set the <i>current author</i>, which is marked with a "`*`" when you list all
 authors and which will be assigned automatically when you create a new tagline.
 
-<b>Tags</b>
+<b>Keywords</b>
 You can assign any number of keywords to a tagline which will make it easier to
 find a suitable tagline in the database later on. Use this menu to create, edit
-and delete tags and to set them active. Active tags are marked with a "`*`"
-when you list all tags and they will be assigned automatically when you create
-a new tagline.
+and delete tags and to set them active. Active keywords are marked with a "`*`"
+when you list all keywords and they will be assigned automatically when you
+create a new tagline.
 
 <b>Tagline</b>
 Use this menu to enter new taglines or edit or delete existing ones. Each
@@ -61,9 +61,9 @@ And then of course there is the actual text. You can enter it in several
 languages, identified by the langauge ISO code (en, de, fr, ja, etc).
 
 When entering many taglines in a row, the user may often need to change the
-current author and active tags from one tagline to the next. Therefore, those
-two menus are avaible as a submenu right in the Tagline menu, removing the need
-to go back over the main menu.
+current author and active keywords from one tagline to the next. Therefore,
+those two menus are avaible as a submenu right in the Tagline menu, removing
+the need to go back over the main menu.
 
 Each and every menu accepts the following common inputs:
 * `q` or `^d`: exit menu to parent (or quit if in topmost menu)
