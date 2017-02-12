@@ -327,7 +327,7 @@ class DatabaseTagline:  # {{{1
             self.remark = None
             self.when = None
             # pylint says keywords=set() in function interface is dangerous
-            self.keywords = set() if keywords is None else keywords
+            self.keywords = set() if keywords is None else set(keywords)
             self.texts = {}
         else:
             cursor = self.db.execute(

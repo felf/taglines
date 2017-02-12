@@ -27,7 +27,7 @@ class ShellUI:  # {{{1 interactive mode
 
     def __init__(self, db, editor):  # {{{1
         self.current_author = None
-        self.current_keywords = []
+        self.current_keywords = set()
         self.db = db
         self.db.open()
         self.editor = editor
@@ -405,7 +405,7 @@ class ShellUI:  # {{{1 interactive mode
                     print(out)
 
             elif choice == "r":
-                self.current_keywords = []
+                self.current_keywords = set()
                 print("All keywords deselected.")
 
             elif choice == "q":
@@ -428,11 +428,10 @@ class ShellUI:  # {{{1 interactive mode
                         print("Error: no valid ID.")
                     else:
                         if keyword in self.current_keywords:
-                            i = self.current_keywords.index(keyword)
-                            self.current_keywords = self.current_keywords[0:i] + self.current_keywords[i+1:]
+                            self.current_keywords.remove(keyword)
                             print("Keyword '{}' disabled.".format(row[1]))
                         else:
-                            self.current_keywords.append(keyword)
+                            self.current_keywords.add(keyword)
                             print("Keyword '{}' enabled.".format(row[1]))
                 else:
                     print("Error: no integer ID.")
@@ -593,7 +592,7 @@ class ShellUI:  # {{{1 interactive mode
         self.menu(breadcrumbs)
 
         tagline = DatabaseTagline(
-            self.db, tagline_id, self.current_author, self.current_keywords[:])
+            self.db, tagline_id, self.current_author, self.current_keywords)
 
         if len(tagline.keywords) == 0:
             keyword_texts = "None"
