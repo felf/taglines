@@ -19,19 +19,11 @@ Possibly run as root or with sudo, depending on your installation prefix. For
 more information please refer to the [setuptools](
 https://github.com/pypa/setuptools) documentation.
 
-How to use taglines
+How to use Taglines
 -------------------
 Taglines has a built-in help:
 
     $ Taglines -h
-
-Taglines uses sqlite as its "file format" to store taglines and associate them
-with various kinds of metadata:
-* an author (who in turn has a couple of additional information)
-* keyword tags
-* the language the text is in
-
-In essence, Taglines is a glorified interface to a database schema. :o)
 
 When running Taglines, you must give it a filename for the database and an
 operation mode, which is one of:
@@ -43,6 +35,46 @@ operation mode, which is one of:
 
 For the output operations, you can narrow down the list of candidates by
 passing selectors, i.e. tags, language, author or words to match.
+
+There are three menus in which you can enter new data.
+
+<b>Author</b>
+Use this menu to enter new authors, or to manage existing ones. Here you also
+set the <i>current author</i>, which is marked with a "`*`" when you list all
+authors and which will be assigned automatically when you create a new tagline.
+
+<b>Tags</b>
+You can assign any number of keywords to a tagline which will make it easier to
+find a suitable tagline in the database later on. Use this menu to create, edit
+and delete tags and to set them active. Active tags are marked with a "`*`"
+when you list all tags and they will be assigned automatically when you create
+a new tagline.
+
+<b>Tagline</b>
+Use this menu to enter new taglines or edit or delete existing ones. Each
+tagline carries has a number of optional information:
+* source: a simple text in which you can describe where the tagline is from,
+* author: who dunnit,
+* date: when the tagline came into existence originally,
+* the date at which you add the tagline to the database. This one is read-only.
+And then of course there is the actual text. You can enter it in several
+languages, identified by the langauge ISO code (en, de, fr, ja, etc).
+
+When entering many taglines in a row, the user may often need to change the
+current author and active tags from one tagline to the next. Therefore, those
+two menus are avaible as a submenu right in the Tagline menu, removing the need
+to go back over the main menu.
+
+Each and every menu accepts the following common inputs:
+* `q` or `^d`: exit menu to parent (or quit if in topmost menu)
+* `Q` or `^c`: quit program without saving
+* `?` or `h`: print list of actions available in the current menu
+
+How does Taglines work?
+-----------------------
+Taglines uses sqlite as its "file format" to store taglines and associate them
+with various kinds of metadata. In essence, Taglines is a glorified interface
+to a database schema. :o)
 
 A "tagline" in the context of this program is a collection of texts whose
 content is the same, but expressed in different langauges. A tagline example
@@ -59,13 +91,10 @@ through the menu. To improve usability, colours and a breadcrumb line at the
 top of the menu are employed.
 
 The quickest way to enter many taglines at once would be to prepare the texts
-in an editor, insert the menu input between the texts and then paste the whole
-thing into the terminal. I used this when I mass-imported my old fortune files.
-
-Each and every menu accepts the following common inputs:
-* `q` or `^d`: exit menu to parent (or quit if in topmost menu)
-* `Q` or `^c`: quit program without saving
-* `?` or `h`: print list of actions available in the current menu
+in an editor, insert the menu commands between the texts and then paste the
+whole thing into the terminal. I used this when I mass-imported my old fortune
+files. This is the main reason why I kept the internal menu around after I
+implemented the use of an external editor.
 
 How came Taglines into being?
 -----------------------------
