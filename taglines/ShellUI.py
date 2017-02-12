@@ -356,7 +356,7 @@ class ShellUI:  # {{{1 interactive mode
                         print("An sqlite3 error occurred:", error.args[0])
 
             elif choice == "d":
-                tag = self.get_input("\nID to delete (empty to abort): ", allow_anything=True, allow_any_int=True)
+                tag = self.get_input("\nID to delete (empty to abort): ", allow_empty=True, allow_any_int=True)
                 if not isinstance(tag, int):
                     print("Error: no integer ID.")
                 else:
