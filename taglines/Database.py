@@ -3,7 +3,11 @@
 from __future__ import print_function
 import os
 import sqlite3
+import shutil
 from datetime import date
+from sys import stderr
+
+__db_version__ = 1
 
 
 class Database:  # {{{1
@@ -53,7 +57,9 @@ class Database:  # {{{1
             return
         self.db = sqlite3.connect(self.filename, detect_types=True)
         self.is_open = isinstance(self.db, sqlite3.Connection)
-        # TODO: handle invalid DB
+
+        if not self.version_is_current():
+            self.upgrade_version()
         return self.is_open
 
     def initialise_file(self, filename):  # {{{2
@@ -69,18 +75,80 @@ class Database:  # {{{1
             self.db = sqlite3.connect(self.filename)
             cursor = self.db.cursor()
             #db.text_factory=str
-            cursor.execute('CREATE TABLE authors (id INTEGER PRIMARY KEY, name TEXT, born INT DEFAULT NULL, died INT DEFAULT NULL);')
-            cursor.execute('CREATE TABLE lines (id INTEGER PRIMARY KEY, tagline INT, date DATE, language VARCHAR(5), text TEXT);')
+            cursor.execute('CREATE TABLE authors (id INTEGER PRIMARY KEY, name TEXT, born INT DEFAULT NULL, died INT DEFAULT NULL)')
+            cursor.execute('CREATE TABLE lines (id INTEGER PRIMARY KEY, tagline INT, date DATE, language VARCHAR(5), text TEXT)')
             # the keyword-tagline assignment table
-            cursor.execute('CREATE TABLE kw_tl (id INTEGER PRIMARY KEY, keyword INT, tagline INT);')
-            cursor.execute('CREATE TABLE taglines (id INTEGER PRIMARY KEY, author INT, source TEXT DEFAULT NULL, remark TEXT DEFAULT NULL, date DATE DEFAULT NULL);')
-            cursor.execute('CREATE TABLE keywords (id INTEGER PRIMARY KEY, text TEXT UNIQUE);')
+            cursor.execute('CREATE TABLE kw_tl (id INTEGER PRIMARY KEY, keyword INT, tagline INT)')
+            cursor.execute('CREATE TABLE taglines (id INTEGER PRIMARY KEY, author INT, source TEXT DEFAULT NULL, remark TEXT DEFAULT NULL, date DATE DEFAULT NULL)')
+            cursor.execute('CREATE TABLE keywords (id INTEGER PRIMARY KEY, text TEXT UNIQUE)')
+            cursor.execute('CREATE TABLE status (id INTEGER PRIMARY KEY, value TEXT)')
+            # database version for later recognition (and conversion)
+            cursor.execute('INSERT INTO status VALUES (0, ?)', (str(__db_version__),))
             self.db.commit()
             self.is_open = True
         except IOError as error:
             raise Database.DatabaseError("Error creating database file: {}".format(error.args[0]))
         except sqlite3.Error as error:
             raise Database.DatabaseError("An sqlite3 error occurred: {}".format(error.args[0]))
+
+    def version_is_current(self):
+        """ Determine whether the database schema needs to be upgraded. """
+
+        try:
+            row = self.get_one("SELECT value FROM status WHERE id=0")
+        # no status table (indicative of a first-version database)
+        except sqlite3.OperationalError:
+            return False
+
+        if row is None:
+            return False
+
+        try:
+            return int(row[0]) == __db_version__
+        except TypeError:
+            return False
+
+    def upgrade_version(self):
+        """ Do an automatic schema upgrade of the database. """
+
+        try:
+            row = self.get_one("SELECT value FROM status WHERE id=0")
+        # no status table (indicative of a first-version database)
+        except sqlite3.OperationalError:
+            self.execute('CREATE TABLE status (id INTEGER PRIMARY KEY, value TEXT);')
+            row = None
+
+        if row is None:
+            self.execute('INSERT INTO status VALUES (0, 0)')
+            dbversion = 0
+        else:
+            try:
+                dbversion = int(row[0])
+            except TypeError:
+                dbversion = 0
+
+        if dbversion > __db_version__:
+            raise Exception(
+                "The database is newer than is supported by this program.")
+
+        if dbversion < __db_version__:
+            print("Database version is out of date. Need to upgrade first.",
+                  file=stderr)
+            print("Creating backup of database (appending .upgradebackup)",
+                  file=stderr)
+            shutil.copy(self.filename, self.filename + ".upgradebackup")
+        while dbversion < __db_version__:
+            dbversion += 1
+            print("Upgrading to version {}...".format(dbversion), file=stderr)
+
+            if dbversion == 1:
+                self.execute('ALTER TABLE tags RENAME TO keywords')
+                self.execute('CREATE TABLE kw_tl (id INTEGER PRIMARY KEY, keyword INT, tagline INT)')
+                self.execute('INSERT INTO kw_tl SELECT * FROM tag')
+                self.execute('DROP TABLE tag')
+                self.execute('UPDATE status SET value=? WHERE id=0', str(__db_version__))
+
+        print("Upgrade complete.", file=stderr)
 
     def commit(self):  # {{{2
         """ Save any changes to the database that have not yet been committed. """
