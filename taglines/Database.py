@@ -35,7 +35,7 @@ class Database:  # {{{1
         self.close()
 
     def set_path(self, path):  # {{{2
-        """ Sets the instance's database filename.
+        """ Set the instance's database filename.
 
         If the path is valid, it is stored and True is returned. """
 
@@ -49,7 +49,7 @@ class Database:  # {{{1
             return False
 
     def open(self):  # {{{2
-        """ Opens a connection to an existing database.
+        """ Open a connection to an existing database.
 
         Returns False if unsuccessful. """
 
@@ -63,7 +63,7 @@ class Database:  # {{{1
         return self.is_open
 
     def initialise_file(self, filename):  # {{{2
-        """Initialises a new, empty database"""
+        """ Initialise a new, empty database """
 
         if self.is_open:
             self.close()
@@ -157,7 +157,7 @@ class Database:  # {{{1
             self.db.commit()
 
     def close(self):  # {{{2
-        """ Closes the instance's database connection. """
+        """ Close the instance's database connection. """
 
         if self.db and self.is_open:
             self.db.commit()

@@ -228,7 +228,7 @@ class ShellUI:  # {{{1 interactive mode
             raise ShellUI.ExitShellUI()
 
     def author_menu(self, breadcrumbs):  # {{{1
-        """The menu with which to alter author information."""
+        """ The menu with which to alter author information. """
 
         breadcrumbs = breadcrumbs[:]+["Author"]
         choice = "h"
@@ -328,7 +328,7 @@ class ShellUI:  # {{{1 interactive mode
                 return
 
     def keyword_menu(self, breadcrumbs):  # {{{1
-        """The menu with which to alter keyword information."""
+        """ The menu with which to alter keyword information. """
 
         breadcrumbs = breadcrumbs[:]+["Keyword"]
         choice = "h"
@@ -438,7 +438,7 @@ class ShellUI:  # {{{1 interactive mode
                     print("Error: no integer ID.")
 
     def taglines_menu(self, breadcrumbs):  # {{{1
-        """The menu with which to alter the actual taglines."""
+        """ The menu with which to alter the actual taglines. """
 
         breadcrumbs = breadcrumbs[:]+["Tagline"]
         choice = "h"

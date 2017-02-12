@@ -12,7 +12,7 @@ from taglines.ShellUI import ShellUI
 import os
 
 def init_database(filepath):  # {{{1
-    """ create a new sqlite database file """
+    """ Create a new sqlite database file. """
 
     if os.path.exists(filepath):
         ok = ShellUI.get_input(
@@ -38,7 +38,7 @@ def init_database(filepath):  # {{{1
     return False
 
 def get_random_item(_args):  # {{{1
-    """ retrieve one random tagline """
+    """ Retrieve one random tagline. """
 
     db = Database(_args.file)
     if db:
@@ -50,7 +50,7 @@ def get_random_item(_args):  # {{{1
     return False
 
 def list_items(_args):  # {{{1
-    """ show list of taglines """
+    """ Show list of taglines. """
 
     db = Database(_args.file)
     if db:
@@ -67,7 +67,7 @@ def list_items(_args):  # {{{1
     return False
 
 def show_keywords(filepath):  # {{{1
-    """ print all keywords, sorted alphabetically """
+    """ Print all keywords, sorted alphabetically. """
 
     db = Database(filepath)
     if db:
@@ -78,7 +78,7 @@ def show_keywords(filepath):  # {{{1
 
 
 def show_authors(filepath):  # {{{1
-    """ print all authors, sorted alphabetically """
+    """ Print all authors, sorted alphabetically. """
 
     db = Database(filepath)
     if db:
@@ -88,7 +88,7 @@ def show_authors(filepath):  # {{{1
     return False
 
 def show_stats(filepath):  # {{{1
-    """ print tabular statistics about the given database file """
+    """ Print tabular statistics about the given database file. """
 
     db = Database(filepath)
     if db:
@@ -126,7 +126,7 @@ def show_stats(filepath):  # {{{1
     return False
 
 def interactive_menu(filepath, editor):  # {{{1
-    """ start interactive console menu mode and exit at the end """
+    """ Start interactive console menu mode and exit at the end. """
 
     try:
         db = Database(filepath)
