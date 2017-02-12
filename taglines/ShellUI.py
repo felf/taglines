@@ -75,7 +75,7 @@ class ShellUI:  # {{{1 interactive mode
         ShellUI.print(("Red", what))
 
     def menu(self, breadcrumbs, choices=None, prompt="", silent=False,  # {{{1
-             no_header=False, allow_any_int=False, allow_anything=False):
+             no_header=False, allow_int=False, allow_anything=False):
         """ Display a list of possible choices and ask user for a selection. """
 
         if not (silent or no_header):
@@ -115,7 +115,7 @@ class ShellUI:  # {{{1 interactive mode
             if not prompt:
                 prompt = breadcrumbs[-1] + " menu choice: "
             try:
-                choice = self.get_input("\n"+prompt, allow_any_int)
+                choice = self.get_input("\n"+prompt, allow_int)
             except KeyboardInterrupt:
                 choice = "Q"
 
@@ -130,7 +130,7 @@ class ShellUI:  # {{{1 interactive mode
                 continue
             elif choice in keys:
                 return choice
-            elif allow_any_int:
+            elif allow_int:
                 try:
                     return int(choice)
                 except ValueError:
@@ -143,12 +143,12 @@ class ShellUI:  # {{{1 interactive mode
                 self.print_warning("Invalid choice.")
 
     @staticmethod
-    def get_input(text="", allow_empty=True, allow_any_int=False):  # {{{1
+    def get_input(text="", allow_empty=True, allow_int=False):  # {{{1
         """ This is a shared function to get user input and catch Ctrl+C/D.
 
         @param allow_empty: whether the input may be the empty string
-        @param allow_any_int: whether to accept numeric input and convert it to
-                              int automatically
+        @param allow_int: whether to accept numeric input and convert it to
+                          int automatically
         """
 
         while True:
@@ -164,7 +164,7 @@ class ShellUI:  # {{{1 interactive mode
                 else:
                     if sys.version_info.major == 2:
                         choice = choice.decode("utf-8")
-                    if allow_any_int:
+                    if allow_int:
                         try:
                             choice = int(choice)
                             return choice
@@ -237,7 +237,7 @@ class ShellUI:  # {{{1 interactive mode
                 breadcrumbs,
                 ["a - add author      ", "l - list all authors\n",
                  "d - delete author   ", "c - set current author for new taglines\n"],
-                silent=choice != "h", allow_any_int=True)
+                silent=choice != "h", allow_int=True)
 
             if isinstance(choice, int):
                 author_id = choice
@@ -276,7 +276,7 @@ class ShellUI:  # {{{1 interactive mode
                 if author_id is None:
                     author_id = self.get_input(
                         "\nID of new current author (empty to abort, 'u' to unset): ",
-                        allow_any_int=True)
+                        allow_int=True)
                     if author_id == "":
                         continue
                     elif author_id == "u":
@@ -294,7 +294,7 @@ class ShellUI:  # {{{1 interactive mode
                     print("New current author:", row[1])
 
             elif choice == "d":
-                author_id = self.get_input("\nID to delete (empty to abort): ", allow_any_int=True)
+                author_id = self.get_input("\nID to delete (empty to abort): ", allow_int=True)
                 if isinstance(author_id, int):
                     row = self.db.get_one("SELECT id FROM authors WHERE id=?", (author_id,))
                     if row is None:
@@ -336,7 +336,7 @@ class ShellUI:  # {{{1 interactive mode
                 ["a - add tag          ", "l - list all tags\n",
                  "d - delete tag       ", "t - toggle tag (or simply enter the ID or name)\n",
                  "r - reset all tags\n"],
-                silent=choice != "h", allow_anything=True, allow_any_int=True)
+                silent=choice != "h", allow_anything=True, allow_int=True)
 
             # instead of entering "t" and then the ID, simply enter the ID
             if isinstance(choice, int):
@@ -356,7 +356,7 @@ class ShellUI:  # {{{1 interactive mode
                         print("An sqlite3 error occurred:", error.args[0])
 
             elif choice == "d":
-                tag = self.get_input("\nID to delete (empty to abort): ", allow_empty=True, allow_any_int=True)
+                tag = self.get_input("\nID to delete (empty to abort): ", allow_empty=True, allow_int=True)
                 if not isinstance(tag, int):
                     print("Error: no integer ID.")
                 else:
@@ -417,7 +417,7 @@ class ShellUI:  # {{{1 interactive mode
                     tag = row[0]
 
                 if not isinstance(tag, int):
-                    tag = self.get_input("\nID to toggle (empty to abort): ", allow_any_int=True)
+                    tag = self.get_input("\nID to toggle (empty to abort): ", allow_int=True)
                 if isinstance(tag, int):
                     row = self.db.get_one("SELECT id, text FROM tags WHERE id=?", (tag,))
                     if not row:
@@ -444,7 +444,7 @@ class ShellUI:  # {{{1 interactive mode
                 "a - add new tagline        ", "any number - show tagline of that ID\n",
                 "e - edit tagline           ", "A - go to author menu\n",
                 "d - delete tagline         ", "T - go to tag menu\n"
-                ], silent=choice != "h", allow_any_int=True)
+                ], silent=choice != "h", allow_int=True)
 
             if choice == "A":
                 self.author_menu(breadcrumbs)
@@ -457,7 +457,7 @@ class ShellUI:  # {{{1 interactive mode
 
             elif choice == "d":
                 tagline = self.get_input(
-                    "\nID to delete (d=last tagline in list, empty to abort): ", allow_any_int=True)
+                    "\nID to delete (d=last tagline in list, empty to abort): ", allow_int=True)
                 if tagline == "":
                     continue
                 if tagline == "d":
@@ -479,7 +479,7 @@ class ShellUI:  # {{{1 interactive mode
             elif choice == "e":
                 tagline = self.get_input(
                     "  ID of tagline to edit (empty to abort, "
-                    "-1 for the most recent tagline change): ", allow_any_int=True)
+                    "-1 for the most recent tagline change): ", allow_int=True)
                 if not tagline:
                     continue
                 if isinstance(tagline, int):
@@ -502,7 +502,7 @@ class ShellUI:  # {{{1 interactive mode
                 LEFT JOIN authors AS a ON t.author=a.id"""
                 if choice == "l":
                     limit = self.get_input(
-                        "  Number of taglines to list (default: 5): ", allow_any_int=True)
+                        "  Number of taglines to list (default: 5): ", allow_int=True)
                     if limit is False:
                         continue
                     if isinstance(limit, int):
