@@ -400,11 +400,6 @@ class DatabaseTagline:  # {{{1
         self.texts[language] = [text, True]
         self.is_changed = True
 
-    def text(self, language):  # {{{2
-        """ Get tagline text associated with the given language. """
-
-        return self.texts.get(language, None)
-
     def set_information(self, source, remark, when):  # {{{2
         """ Assign values to the tagline's source, remark and date field. """
 
