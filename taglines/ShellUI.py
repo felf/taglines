@@ -600,7 +600,7 @@ class ShellUI:  # {{{1 interactive mode
             keyword_texts = ",".join([str(keyword) for keyword in tagline.keywords])
             cursor = self.db.execute(
                 "SELECT text FROM keywords WHERE id IN (" + keyword_texts + ") ORDER BY text")
-            keyword_texts = ", ".join([text[0] for text in cursor.fetchall()])
+            keyword_texts = ", ".join(text[0] for text in cursor.fetchall())
 
         prefix = "Current" if tagline_id is None else "Tagline"
         print("{} author: {}".format(

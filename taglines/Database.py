@@ -369,15 +369,12 @@ class DatabaseTagline:  # {{{1
         The difference to self.texts is that the latter also contains a flag to
         store the changed state. """
 
-        return {language: self.texts[language][0] for language in self.texts}
+        return {language: text[0] for language, text in self.texts.items()}
 
     def get_text(self, language):  # {{{2
         """ Retrieve the text with the given language from the internal list. """
 
-        text = self.texts.get(language, None)
-        if text is None:
-            return None
-        return text[0]
+        return self.texts[language][0] if language in self.texts else None
 
     def pop_text(self, language):  # {{{2
         """ Retrieve and remove the text with the given language from the internal list. """
@@ -450,18 +447,18 @@ class DatabaseTagline:  # {{{1
             cursor = self.db.execute("SELECT keyword FROM kw_tl WHERE tagline=?", (self.id,))
             present_keywords = set(item[0] for item in cursor)
 
-        for lang in self.texts:
+        for lang, text in self.texts.items():
             if lang in present_languages:
-                if self.texts[lang][1]:
+                if text[1]:
                     self.db.execute(
                         "UPDATE lines set date=?, text=? WHERE tagline=? AND language=?",
-                        (date.today().isoformat(), self.texts[lang][0], self.id, lang))
+                        (date.today().isoformat(), text[0], self.id, lang))
                 present_languages.remove(lang)
             else:
                 self.db.execute(
                     "INSERT INTO lines (tagline, date, language, text) VALUES (?,?,?,?)",
-                    (self.id, date.today().isoformat(), lang, self.texts[lang][0]))
-            self.texts[lang][1] = False
+                    (self.id, date.today().isoformat(), lang, text[0]))
+            text[1] = False
         for lang in present_languages:
             self.db.execute("DELETE FROM lines WHERE tagline=? AND language=?", (self.id, lang))
 
