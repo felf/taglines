@@ -31,7 +31,7 @@ operation mode, which is one of:
 * open the db interactively to edit items or enter new ones (`Taglines -i`)
 * print database statistics (`Taglines --stats`)
 * list all items in ye olde flat fortune format (`Taglines -L`)
-* print a random item (`Taglines -r`)
+* print a random item (`Taglines -r`), which is the default action
 
 For the output operations, you can narrow down the list of candidates by
 passing selectors, i.e. keywords, language, author or words to match.
@@ -52,12 +52,12 @@ create a new tagline.
 
 <b>Tagline</b>
 Use this menu to enter new taglines or edit or delete existing ones. Each
-tagline carries has a number of optional information:
+tagline carries a number of optional information:
 * source: a simple text in which you can describe where the tagline is from,
 * author: who dunnit,
 * date: when the tagline came into existence originally,
-* the date at which you add the tagline to the database. This one is read-only.
-And then of course there is the actual text. You can enter it in several
+* the date at which you add the tagline to the database (read-only item),
+* and then of course there is the actual text. You can enter it in several
 languages, identified by the langauge ISO code (en, de, fr, ja, etc).
 
 When entering many taglines in a row, the user may often need to change the
@@ -109,17 +109,19 @@ Over time, my tagline collection grew and grew, whilst I became active in
 international communities, at first in newsgroups, later in mailing lists. And
 the people there don’t necessarily understand jokes in my native language of
 German. At first I used separate fortune files to keep German and English
-apart, but this is a mess, as id made keeping the files in sync difficult: I
-need to keep track of translations, and based on which criterion would the
-items in the file be sorted?
+apart, but this is a mess, as it made keeping the files in sync difficult:
+How to keep the files in sync with respect to translations? (some puns only
+work in one language and thus cannot be translated). How should the files be
+sorted (alphabetically, by topic)?
 
 And so, Taglines became one of the first tools I wrote using Python and sqlite.
-It fills that gap by storing everything in one file, keeping the different
-translations of one and the same text semantically together and keep track of
-where I got a certain text from. I also allows to choose a tagline by topic, by
-way of applying keywords to the taglines. So in a linux mailing list, I could
-restrict tagline selection to English computer and math jokes, whereas in a
-mailing list for a local choir, I would only use music jokes in German.
+It fills the above gaps by storing everything in one file, keeping the
+different translations of one and the same text semantically together while
+preserving where I got a certain text from. It also allows to choose a tagline
+by topic, by way of applying keywords to the taglines. So in a linux mailing
+list, I could restrict tagline selection to English computer and math jokes,
+whereas in a mailing list for a local choir, I would only use music jokes in
+German.
 
 Hacking
 -------
