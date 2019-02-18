@@ -693,8 +693,8 @@ class ShellUI:  # {{{1 interactive mode
 
             choice = self.menu(breadcrumbs, [
                 "a - add a tagline text      ", "k - edit keywords\n",
-                "m - manage tagline texts    ", "w - save changes to database and quit menu\n",
-                "o - edit optional inform.   ", "q - quit to previous menu, discarding changes\n"
+                "m - manage tagline texts    ", "w - save any changes to database and quit menu\n",
+                "o - edit optional inform.   ", "q - quit to previous menu{}\n".format(", discarding changes" if tagline.is_changed else ""),
                 ], silent=choice != "h", no_header=no_header)
             no_header = False
 
