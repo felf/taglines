@@ -628,7 +628,7 @@ class ShellUI:  # {{{1 interactive mode
 
                 print("    " + heading)
                 new_language = self.get_input("    Language (ISO code){}: ".format(
-                    " [" + language + "]" if language else ""), allow_empty=False)
+                    " [" + language + "]" if language else ""), allow_empty=True)
                 if new_language == "":
                     new_language = language
                 if not new_language:
