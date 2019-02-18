@@ -488,7 +488,7 @@ class ShellUI:  # {{{1 interactive mode
                 if isinstance(tagline, int):
                     if tagline == -1:
                         row = self.db.get_one(
-                            "SELECT tagline FROM lines ORDER BY date DESC LIMIT 1")
+                            "SELECT tagline FROM lines ORDER BY date DESC, id DESC LIMIT 1")
                     else:
                         row = self.db.get_one("SELECT id FROM taglines WHERE id=?", (tagline,))
                     if row:
