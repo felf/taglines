@@ -623,7 +623,7 @@ class ShellUI:  # {{{1 interactive mode
         choice = "h"
         while choice != "q":
 
-            def enter_text(heading, language="", existing_langs=None):
+            def enter_text(heading, language="", existing_langs=None, existing_text=None):
                 """ Tagline entry mask to enter several lines of text. """
 
                 print("    " + heading)
@@ -645,6 +645,10 @@ class ShellUI:  # {{{1 interactive mode
                 elif self.editor:
                     with tempfile.NamedTemporaryFile(mode='w+t', prefix='taglines.') as handle:
                         try:
+                            if existing_text is not None:
+                                handle.write(existing_text)
+                                handle.flush()
+
                             # allow for arguments to editor itself
                             subprocess.check_call(
                                 self.editor.split() + [handle.name])
@@ -742,7 +746,7 @@ class ShellUI:  # {{{1 interactive mode
                         lang = self.get_input("   Language to modify ({}): ".format(
                             ", ".join(tagline.texts)))
                         if lang in tagline.texts:
-                            result = enter_text("EDIT TEXT", lang, tagline.texts)
+                            result = enter_text("EDIT TEXT", lang, tagline.texts, existing_text=tagline.texts[lang][0])
                             if result is not None:
                                 tagline.set_text(*result, old_language=lang)
                         else:
