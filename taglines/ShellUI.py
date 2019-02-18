@@ -743,8 +743,12 @@ class ShellUI:  # {{{1 interactive mode
                                 lang, " (unsaved)" if text[1] else "", text[0]))
 
                     elif choice == "m":
-                        lang = self.get_input("   Language to modify ({}): ".format(
-                            ", ".join(tagline.texts)))
+                        if len(tagline.texts) > 1:
+                            lang = self.get_input("   Language to modify ({}): ".format(
+                                ", ".join(tagline.texts)))
+                        else:
+                            lang = list(tagline.texts.keys())[0]
+
                         if lang in tagline.texts:
                             result = enter_text("EDIT TEXT", lang, tagline.texts, existing_text=tagline.texts[lang][0])
                             if result is not None:
