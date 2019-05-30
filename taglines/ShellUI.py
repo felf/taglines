@@ -414,11 +414,15 @@ class ShellUI:  # {{{1 interactive mode
             else:
                 if not choice == "t":
                     # a keyword name was given
-                    row = self.db.get_one("SELECT id FROM keywords WHERE text=?", (choice,))
-                    if not row:
+                    cursor = self.db.execute("SELECT id FROM keywords WHERE text LIKE ?", (choice + '%',))
+                    rows = cursor.fetchall()
+                    if len(rows) == 0:
                         print("Error: no valid keyword name.")
                         continue
-                    keyword = row[0]
+                    if len(rows) > 1:
+                        print("Error: multiple matches.")
+                        continue
+                    keyword = rows[0][0]
 
                 if not isinstance(keyword, int):
                     keyword = self.get_input("\nID to toggle (empty to abort): ", allow_int=True)
