@@ -440,6 +440,38 @@ class ShellUI:  # {{{1 interactive mode
                 else:
                     print("Error: no integer ID.")
 
+
+    def print_search_result(self, query):  # {{{1
+        found = False
+        for row in self.db.execute(query):
+            found = True
+            output = []
+            if row[1] is not None: output.append("by "+row[1])
+            if row[4] is not None: output.append("from "+row[4].isoformat())
+            if row[2] is not None: output.append("source: "+row[2])
+            if row[3] is not None: output.append("remark: "+row[3])
+            sub = self.db.execute(
+                "SELECT text FROM keywords JOIN kw_tl k ON k.tagline=? AND k.keyword=keywords.id "
+                "ORDER BY text", (row[0],))
+            keywords = sub.fetchall()
+            keywords = [keyword[0] for keyword in keywords]
+            if keywords:
+                output.append(str("keywords: " + ", ".join(keywords)))
+            print("#{:>5}{}".format(
+                row[0], ": "+", ".join(output) if output else ""))
+            sub = self.db.execute(
+                "SELECT l.id, l.date, language, text FROM lines l "
+                "LEFT JOIN taglines t ON l.tagline = t.id WHERE t.id=?", (row[0],))
+            for keyword in sub:
+                print("     Line  # {:>5}:{}{}: {}".format(
+                    keyword[0],
+                    " ("+keyword[1].isoformat()+")" if keyword[1] is not None else "",
+                    " lang="+keyword[2] if keyword[2] is not None else "",
+                    keyword[3] if keyword[3] else ""))
+        if not found:
+            print("No match found.")
+
+
     def taglines_menu(self, breadcrumbs):  # {{{1
         """ The menu with which to alter the actual taglines. """
 
@@ -527,35 +559,7 @@ class ShellUI:  # {{{1 interactive mode
                     tagline = choice
                     query += " WHERE t.id='{}'".format(tagline)
 
-                cursor = self.db.execute(query)
-                anzahl = -1
-                for index, row in enumerate(cursor):
-                    anzahl = index
-                    output = []
-                    if row[1] is not None: output.append("by "+row[1])
-                    if row[4] is not None: output.append("from "+row[4].isoformat())
-                    if row[2] is not None: output.append("source: "+row[2])
-                    if row[3] is not None: output.append("remark: "+row[3])
-                    sub = self.db.execute(
-                        "SELECT text FROM keywords JOIN kw_tl k ON k.tagline=? AND k.keyword=keywords.id "
-                        "ORDER BY text", (row[0],))
-                    keywords = sub.fetchall()
-                    keywords = [keyword[0] for keyword in keywords]
-                    if keywords:
-                        output.append(str("keywords: " + ", ".join(keywords)))
-                    print("#{:>5}{}".format(
-                        row[0], ": "+", ".join(output) if output else ""))
-                    sub = self.db.execute(
-                        "SELECT l.id, l.date, language, text FROM lines l "
-                        "LEFT JOIN taglines t ON l.tagline = t.id WHERE t.id=?", (row[0],))
-                    for keyword in sub:
-                        print("     Line  # {:>5}:{}{}: {}".format(
-                            keyword[0],
-                            " ("+keyword[1].isoformat()+")" if keyword[1] is not None else "",
-                            " lang="+keyword[2] if keyword[2] is not None else "",
-                            keyword[3] if keyword[3] else ""))
-                if anzahl == -1:
-                    print("No match found.")
+                self.print_search_result(query)
 
             elif choice == "q":
                 return
