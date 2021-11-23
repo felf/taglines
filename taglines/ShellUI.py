@@ -482,7 +482,8 @@ class ShellUI:  # {{{1 interactive mode
                 "l - list last taglines     ", "L - list all taglines\n",
                 "a - add new tagline        ", "any number - show tagline of that ID\n",
                 "e - edit tagline           ", "A - go to author menu\n",
-                "d - delete tagline         ", "K - go to keyword menu\n"
+                "d - delete tagline         ", "K - go to keyword menu\n",
+                "s - search ID by text      \n",
                 ], silent=choice != "h", allow_int=True)
 
             if choice == "A":
@@ -563,6 +564,23 @@ class ShellUI:  # {{{1 interactive mode
 
             elif choice == "q":
                 return
+
+            elif choice == "s":
+                needle = self.get_input("  Text to look for (empty to abort): ")
+                if needle == "":
+                    continue
+
+                query = """SELECT tl.id FROM taglines AS tl JOIN lines AS l ON
+                l.tagline=tl.id WHERE text like ?"""
+                cursor = self.db.execute(query, ("%{}%".format(needle),))
+                ids = []
+                for row in cursor:
+                    ids.append(row[0])
+                query = """SELECT t.id, a.name, source, remark, date FROM taglines AS t
+                LEFT JOIN authors AS a ON t.author=a.id WHERE t.id IN ({})""".format(
+                        ",".join([str(i) for i in ids]))
+                self.print_search_result(query)
+
 
     def tagline_edit_menu(self, breadcrumbs, tagline_id=None):  # {{{1
         """ Edit the content of a tagline or add a new one. """
