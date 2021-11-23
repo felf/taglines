@@ -270,6 +270,8 @@ class Database:  # {{{1
 
         if random:
             query += " ORDER BY RANDOM() LIMIT 1"
+        else:
+            query += " ORDER BY l.tagline, l.language"
 
         return self.execute(query, (qargs))
 
