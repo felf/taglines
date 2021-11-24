@@ -220,7 +220,9 @@ class Database:  # {{{1
 
         cursor = self.taglines(True)
         if cursor:
-            return cursor.fetchone()[0]
+            result = cursor.fetchone()
+            if result:
+                return result[0]
 
     def taglines(self, random=False):  # {{{2
         """ Retrieve and return taglines according to set filters. """
