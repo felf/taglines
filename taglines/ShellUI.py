@@ -618,24 +618,27 @@ class ShellUI:  # {{{1 interactive mode
 
             return source, remark, when
 
+        def show_keywords(prefix):
+            """ Print comma-separated list of tagline's current keywords """
+
+            if len(tagline.keywords) == 0:
+                keyword_texts = "None"
+            else:
+                keyword_texts = ",".join([str(keyword) for keyword in tagline.keywords])
+                cursor = self.db.execute(
+                    "SELECT text FROM keywords WHERE id IN (" + keyword_texts + ") ORDER BY text")
+                keyword_texts = ", ".join(text[0] for text in cursor.fetchall())
+            print("{} keywords: {}".format(prefix, keyword_texts))
+
         breadcrumbs = breadcrumbs[:] + ["New tagline" if tagline_id is None else "Edit tagline"]
         self.menu(breadcrumbs)
 
-        tagline = DatabaseTagline(
-            self.db, tagline_id, self.current_author, self.current_keywords)
-
-        if len(tagline.keywords) == 0:
-            keyword_texts = "None"
-        else:
-            keyword_texts = ",".join([str(keyword) for keyword in tagline.keywords])
-            cursor = self.db.execute(
-                "SELECT text FROM keywords WHERE id IN (" + keyword_texts + ") ORDER BY text")
-            keyword_texts = ", ".join(text[0] for text in cursor.fetchall())
+        tagline = DatabaseTagline(self.db, tagline_id, self.current_author, self.current_keywords)
 
         prefix = "Current" if tagline_id is None else "Tagline"
         print("{} author: {}".format(
             prefix, "None" if tagline.author_name is None else tagline.author_name))
-        print("{} keywords: {}".format(prefix, keyword_texts))
+        show_keywords(prefix)
 
         self.print(("White", "\nOptional information:"))
         if tagline_id is None:
