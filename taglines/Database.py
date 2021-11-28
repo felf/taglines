@@ -467,7 +467,7 @@ class DatabaseTagline:  # {{{1
             else:
                 self.db.execute("INSERT INTO kw_tl (keyword, tagline) VALUES (?,?)", (keyword, self.id))
         for keyword in present_keywords:
-            self.db.execute("REMOVE FROM kw_tl WHERE keyword=? AND tagline=?", (keyword, self.id))
+            self.db.execute("DELETE FROM kw_tl WHERE keyword=? AND tagline=?", (keyword, self.id))
 
         self.db.commit()
         self.is_changed = False
