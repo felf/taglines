@@ -367,36 +367,37 @@ class ShellUI:  # {{{1 interactive mode
                     continue
                 if not isinstance(keyword, int):
                     print("Error: no integer ID.")
-                else:
-                    try:
-                        output = ""
+                    continue
 
-                        cursor = self.db.get_one("SELECT COUNT(*) FROM kw_tl WHERE keyword=?", (keyword,))
-                        if cursor[0] > 0:
-                            dellines = self.ask_yesno(
-                                "Also delete the {} taglines associated with that keyword?".format(
-                                    cursor[0],),
-                                allow_cancel=True)
-                            if dellines is False:
-                                print("Deletion aborted.")
-                                continue
-                            if dellines == "y":
-                                # delete lines of associated taglines
-                                self.db.execute("""DELETE FROM lines WHERE id IN (SELECT
-                                    l.id FROM lines l JOIN kw_tl k ON k.tagline=l.tagline
-                                    WHERE k.keyword=?)""", (keyword,))
-                                # delete associated taglines
-                                cursor = self.db.execute("""DELETE FROM taglines WHERE id IN (SELECT
-                                    tl.id FROM taglines tl JOIN kw_tl k ON k.tagline=tl.id
-                                    WHERE k.keyword=?)""", (keyword,))
-                                deleted = cursor.rowcount
-                                output = (" and one tagline" if deleted == 1
-                                          else " and {} taglines".format(deleted))
-                        self.db.execute("DELETE FROM kw_tl WHERE keyword=?", (keyword,))
-                        self.db.execute("DELETE FROM keywords WHERE id=?", (keyword,), True)
-                        print("Keyword{} deleted.".format(output))
-                    except sqlite3.Error as error:
-                        print("An sqlite3 error occurred:", error.args[0])
+                try:
+                    output = ""
+
+                    cursor = self.db.get_one("SELECT COUNT(*) FROM kw_tl WHERE keyword=?", (keyword,))
+                    if cursor[0] > 0:
+                        dellines = self.ask_yesno(
+                            "Also delete the {} taglines associated with that keyword?".format(
+                                cursor[0],),
+                            allow_cancel=True)
+                        if dellines is False:
+                            print("Deletion aborted.")
+                            continue
+                        if dellines == "y":
+                            # delete lines of associated taglines
+                            self.db.execute("""DELETE FROM lines WHERE id IN (SELECT
+                                l.id FROM lines l JOIN kw_tl k ON k.tagline=l.tagline
+                                WHERE k.keyword=?)""", (keyword,))
+                            # delete associated taglines
+                            cursor = self.db.execute("""DELETE FROM taglines WHERE id IN (SELECT
+                                tl.id FROM taglines tl JOIN kw_tl k ON k.tagline=tl.id
+                                WHERE k.keyword=?)""", (keyword,))
+                            deleted = cursor.rowcount
+                            output = (" and one tagline" if deleted == 1
+                                      else " and {} taglines".format(deleted))
+                    self.db.execute("DELETE FROM kw_tl WHERE keyword=?", (keyword,))
+                    self.db.execute("DELETE FROM keywords WHERE id=?", (keyword,), True)
+                    print("Keyword{} deleted.".format(output))
+                except sqlite3.Error as error:
+                    print("An sqlite3 error occurred:", error.args[0])
 
             elif choice == "l":
                 print("\nALL KEYWORDS (sorted by text):")
