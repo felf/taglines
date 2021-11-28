@@ -331,17 +331,20 @@ class ShellUI:  # {{{1 interactive mode
             elif choice == "q":
                 return
 
-    def keyword_menu(self, breadcrumbs, keywords):  # {{{1
+    def keyword_menu(self, breadcrumbs, keywords, show_reset):  # {{{1
         """ The menu with which to manage and select keywords. """
 
         breadcrumbs = breadcrumbs[:]+["Keyword"]
+        original_keywords = set(keywords)
+        deleted_keywords = set()
         choice = "h"
         while True:
             choice = self.menu(
                 breadcrumbs,
-                ["a - add keyword      ", "l - list all keywords\n",
-                 "d - delete keyword   ", "t - toggle keyword (or simply enter the ID or name)\n",
-                 "r - reset all keywords\n"],
+                ["a - add keyword        ", "c - clear keyword selection\n",
+                 "d - delete keyword     ",
+                 "r - reset keyword selection\n" if show_reset else "\n",
+                 "l - list all keywords  ", "t - toggle keyword (or simply enter the ID or name)",],
                 silent=choice != "h", allow_anything=True, allow_int=True)
 
             # instead of entering "t" and then the ID, simply enter the ID
@@ -357,9 +360,15 @@ class ShellUI:  # {{{1 interactive mode
                     try:
                         cursor = self.db.execute(
                             "INSERT INTO keywords (text) VALUES (?)", (text,), True)
-                        print("Keyword added, new ID is", cursor.lastrowid)
+                        keyword = cursor.lastrowid()
+                        print("Keyword added, new ID is", keyword)
+                        deleted_keywords.discard(keyword)
                     except sqlite3.Error as error:
                         print("An sqlite3 error occurred:", error.args[0])
+
+            elif choice == "c":
+                keywords = set()
+                print("All keywords deselected.")
 
             elif choice == "d":
                 keyword = self.get_input("\nID to delete (empty to abort): ", allow_empty=True, allow_int=True)
@@ -395,6 +404,8 @@ class ShellUI:  # {{{1 interactive mode
                                       else " and {} taglines".format(deleted))
                     self.db.execute("DELETE FROM kw_tl WHERE keyword=?", (keyword,))
                     self.db.execute("DELETE FROM keywords WHERE id=?", (keyword,), True)
+                    keywords.discard(keyword)
+                    deleted_keywords.add(keyword)
                     print("Keyword{} deleted.".format(output))
                 except sqlite3.Error as error:
                     print("An sqlite3 error occurred:", error.args[0])
@@ -409,12 +420,12 @@ class ShellUI:  # {{{1 interactive mode
                         if row[0] in keywords else ' ', row[1])
                     print(out)
 
-            elif choice == "r":
-                keywords = set()
-                print("All keywords deselected.")
+            elif choice == "r" and show_reset:
+                keywords = set(original_keywords)
+                print("Keyword selection reset.")
 
             elif choice == "q":
-                return keywords
+                return keywords - deleted_keywords
 
             else:
                 if not choice == "t":
@@ -635,6 +646,7 @@ class ShellUI:  # {{{1 interactive mode
         self.menu(breadcrumbs)
 
         tagline = DatabaseTagline(self.db, tagline_id, self.current_author, self.current_keywords)
+        original_keywords = tagline.keywords
 
         prefix = "Current" if tagline_id is None else "Tagline"
         print("{} author: {}".format(
@@ -655,7 +667,7 @@ class ShellUI:  # {{{1 interactive mode
 
         no_header = True
         choice = "h"
-        while choice != "q":
+        while True:
 
             def enter_text(heading, language="", existing_langs=None, existing_text=None):
                 """ Tagline entry mask to enter several lines of text. """
@@ -793,10 +805,10 @@ class ShellUI:  # {{{1 interactive mode
                     elif choice == "q":
                         break
 
-                choice = "h"
-
             elif choice == "k":
-                print("Sorry, not implemented yet.")
+                tagline.set_keywords(self.keyword_menu(breadcrumbs, set(tagline.keywords), True))
+                if original_keywords.symmetric_difference(tagline.keywords):
+                    show_keywords("Changed")
 
             elif choice == "o":
                 result = ask_optional_info(
@@ -805,9 +817,10 @@ class ShellUI:  # {{{1 interactive mode
                     tagline.set_information(*result)
 
             elif choice == "q":
-                if tagline.is_changed:
-                    if self.ask_yesno("    Tagline has unsaved changes. Continue?", "n") != "y":
-                        choice = ""
+                if tagline.is_changed and self.ask_yesno(
+                        "    Tagline has unsaved changes. Continue?", "n") != "y":
+                    continue
+                break
 
             elif choice == "w":
                 if not tagline.is_changed:
@@ -833,7 +846,8 @@ class ShellUI:  # {{{1 interactive mode
                 elif choice == "q":
                     self.exit_taglines()
                 elif choice == "k":
-                    self.keyword_menu(breadcrumbs)
+                    self.current_keywords = self.keyword_menu(
+                            breadcrumbs, self.current_keywords, False)
         except self.ExitShellUI:
             return True
         # }}}2

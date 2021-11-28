@@ -421,6 +421,11 @@ class DatabaseTagline:  # {{{1
         self.when = when
         #TODO: set changed
 
+    def set_keywords(self, new_keywords):  # {{{2
+        if new_keywords.symmetric_difference(self.keywords):
+            self.is_changed = True
+            self.keywords = new_keywords
+
     def commit(self):  #{{{2
         """ Write changed data to database. """
 
