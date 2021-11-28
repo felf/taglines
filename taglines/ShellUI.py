@@ -94,7 +94,11 @@ class ShellUI:  # {{{1 interactive mode
 
         keys = [False]
         for choice in choices:
-            key, text = choice.split(" - ", 1)
+            try:
+                key, text = choice.split(" - ", 1)
+            except ValueError:
+                key = ""
+                text = choice
             if key:
                 keys.append(key.lstrip()[0])
             if not silent:
