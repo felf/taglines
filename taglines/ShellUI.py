@@ -331,8 +331,8 @@ class ShellUI:  # {{{1 interactive mode
             elif choice == "q":
                 return
 
-    def keyword_menu(self, breadcrumbs):  # {{{1
-        """ The menu with which to alter keyword information. """
+    def keyword_menu(self, breadcrumbs, keywords):  # {{{1
+        """ The menu with which to manage and select keywords. """
 
         breadcrumbs = breadcrumbs[:]+["Keyword"]
         choice = "h"
@@ -406,15 +406,15 @@ class ShellUI:  # {{{1 interactive mode
                     out = "{:>4}{}: {}".format(
                         row[0],
                         self.colorstring("Yellow")+"*\033[0;0m"
-                        if row[0] in self.current_keywords else ' ', row[1])
+                        if row[0] in keywords else ' ', row[1])
                     print(out)
 
             elif choice == "r":
-                self.current_keywords = set()
+                keywords = set()
                 print("All keywords deselected.")
 
             elif choice == "q":
-                return
+                return keywords
 
             else:
                 if not choice == "t":
@@ -436,11 +436,11 @@ class ShellUI:  # {{{1 interactive mode
                     if not row:
                         print("Error: no valid ID.")
                     else:
-                        if keyword in self.current_keywords:
-                            self.current_keywords.remove(keyword)
+                        if keyword in keywords:
+                            keywords.remove(keyword)
                             print("Keyword '{}' disabled.".format(row[1]))
                         else:
-                            self.current_keywords.add(keyword)
+                            keywords.add(keyword)
                             print("Keyword '{}' enabled.".format(row[1]))
                 else:
                     print("Error: no integer ID.")
@@ -495,7 +495,7 @@ class ShellUI:  # {{{1 interactive mode
                 self.author_menu(breadcrumbs)
 
             elif choice == "K":
-                self.keyword_menu(breadcrumbs)
+                self.current_keywords = self.keyword_menu(breadcrumbs, self.current_keywords)
 
             elif choice == "a":
                 self.tagline_edit_menu(breadcrumbs)
