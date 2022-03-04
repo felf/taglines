@@ -239,8 +239,9 @@ class ShellUI:  # {{{1 interactive mode
         while True:
             choice = self.menu(
                 breadcrumbs,
-                ["a - add author      ", "l - list all authors\n",
-                 "d - delete author   ", "c - set current author for new taglines\n"],
+                ["a - add author      ", "c - set current author for new taglines\n",
+                 "d - delete author   ", "u - unset current author\n",
+                 "l - list all authors"],
                 silent=choice != "h", allow_int=True)
 
             if isinstance(choice, int):
@@ -285,7 +286,7 @@ class ShellUI:  # {{{1 interactive mode
                         continue
                     elif author_id == "u":
                         self.current_author = None
-                        print("Current author reset.")
+                        print("Current author unset.")
                         continue
                     elif not isinstance(author_id, int):
                         print("Error: not a valid integer ID.")
@@ -327,6 +328,11 @@ class ShellUI:  # {{{1 interactive mode
                     if row[2] is not None or row[3] is not None:
                         out += " (" + str(row[2]) + "-" + str(row[3]) + ")"
                     print(out)
+
+            elif choice == "u":
+                self.current_author = None
+                print("Current author unset.")
+                continue
 
             elif choice == "q":
                 return
