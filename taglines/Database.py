@@ -45,8 +45,7 @@ class Database:  # {{{1
         if exists and isfile:
             self.filename = filename
             return True
-        else:
-            return False
+        return False
 
     def open(self):  # {{{2
         """ Open a connection to an existing database.
@@ -54,7 +53,7 @@ class Database:  # {{{1
         Returns False if unsuccessful. """
 
         if self.is_open:
-            return
+            return True
         self.db = sqlite3.connect(self.filename, detect_types=True)
         self.is_open = isinstance(self.db, sqlite3.Connection)
 
@@ -87,9 +86,9 @@ class Database:  # {{{1
             self.db.commit()
             self.is_open = True
         except IOError as error:
-            raise Database.DatabaseError("Error creating database file: {}".format(error.args[0]))
+            raise Database.DatabaseError(f"Error creating database file: {error.args[0]}")
         except sqlite3.Error as error:
-            raise Database.DatabaseError("An sqlite3 error occurred: {}".format(error.args[0]))
+            raise Database.DatabaseError(f"An sqlite3 error occurred: {error.args[0]}")
 
     def get_version(self):
         """ Extract schema version from database. """
@@ -145,7 +144,7 @@ class Database:  # {{{1
             shutil.copy(self.filename, self.filename + ".upgradebackup")
         while dbversion < __db_version__:
             dbversion += 1
-            print("Upgrading to version {}...".format(dbversion), file=stderr)
+            print(f"Upgrading to version {dbversion}...", file=stderr)
 
             if dbversion == 1:
                 self.execute('ALTER TABLE tags RENAME TO keywords')
@@ -223,6 +222,7 @@ class Database:  # {{{1
             result = cursor.fetchone()
             if result:
                 return result[0]
+        return None
 
     def taglines(self, random=False):  # {{{2
         """ Retrieve and return taglines according to set filters. """
@@ -244,12 +244,11 @@ class Database:  # {{{1
         keywords = self.filters.get("keywords")
         if keywords:
             where.append(
-                """l.tagline IN (
-                SELECT tagline FROM kw_tl JOIN keywords ON kw_tl.keyword=keywords.id WHERE text IN ({keyword_texts}) GROUP BY tagline{having}
-                )""".format(
-                    keyword_texts=",".join(["?"] * len(keywords)),
-                    having="" if self.keywords_or else " HAVING count(*)=?",
-                ))
+                f"""l.tagline IN (
+                SELECT tagline FROM kw_tl JOIN keywords ON kw_tl.keyword=keywords.id
+                WHERE text IN ({",".join(["?"] * len(keywords))})
+                GROUP BY tagline{"" if self.keywords_or else " HAVING count(*)=?"}
+                )""")
             qargs += keywords
             if not self.keywords_or:
                 qargs.append(len(keywords))
@@ -291,10 +290,8 @@ class Database:  # {{{1
         query = "SELECT name, born, died FROM authors"
         if by_name:
             query += " ORDER BY name"
-        return (name + (" ({}-{})".format(
-            born if born else "",
-            died if died else ""
-        ) if born or died else "") for name, born, died in self.execute(query))
+        return (name + (f' ({born if born else ""}-{died if died else ""})'
+            if born or died else "") for name, born, died in self.execute(query))
 
     def stats(self):  # {{{2
         """ Calculate and return some statistical data on the database. """
@@ -423,6 +420,8 @@ class DatabaseTagline:  # {{{1
         #TODO: set changed
 
     def set_keywords(self, new_keywords):  # {{{2
+        """ Change the set of keywords. """
+
         if new_keywords.symmetric_difference(self.keywords):
             self.is_changed = True
             self.keywords = new_keywords
