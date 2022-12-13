@@ -291,10 +291,10 @@ class Database:  # {{{1
         query = "SELECT name, born, died FROM authors"
         if by_name:
             query += " ORDER BY name"
-        return (name+(" ({}-{})".format(
+        return (name + (" ({}-{})".format(
             born if born else "",
             died if died else ""
-            ) if born or died else "") for name, born, died in self.execute(query))
+        ) if born or died else "") for name, born, died in self.execute(query))
 
     def stats(self):  # {{{2
         """ Calculate and return some statistical data on the database. """
@@ -311,8 +311,8 @@ class Database:  # {{{1
 
         cursor = self.execute("SELECT text FROM lines")
         linelengthsum = sum(len(row[0]) for row in cursor)
-        stats["avg tagline length"] = linelengthsum/stats["line count"] if \
-                stats["line count"] != 0 else 0
+        stats["avg tagline length"] = linelengthsum / stats["line count"] if \
+            stats["line count"] != 0 else 0
 
         return stats
 
@@ -413,9 +413,10 @@ class DatabaseTagline:  # {{{1
             remark = None
         if when == "":
             when = None
-        self.is_changed = (self.source != source or
-                           self.remark != remark or
-                           self.when != when)
+        self.is_changed = any((
+            self.source != source,
+            self.remark != remark,
+            self.when != when))
         self.source = source
         self.remark = remark
         self.when = when

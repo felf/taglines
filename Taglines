@@ -11,6 +11,7 @@ from taglines.ShellUI import ShellUI
 
 import os
 
+
 def init_database(filepath):  # {{{1
     """ Create a new sqlite database file. """
 
@@ -37,6 +38,7 @@ def init_database(filepath):  # {{{1
 
     return False
 
+
 def get_random_item(_args):  # {{{1
     """ Retrieve one random tagline. """
 
@@ -48,6 +50,7 @@ def get_random_item(_args):  # {{{1
             print(tagline)
         return True
     return False
+
 
 def list_items(_args):  # {{{1
     """ Show list of taglines. """
@@ -65,6 +68,7 @@ def list_items(_args):  # {{{1
             print(row[0])
         return True
     return False
+
 
 def show_keywords(filepath):  # {{{1
     """ Print all keywords, sorted alphabetically. """
@@ -86,6 +90,7 @@ def show_authors(filepath):  # {{{1
             print(author)
         return True
     return False
+
 
 def show_stats(filepath):  # {{{1
     """ Print tabular statistics about the given database file. """
@@ -129,6 +134,7 @@ def show_stats(filepath):  # {{{1
                 label=keyval[0], width=maxlabelwidth, value=keyval[1]))
         return True
     return False
+
 
 def interactive_menu(filepath, editor):  # {{{1
     """ Start interactive console menu mode and exit at the end. """
@@ -185,6 +191,7 @@ def main():  # {{{1
         exit(0)
     else:
         exit(1)
+
 
 if __name__ == "__main__":  # {{{1
     main()

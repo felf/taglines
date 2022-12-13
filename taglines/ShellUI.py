@@ -11,19 +11,18 @@ from datetime import datetime
 
 from taglines.Database import DatabaseTagline
 
+
 class ShellUI:  # {{{1 interactive mode
     """ Shellmode class
 
     It provides a hierarchy of menus which are used to inspect
     and modify the content of the database."""
 
-
     class ExitShellUI(Exception):  # {{{1
         """ Exception that is raised to leave the menu hierarchy. """
 
         def __init__(self):
             super(ShellUI.ExitShellUI, self).__init__()
-
 
     def __init__(self, db, editor):  # {{{1
         self.current_author = None
@@ -65,7 +64,7 @@ class ShellUI:  # {{{1 interactive mode
                 output += "".join([
                     ShellUI.colorstring(part[0]) + part[1] + "\033[0;0m"
                     if isinstance(part, tuple) else part
-                    ]) + "\033[0;0m"
+                ]) + "\033[0;0m"
             print(output, end=ending)
 
     @staticmethod
@@ -87,7 +86,7 @@ class ShellUI:  # {{{1 interactive mode
                     length += 3
                 self.print(("White", crumb.upper()), False)
                 length += len(crumb)
-            print("\n" + "-" * (length+2), end="\n\n")
+            print("\n" + "-" * (length + 2), end="\n\n")
         # no choices given -> just output the headline
         if not choices:
             return
@@ -109,9 +108,9 @@ class ShellUI:  # {{{1 interactive mode
             for choice in [
                     "   q/^d - quit to parent menu   ", "Q/^c - quit program   ",
                     "h/? - show menu help"
-                ]:
+            ]:
                 key, text = choice.split(" - ")
-                self.print([("Yellow", key), " - "+text], False)
+                self.print([("Yellow", key), " - " + text], False)
             print("")
 
         keys.extend(["h", "?", "q"])
@@ -119,7 +118,7 @@ class ShellUI:  # {{{1 interactive mode
             if not prompt:
                 prompt = breadcrumbs[-1] + " menu choice: "
             try:
-                choice = self.get_input("\n"+prompt, allow_int)
+                choice = self.get_input("\n" + prompt, allow_int)
             except KeyboardInterrupt:
                 choice = "Q"
 
@@ -234,7 +233,7 @@ class ShellUI:  # {{{1 interactive mode
     def author_menu(self, breadcrumbs):  # {{{1
         """ The menu with which to alter author information. """
 
-        breadcrumbs = breadcrumbs[:]+["Author"]
+        breadcrumbs = breadcrumbs[:] + ["Author"]
         choice = "h"
         while True:
             choice = self.menu(
@@ -252,10 +251,10 @@ class ShellUI:  # {{{1 interactive mode
 
             if choice == "a":
                 name = self.get_input("\nName (empty to abort): ")
-                if name != False and name != "":
+                if name is not False and name != "":
                     try:
                         born = self.get_input("Year of birth: ")
-                        if born == False:
+                        if born is False:
                             continue
                         else:
                             born = int(born)
@@ -263,7 +262,7 @@ class ShellUI:  # {{{1 interactive mode
                         born = None
                     try:
                         died = self.get_input("Year of death: ")
-                        if died == False:
+                        if died is False:
                             continue
                         else:
                             died = int(died)
@@ -322,7 +321,7 @@ class ShellUI:  # {{{1 interactive mode
                 for row in cursor:
                     out = "{:>4}{}: {}".format(
                         row[0],
-                        self.colorstring("Yellow")+"*\033[0;0m"
+                        self.colorstring("Yellow") + "*\033[0;0m"
                         if self.current_author == row[0] else ' ',
                         row[1])
                     if row[2] is not None or row[3] is not None:
@@ -340,7 +339,7 @@ class ShellUI:  # {{{1 interactive mode
     def keyword_menu(self, breadcrumbs, keywords, show_reset):  # {{{1
         """ The menu with which to manage and select keywords. """
 
-        breadcrumbs = breadcrumbs[:]+["Keyword"]
+        breadcrumbs = breadcrumbs[:] + ["Keyword"]
         original_keywords = set(keywords)
         deleted_keywords = set()
         choice = "h"
@@ -422,7 +421,7 @@ class ShellUI:  # {{{1 interactive mode
                 for row in cursor:
                     out = "{:>4}{}: {}".format(
                         row[0],
-                        self.colorstring("Yellow")+"*\033[0;0m"
+                        self.colorstring("Yellow") + "*\033[0;0m"
                         if row[0] in keywords else ' ', row[1])
                     print(out)
 
@@ -462,16 +461,15 @@ class ShellUI:  # {{{1 interactive mode
                 else:
                     print("Error: no integer ID.")
 
-
     def print_search_result(self, query):  # {{{1
         found = False
         for row in self.db.execute(query):
             found = True
             output = []
-            if row[1] is not None: output.append("by "+row[1])
-            if row[4] is not None: output.append("from "+row[4].isoformat())
-            if row[2] is not None: output.append("source: "+row[2])
-            if row[3] is not None: output.append("remark: "+row[3])
+            if row[1] is not None: output.append("by " + row[1])
+            if row[4] is not None: output.append("from " + row[4].isoformat())
+            if row[2] is not None: output.append("source: " + row[2])
+            if row[3] is not None: output.append("remark: " + row[3])
             sub = self.db.execute(
                 "SELECT text FROM keywords JOIN kw_tl k ON k.tagline=? AND k.keyword=keywords.id "
                 "ORDER BY text", (row[0],))
@@ -480,24 +478,23 @@ class ShellUI:  # {{{1 interactive mode
             if keywords:
                 output.append(str("keywords: " + ", ".join(keywords)))
             print("#{:>5}{}".format(
-                row[0], ": "+", ".join(output) if output else ""))
+                row[0], ": " + ", ".join(output) if output else ""))
             sub = self.db.execute(
                 "SELECT l.id, l.date, language, text FROM lines l "
                 "LEFT JOIN taglines t ON l.tagline = t.id WHERE t.id=?", (row[0],))
             for keyword in sub:
                 print("     Line  # {:>5}:{}{}: {}".format(
                     keyword[0],
-                    " ("+keyword[1].isoformat()+")" if keyword[1] is not None else "",
-                    " lang="+keyword[2] if keyword[2] is not None else "",
+                    " (" + keyword[1].isoformat() + ")" if keyword[1] is not None else "",
+                    " lang=" + keyword[2] if keyword[2] is not None else "",
                     keyword[3] if keyword[3] else ""))
         if not found:
             print("No match found.")
 
-
     def taglines_menu(self, breadcrumbs):  # {{{1
         """ The menu with which to alter the actual taglines. """
 
-        breadcrumbs = breadcrumbs[:]+["Tagline"]
+        breadcrumbs = breadcrumbs[:] + ["Tagline"]
         choice = "h"
         while True:
             choice = self.menu(breadcrumbs, [
@@ -506,7 +503,7 @@ class ShellUI:  # {{{1 interactive mode
                 "e - edit tagline           ", "A - go to author menu\n",
                 "d - delete tagline         ", "K - go to keyword menu\n",
                 "s - search ID by text      \n",
-                ], silent=choice != "h", allow_int=True)
+            ], silent=choice != "h", allow_int=True)
 
             if choice == "A":
                 self.author_menu(breadcrumbs)
@@ -602,7 +599,6 @@ class ShellUI:  # {{{1 interactive mode
                 LEFT JOIN authors AS a ON t.author=a.id WHERE t.id IN ({})""".format(
                         ",".join([str(i) for i in ids]))
                 self.print_search_result(query)
-
 
     def tagline_edit_menu(self, breadcrumbs, tagline_id=None):  # {{{1
         """ Edit the content of a tagline or add a new one. """
@@ -707,7 +703,7 @@ class ShellUI:  # {{{1 interactive mode
                         except (subprocess.CalledProcessError, FileNotFoundError):
                             self.print_warning(
                                 "Could not open editor. Continuing with internal menu."
-                                )
+                            )
                         else:
                             handle.file.seek(0)
                             lines = handle.file.read().strip()
@@ -726,7 +722,7 @@ class ShellUI:  # {{{1 interactive mode
                 print("    Text ('r'=restart, 'c'=correct last line, "
                       "'a'=abort, 'f' or two empty lines=finish:")
                 print("".join(["         {}".format(x) for x in range(1, 9)]))
-                print("1234567890"*8)
+                print("1234567890" * 8)
                 while True:
                     line = self.get_input()
                     if line == "a":
@@ -751,7 +747,7 @@ class ShellUI:  # {{{1 interactive mode
                 "a - add a tagline text      ", "k - edit keywords\n",
                 "m - manage tagline texts    ", "w - save any changes to database and quit menu\n",
                 "o - edit optional inform.   ", "q - quit to previous menu{}\n".format(", discarding changes" if tagline.is_changed else ""),
-                ], silent=choice != "h", no_header=no_header)
+            ], silent=choice != "h", no_header=no_header)
             no_header = False
 
             if choice == "a":
@@ -772,7 +768,7 @@ class ShellUI:  # {{{1 interactive mode
                     choice = self.menu(breadcrumbs + ["Modify tagline texts"], [
                         "d - delete a text   ", "l - list texts\n",
                         "m - modify a text   ", "q - quit menu\n",
-                        ], silent=choice != "h", no_header=no_header)
+                    ], silent=choice != "h", no_header=no_header)
 
                     if choice == "":
                         continue
@@ -844,7 +840,7 @@ class ShellUI:  # {{{1 interactive mode
                 breadcrumbs = ["Main"]
                 choice = self.menu(breadcrumbs, [
                     "   a - Author menu    ", "k - Keyword menu    ", "l - taglines menu",
-                    ], "By your command: ")
+                ], "By your command: ")
                 if choice == "a":
                     self.author_menu(breadcrumbs)
                 elif choice == "l":
@@ -853,7 +849,7 @@ class ShellUI:  # {{{1 interactive mode
                     self.exit_taglines()
                 elif choice == "k":
                     self.current_keywords = self.keyword_menu(
-                            breadcrumbs, self.current_keywords, False)
+                        breadcrumbs, self.current_keywords, False)
         except self.ExitShellUI:
             return True
         # }}}2

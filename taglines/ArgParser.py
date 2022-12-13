@@ -3,6 +3,7 @@
 import argparse
 from os import getenv
 
+
 def parse_arguments():
     """ Parse arguments passed to Taglines. """
 
@@ -71,7 +72,7 @@ def parse_arguments():
         (
             args.list, args.random, args.show_keywords, args.show_authors,
             args.stats, args.init, args.interactive)
-        ):
+    ):
         args.random = True
 
     return args
