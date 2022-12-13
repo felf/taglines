@@ -1,0 +1,9 @@
+*~
+*.pyc
+*.pylint
+MANIFEST
+__pycache__
+build/
+dist/
+mo/
+po/template.pot
