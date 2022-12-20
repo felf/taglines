@@ -4,7 +4,6 @@
 # Preamble {{{1
 """ Entry point for the Taglines program. """
 
-from __future__ import print_function, division
 from taglines.ArgParser import parse_arguments
 from taglines.Database import Database
 from taglines.ShellUI import ShellUI
@@ -100,33 +99,33 @@ def show_stats(filepath):  # {{{1
         stats = db.stats()
 
         labels = [
-                "Database schema version:",
-                "Number of taglines:",
-                "Number of texts:",
-                "Average text length:",
-                "Number of keywords:",
-                "Number of keyword assignments:",
-                "Number of authors:",
-                "Used languages:",
-                ]
+            "Database schema version:",
+            "Number of taglines:",
+            "Number of texts:",
+            "Average text length:",
+            "Number of keywords:",
+            "Number of keyword assignments:",
+            "Number of authors:",
+            "Used languages:",
+        ]
 
         values = [
-                "unknown" if stats["schema version"] is None else
-                    "{:6d}".format(stats["schema version"]),
-                "{:6d}".format(stats["tagline count"],),
-                "{:6d}   (ø {:5.2f} per tagline)".format(
-                    stats["line count"],
-                    stats["line count"]/stats["tagline count"] if
-                        stats["line count"] != 0 else 0),
-                "{:8.1f}".format(stats["avg tagline length"],),
-                "{:6d}".format(stats["keyword count"],),
-                "{:6d}   (ø {:5.2f} per tagline)".format(
-                    stats["keyword assignments"],
-                    stats["keyword assignments"]/stats["tagline count"] if
-                        stats["tagline count"] != 0 else 0),
-                "{:6d}".format(stats["author count"],),
-                "{:6d}".format(stats["language count"],),
-                ]
+            "unknown" if stats["schema version"] is None else
+            "{:6d}".format(stats["schema version"]),
+            "{:6d}".format(stats["tagline count"],),
+            "{:6d}   (ø {:5.2f} per tagline)".format(
+                stats["line count"],
+                stats["line count"]/stats["tagline count"] if
+                stats["line count"] != 0 else 0),
+            "{:8.1f}".format(stats["avg tagline length"],),
+            "{:6d}".format(stats["keyword count"],),
+            "{:6d}   (ø {:5.2f} per tagline)".format(
+                stats["keyword assignments"],
+                stats["keyword assignments"]/stats["tagline count"] if
+                stats["tagline count"] != 0 else 0),
+            "{:6d}".format(stats["author count"],),
+            "{:6d}".format(stats["language count"],),
+        ]
 
         maxlabelwidth = max(len(label) for label in labels)
         for keyval in zip(labels, values):

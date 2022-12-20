@@ -2,10 +2,8 @@
 
 """ The terminal-based menu interface. """
 
-from __future__ import print_function, unicode_literals
 import sqlite3
 import subprocess
-import sys
 import tempfile
 from datetime import datetime
 
@@ -150,16 +148,11 @@ class ShellUI:  # {{{1 interactive mode
         while True:
             try:
                 ShellUI.print(("green", text), False)
-                if sys.version_info.major == 2:
-                    choice = raw_input()
-                else:
-                    choice = input()
+                choice = input()
 
                 if not allow_empty and not choice:
                     print("Empty string not allowed here.")
                 else:
-                    if sys.version_info.major == 2:
-                        choice = choice.decode("utf-8")
                     if allow_int:
                         try:
                             choice = int(choice)
@@ -212,11 +205,7 @@ class ShellUI:  # {{{1 interactive mode
         try:
             # not using ask_yesno b/c of own handling of Ctrl+C/D
             ShellUI.print(("green", "\nReally quit Taglines?  [y/N] "), False)
-            if sys.version_info.major == 2:
-                # pylint: disable=undefined-variable
-                i = raw_input()
-            else:
-                i = input()
+            i = input()
         except (EOFError, KeyboardInterrupt):
             print()
             return

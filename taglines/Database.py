@@ -1,11 +1,11 @@
 """ Encapsulation of tagline data in an sqlite database file. """
 
-from __future__ import print_function
 import os
 import sqlite3
 import shutil
 from datetime import date
 from sys import stderr
+from pathlib import Path
 
 __db_version__ = 1
 
@@ -68,8 +68,7 @@ class Database:  # {{{1
             self.close()
 
         try:
-            dbfile = open(filename, 'w')
-            dbfile.close()
+            Path.touch(filename)
             self.filename = filename
             self.db = sqlite3.connect(self.filename)
             cursor = self.db.cursor()
