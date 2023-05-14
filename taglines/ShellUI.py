@@ -769,7 +769,7 @@ class ShellUI:  # {{{1 interactive mode
 
                     elif choice == "m":
                         if len(tagline.texts) > 1:
-                            lang = self.get_input("   Language to modify ({', '.join(tagline.texts)}): ")
+                            lang = self.get_input(f"   Language to modify ({', '.join(tagline.texts)}): ")
                         else:
                             lang = list(tagline.texts.keys())[0]
 
