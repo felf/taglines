@@ -7,7 +7,7 @@ import subprocess
 import tempfile
 from datetime import datetime
 
-from taglines.Database import DatabaseTagline
+from taglines.database import DatabaseTagline
 
 
 class ShellUI:  # {{{1 interactive mode

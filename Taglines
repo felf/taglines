@@ -4,9 +4,9 @@
 # Preamble {{{1
 """ Entry point for the Taglines program. """
 
-from taglines.ArgParser import parse_arguments
-from taglines.Database import Database
-from taglines.ShellUI import ShellUI
+from taglines.argparser import parse_arguments
+from taglines.database import Database
+from taglines.shell_ui import ShellUI
 
 import os
 
