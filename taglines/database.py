@@ -63,6 +63,7 @@ class Database:  # {{{1
 
     def initialise_file(self, filename):  # {{{2
         """ Initialise a new, empty database """
+        # pylint: disable=line-too-long
 
         if self.is_open:
             self.close()
@@ -72,7 +73,6 @@ class Database:  # {{{1
             self.filename = filename
             self.db = sqlite3.connect(self.filename)
             cursor = self.db.cursor()
-            #db.text_factory=str
             cursor.execute('CREATE TABLE authors (id INTEGER PRIMARY KEY, name TEXT, born INT DEFAULT NULL, died INT DEFAULT NULL)')
             cursor.execute('CREATE TABLE lines (id INTEGER PRIMARY KEY, tagline INT, date DATE, language VARCHAR(5), text TEXT)')
             # the keyword-tagline assignment table
@@ -289,7 +289,8 @@ class Database:  # {{{1
         query = "SELECT name, born, died FROM authors"
         if by_name:
             query += " ORDER BY name"
-        return (name + (f' ({born if born else ""}-{died if died else ""})'
+        return (name + (
+            f' ({born if born else ""}-{died if died else ""})'
             if born or died else "") for name, born, died in self.execute(query))
 
     def stats(self):  # {{{2
@@ -360,9 +361,6 @@ class DatabaseTagline:  # {{{1
             for row in cursor:
                 self.texts[row[0]] = [row[1], False]
 
-        # todo
-        #self.last_changed = None
-
     def get_texts(self):
         """ Return a dict {language: text} from the internal list.
 
@@ -425,7 +423,7 @@ class DatabaseTagline:  # {{{1
             self.is_changed = True
             self.keywords = new_keywords
 
-    def commit(self):  #{{{2
+    def commit(self):  # {{{2
         """ Write changed data to database. """
 
         if self.id is None:

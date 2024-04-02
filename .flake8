@@ -1,0 +1,5 @@
+[flake8]
+per-file-ignores =
+    # lines too long
+    taglines/database.py: E501
+    taglines/shell_ui.py: E501

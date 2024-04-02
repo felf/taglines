@@ -4,11 +4,12 @@
 # Preamble {{{1
 """ Entry point for the Taglines program. """
 
+import os
+import sys
+
 from taglines.argparser import parse_arguments
 from taglines.database import Database
 from taglines.shell_ui import ShellUI
-
-import os
 
 
 def init_database(filepath):  # {{{1
@@ -21,19 +22,19 @@ def init_database(filepath):  # {{{1
             try:
                 os.remove(filepath)
             except OSError as error:
-                exit("Error: could not delete old file: {}. Exiting.".format(
-                    error.args[1]))
+                sys.exit(
+                    f"Error: could not delete old file: {error.args[1]}. "
+                    "Exiting.")
         else:
             print("good bye")
-            exit(1)
+            sys.exit(1)
     try:
         db = Database()
         if db:
             db.initialise_file(filepath)
             return True
     except Database.DatabaseError as error:
-        print("Error initialising database: {}.".format(
-            error.args[0]))
+        print("Error initialising database: {error.args[0]}.")
 
     return False
 
@@ -129,8 +130,7 @@ def show_stats(filepath):  # {{{1
 
         maxlabelwidth = max(len(label) for label in labels)
         for keyval in zip(labels, values):
-            print("{label:{width}} {value}".format(
-                label=keyval[0], width=maxlabelwidth, value=keyval[1]))
+            print(f"{keyval[0]:{maxlabelwidth}} {keyval[1]}")
         return True
     return False
 
@@ -146,7 +146,6 @@ def interactive_menu(filepath, editor):  # {{{1
 
     except Exception:
         raise
-        import sys
         print(sys.exc_info()[1])
         result = False
     return result
@@ -180,16 +179,15 @@ def main():  # {{{1
 
     except Exception as error:
         raise
-        from sys import stderr
-        print(error, file=stderr)
+        print(error, file=sys.stderr)
         result = False
 
     if result is None:
-        exit(-1)
+        sys.exit(-1)
     elif result:
-        exit(0)
+        sys.exit(0)
     else:
-        exit(1)
+        sys.exit(1)
 
 
 if __name__ == "__main__":  # {{{1

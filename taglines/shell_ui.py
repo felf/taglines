@@ -9,6 +9,7 @@ from datetime import datetime
 
 from taglines.database import DatabaseTagline
 
+# pylint: disable=line-too-long
 
 class ShellUI:  # {{{1 interactive mode
     """ Shellmode class
@@ -442,6 +443,7 @@ class ShellUI:  # {{{1 interactive mode
 
     def print_search_result(self, query):  # {{{1
         """ Print the rows of the given db query with some labelling. """
+        # pylint: disable=multiple-statements
 
         found = False
         for row in self.db.execute(query):
@@ -458,12 +460,12 @@ class ShellUI:  # {{{1 interactive mode
             keywords = [keyword[0] for keyword in keywords]
             if keywords:
                 output.append(str("keywords: " + ", ".join(keywords)))
-            print("#{:>5}{}".format(
-                row[0], ": " + ", ".join(output) if output else ""))
+            print(f"#{row[0]:>5}{': ' + ', '.join(output) if output else ''}")
             sub = self.db.execute(
                 "SELECT l.id, l.date, language, text FROM lines l "
                 "LEFT JOIN taglines t ON l.tagline = t.id WHERE t.id=?", (row[0],))
             for keyword in sub:
+                # pylint: disable=consider-using-f-string
                 print("     Line  # {:>5}:{}{}: {}".format(
                     keyword[0],
                     " (" + keyword[1].isoformat() + ")" if keyword[1] is not None else "",
@@ -589,18 +591,21 @@ class ShellUI:  # {{{1 interactive mode
 
             result = self.get_input(
                 f"  Tagline source{'' if source is None else ' [' + source + ']'}: ")
-            if result is False: return None
+            if result is False:
+                return None
             source = result
 
             result = self.get_input(
                 f"  Tagline remark{'' if remark is None else ' [' + remark + ']'}: ")
-            if result is False: return None
+            if result is False:
+                return None
             remark = result
 
             while True:
                 result = self.get_input(
                     f"  Tagline date (yyyy-mm-dd){'' if when is None else ' [' + when.strftime('%F') + ']'}: ")
-                if result is False: return None
+                if result is False:
+                    return None
                 if result:
                     try:
                         when = datetime.strptime(result, '%Y-%m-%d').date()
@@ -722,11 +727,13 @@ class ShellUI:  # {{{1 interactive mode
 
                     else:
                         lines.append(line)
+                return None
 
             choice = self.menu(breadcrumbs, [
                 "a - add a tagline text      ", "k - edit keywords\n",
                 "m - manage tagline texts    ", "w - save any changes to database and quit menu\n",
-                "o - edit optional inform.   ", "q - quit to previous menu{}\n".format(", discarding changes" if tagline.is_changed else ""),
+                "o - edit optional inform.   ",
+                "q - quit to previous menu{', discarding changes' if tagline.is_changed else ''}\n",
             ], silent=choice != "h", no_header=no_header)
             no_header = False
 
