@@ -6,11 +6,11 @@ if __name__ == "__main__":
     import taglines
     setup(
         name="taglines",
-        description="taglines is an e-mail signature/fortune cookie tool.",
+        description="Taglines is an e-mail signature/fortune cookie tool.",
         long_description=taglines.__doc__,
         version=taglines.__version__,
         author="Frank Steinmetzger",
-        author_email="felsenfleischer@googlemail.com",
+        author_email="dev@felsenfleischer.de",
         license="GPL",
         packages=["taglines"],
         scripts=["./Taglines"],
