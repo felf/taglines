@@ -269,7 +269,7 @@ class ShellUI:  # {{{1 interactive mode
                         print("Current author unset.")
                         continue
                     if not isinstance(author_id, int):
-                        print("Error: not a valid integer ID.")
+                        print("Error: not an integer ID.")
                         continue
                 row = self.db.get_one("SELECT id, name FROM authors WHERE id=?", (author_id,))
                 if row is None:
@@ -282,19 +282,18 @@ class ShellUI:  # {{{1 interactive mode
                 author_id = self.get_input("\nID to delete (empty to abort): ", allow_int=True)
                 if author_id == "":
                     continue
-                if isinstance(author_id, int):
-                    row = self.db.get_one("SELECT id FROM authors WHERE id=?", (author_id,))
-                    if row is None:
-                        print("Author with given ID does not exist.")
-                        continue
-                    try:
-                        self.db.execute('DELETE FROM authors WHERE id=?', (author_id,), True)
-                        print("Author deleted.")
-                        if author_id == self.current_author:
-                            self.current_author = None
-                            print("Current author reset.")
-                    except ValueError:
-                        print("Error: no integer ID.")
+                if not isinstance(author_id, int):
+                    print("Error: not an integer ID.")
+                    continue
+                row = self.db.get_one("SELECT id FROM authors WHERE id=?", (author_id,))
+                if row is None:
+                    print("Author with given ID does not exist.")
+                    continue
+                self.db.execute('DELETE FROM authors WHERE id=?', (author_id,), True)
+                print("Author deleted.")
+                if author_id == self.current_author:
+                    self.current_author = None
+                    print("Current author reset.")
 
             elif choice == "l":
                 print("\nALL AUTHORS (sorted by name):")
@@ -361,7 +360,7 @@ class ShellUI:  # {{{1 interactive mode
                 if keyword == "":
                     continue
                 if not isinstance(keyword, int):
-                    print("Error: no integer ID.")
+                    print("Error: not an integer ID.")
                     continue
 
                 try:
@@ -439,7 +438,7 @@ class ShellUI:  # {{{1 interactive mode
                             keywords.add(keyword)
                             print(f"Keyword '{row[1]}' enabled.")
                 else:
-                    print("Error: no integer ID.")
+                    print("Error: not an integer ID.")
 
     def print_search_result(self, query):  # {{{1
         """ Print the rows of the given db query with some labelling. """
@@ -506,17 +505,20 @@ class ShellUI:  # {{{1 interactive mode
                     tagline = self.db.get_one("SELECT MAX(id) FROM taglines")[0]
                     if tagline is None:
                         print("Nothing to delete.")
-                if isinstance(tagline, int):
-                    try:
-                        if self.db.get_one("SELECT id FROM taglines WHERE id=?", (tagline,)):
-                            self.db.execute("DELETE FROM kw_tl WHERE tagline=?", (tagline,))
-                            self.db.execute("DELETE FROM lines WHERE tagline=?", (tagline,), commit=True)
-                            self.db.execute('DELETE FROM taglines WHERE id=?', (tagline,))
+                if not isinstance(tagline, int):
+                    self.print_warning("Error: not an integer ID.")
+                    continue
+
+                try:
+                    if self.db.get_one("SELECT id FROM taglines WHERE id=?", (tagline,)):
+                        self.db.execute("DELETE FROM kw_tl WHERE tagline=?", (tagline,))
+                        self.db.execute("DELETE FROM lines WHERE tagline=?", (tagline,))
+                        self.db.execute('DELETE FROM taglines WHERE id=?', (tagline,), commit=True)
                         print(f"Tagline {tagline} and all its keyword assignments deleted.")
-                    except sqlite3.Error as error:
-                        print(f"Error while deleting tagline: {error.args[0]}.")
-                else:
-                    self.print_warning("Invalid choice.")
+                    else:
+                        print("Tagline with given ID does not exist.")
+                except sqlite3.Error as error:
+                    print(f"Error while deleting tagline: {error.args[0]}.")
 
             elif choice == "e":
                 tagline = self.get_input(
