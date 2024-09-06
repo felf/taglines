@@ -2,12 +2,12 @@ taglines – fortunes with a database
 ===================================
 
 https://github.com/felf/taglines
-Copyright © 2011–2017 Frank Steinmetzger
+Copyright © 2011–2024 Frank Steinmetzger
 
 Synopsis
 --------
 With Taglines you can manage a database of fortunes, enriched with metadata for
-filtering and retrieval. It is written in Python and works with python 2 and 3.
+filtering and retrieval. It is written in Python 3.
 
 Installation
 ------------
